@@ -1,19 +1,15 @@
 import { Client, Intents, Message } from 'discord.js';
 
+import { initializeVoiceConnection } from './Audio';
 import { config } from './config';
 import { Emoji, emojiGetter as emojiGetter } from './emotes';
-import { logEvent, logMessage } from './utils';
+import { logError, logEvent, logMessage } from './utils';
 
 const isBotCommand = ({ author, content }: Message) =>
   !author.bot && content.startsWith(config.botPrefix) ? content.slice(1) : null;
 
-const respond = (
-  message: Message,
-  ...content: Parameters<typeof message.channel.send>
-) => message.channel.send(...content);
-
-export const initialize = async () => {
-  const client = new Client({
+export const initializeClient = async () => {
+  const client = new Client<true>({
     // required for direct messages
     partials: [ 'CHANNEL' ],
     intents:  [
@@ -25,19 +21,23 @@ export const initialize = async () => {
     ],
   });
 
-  client.once('ready', (client) => {
-    logEvent('ready', `@${client.user.tag}, invite: ${config.authorizeUrl}`);
-    client.user.setPresence({
-      activities: [ { name: 'slaving away' } ],
-      status:     'online',
+  client.on('error', (error) => logError('client', error));
+  registerMessageCommands(client);
+
+  const ready = new Promise<void>((resolve) => {
+    client.once('ready', (client) => {
+      logEvent('ready', `@${client.user.tag}, invite: ${config.authorizeUrl}`);
+      client.user.setPresence({
+        activities: [ { name: 'slaving away' } ],
+        status:     'online',
+      });
+      resolve();
     });
   });
 
-  registerMessageCommands(client);
+  await Promise.all([ client.login(config.botToken), ready ]);
 
-  await client.login(config.botToken);
-
-  return { client, promise: exitPromise(client) };
+  return { client, reason: exitPromise(client) };
 };
 
 const registerMessageCommands = (client: Client) => {
@@ -52,16 +52,31 @@ const registerMessageCommands = (client: Client) => {
 
     switch (content) {
       case 'ping': {
-        await respond (message, 'pong');
-        await respond(message, emoji(Emoji.FeelsCarlosMan));
-        console.log(emoji?.toString() );
+        await message.channel.send ( 'pong');
+        return;
+      }
+
+      case 'summon': {
+        if (!message.guild) {
+          await message.reply('must be in a server to summon');
+          return;
+        }
+
+        await message.react(emoji(Emoji.peepoHappy));
+        const user = message.guild.members.cache.get(message.author.id);
+        if (!user?.voice.channel) {
+          await message.reply('must be in a voice channel to summon');
+          return;
+        }
+
+        await initializeVoiceConnection(user.voice.channel);
         break;
       }
     }
   });
 };
 
-const exitPromise = (client: Client) =>
+const exitPromise = (client: Client<true>) =>
   new Promise<string>((resolve) => {
     process.once('SIGINT', () => {
       resolve('caught sigint');
@@ -71,6 +86,7 @@ const exitPromise = (client: Client) =>
       resolve('session invalidated');
     });
 
+
     client.on('messageCreate', async (message) => {
       if (isBotCommand(message) !== 'gtfo') {
         return;
@@ -78,7 +94,7 @@ const exitPromise = (client: Client) =>
 
       const emoji = emojiGetter(client.emojis.cache);
       await message.react(emoji(Emoji.FeelsCarlosMan));
-      await client.user?.setStatus('invisible');
+      await client.user.setStatus('invisible');
       resolve('requested disconnect');
     });
   });

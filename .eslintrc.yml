@@ -92,7 +92,8 @@ rules:
   newline-per-chained-call:
     - warn
     - ignoreChainWithDepth: 1
-  no-extra-parens:
+  no-extra-parens: "off"
+  "@typescript-eslint/no-extra-parens":
     - warn
     - all
   operator-linebreak:

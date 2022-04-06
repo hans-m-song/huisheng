@@ -1,5 +1,9 @@
 import { Message } from 'discord.js';
 
+export const logEvent = (event: string, ...args: unknown[]) => {
+  console.log(`[${event}]`, ...args);
+};
+
 export const logMessage = (message: Message) =>
   logEvent(
     'message',
@@ -8,6 +12,5 @@ export const logMessage = (message: Message) =>
     `"${message.content}"`
   );
 
-export const logEvent = (event: string, ...args: unknown[]) => {
-  console.log(`[${event}]`, ...args);
-};
+export const logError = (event: string, error: any, ) =>
+  logEvent(event, '[ERROR]', error);
