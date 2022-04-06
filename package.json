@@ -1,0 +1,36 @@
+{
+  "name": "huisheng",
+  "version": "0.0.1",
+  "main": "./dist/index.js",
+  "repository": "git@github.com:hans-m-song/huisheng.git",
+  "author": "Hans Song <hans.m.song@gmail.com>",
+  "license": "Apache-2.0",
+  "scripts": {
+    "compile": "tsc",
+    "watch": "yarn compile -w",
+    "start": "node dist/index.js",
+    "debug": "nodemon --watch \"./src/**\" --ext \"ts\" --exec \"ts-node src/index.ts\"",
+    "lint": "eslint \"src/**\"",
+    "lint:fix": "yarn lint --fix"
+  },
+  "dependencies": {
+    "@discordjs/rest": "^0.3.0",
+    "discord-api-types": "^0.31.0",
+    "discord.js": "^13.6.0",
+    "dotenv": "^16.0.0",
+    "source-map-support": "^0.5.21"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.23",
+    "@typescript-eslint/eslint-plugin": "^5.18.0",
+    "@typescript-eslint/parser": "^5.18.0",
+    "eslint": "^8.12.0",
+    "eslint-plugin-import": "^2.26.0",
+    "nodemon": "^2.0.15",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.3"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
