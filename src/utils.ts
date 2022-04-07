@@ -12,8 +12,8 @@ export const logMessage = (message: Message) =>
     `"${message.content}"`
   );
 
-export const logError = (event: string, error: any, ) =>
-  logEvent(event, '[ERROR]', error);
+export const logError = (event: string, error: any, ...args: unknown[]) =>
+  logEvent(event, '[ERROR]', ...args, '\n', error, );
 
 type Resolver<T> = (value: T | PromiseLike<T>) => void
 type Rejecter = (reason: any) => void

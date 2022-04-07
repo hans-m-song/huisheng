@@ -1,10 +1,13 @@
-import { VoiceConnection } from '@discordjs/voice';
+import { AudioPlayerStatus, VoiceConnection } from '@discordjs/voice';
 import { Client, Message } from 'discord.js';
 
 import { getVoiceConnectionFromMessage, initializeVoiceConnectionFromMessage, messageAuthorVoiceChannel } from './Audio';
 import { config } from './config';
 import { Emoji, emojiGetter } from './emotes';
-import { logMessage } from './utils';
+import { linkQueueItem, player, playNext, queue } from './Player';
+import { logEvent, logMessage } from './utils';
+import { youtube } from './Youtube';
+
 
 const botCommand = (message: Message): string | null =>
   !message.author.bot && message.content.startsWith(config.botPrefix)
@@ -32,6 +35,7 @@ const voiceCommand = async (
     return;
   }
 
+  connection.subscribe(player);
   await callback(connection);
 };
 
@@ -46,7 +50,9 @@ export const messageHandler = (client: Client, cancel: Cancel) => async (message
   logMessage(message);
   const emoji = emojiGetter(client.emojis.cache);
 
-  switch (content) {
+  const [ command, ...args ] = content.split(/\s{1,}/g);
+  const allArgs = args.join(' ').trim();
+  switch (command) {
     case 'ping': {
       await message.channel.send ('pong');
       return;
@@ -58,7 +64,7 @@ export const messageHandler = (client: Client, cancel: Cancel) => async (message
       await client.user?.setStatus('invisible');
       cancel('requested disconnect');
 
-      break;
+      return;
     }
 
     case 'summon': {
@@ -66,13 +72,84 @@ export const messageHandler = (client: Client, cancel: Cancel) => async (message
         await message.react(emoji(Emoji.peepoHappy));
       });
 
+      return;
+    }
+
+    case 'play': {
+      await voiceCommand(message, true, true, async () => {
+        if (args.length < 1 && player.state.status === AudioPlayerStatus.Paused) {
+          player.unpause();
+          return;
+        }
+
+        const result = await youtube.query(allArgs);
+        if (!result) {
+          await message.channel.send('No results found');
+          return;
+        }
+
+        const { videoId } = result.id;
+        logEvent('enqueue', { videoId });
+      });
+
       break;
     }
 
-    case 'play':
-    case 'queue':
-    case 'stop':
-    case 'pause':
-    case 'skip':
+    case 'np': {
+      if (queue.current) {
+        await message.channel.send(`Now playing: ${linkQueueItem(queue.current)}`);
+      } else {
+        await message.channel.send('Not playing anything');
+      }
+
+      return;
+    }
+
+    case 'queue': {
+      if (queue.length < 1) {
+        await message.channel.send('Nothing queued');
+        return;
+      }
+
+      await message.channel.send([
+        'Queued items',
+        ...queue.map((item, i) => `${i}. ${linkQueueItem(item)}`),
+      ].join('\n'));
+
+      return;
+    }
+
+    case 'stop': {
+      await voiceCommand(message, true, false, async () => {
+        player.stop();
+      });
+
+      return;
+    }
+
+    case 'pause': {
+      await voiceCommand(message, true, false, async () => {
+        switch(player.state.status) {
+          case AudioPlayerStatus.Paused:
+            player.unpause();
+            return;
+
+          case AudioPlayerStatus.Playing:
+            player.pause(true);
+            return;
+        }
+      });
+
+      return;
+    }
+
+    case 'skip': {
+      await voiceCommand(message, true, false, async () => {
+        player.stop();
+        playNext();
+      });
+
+      return;
+    }
   }
 };

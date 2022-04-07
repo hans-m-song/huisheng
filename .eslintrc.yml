@@ -103,9 +103,6 @@ rules:
   block-spacing:
     - warn
     - always
-  newline-per-chained-call:
-    - warn
-    - ignoreChainWithDepth: 1
   no-extra-parens: "off"
   "@typescript-eslint/no-extra-parens":
     - warn
