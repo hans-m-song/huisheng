@@ -12,6 +12,13 @@ rules:
   # suggestions
   arrow-body-style:
     - off
+  arrow-parens:
+    - warn
+    - always
+  arrow-spacing:
+    - warn
+    - before: true
+      after: true
   capitalized-comments:
     - warn
     - always

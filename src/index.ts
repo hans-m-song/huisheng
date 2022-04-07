@@ -1,7 +1,8 @@
-import { generateDependencyReport, getVoiceConnection } from '@discordjs/voice';
+import { generateDependencyReport } from '@discordjs/voice';
 
 import 'dotenv/config';
 import 'source-map-support/register';
+import { destroyVoiceConnections } from './Audio';
 import { initializeClient } from './Bot';
 import { logEvent } from './utils';
 
@@ -13,15 +14,7 @@ import { logEvent } from './utils';
   console.log();
   logEvent('exit', 'reason:', `"${await reason}"`);
 
-  client.guilds.cache.forEach((guild) => {
-    const connection = getVoiceConnection(guild.id);
-    if (!connection) {
-      return;
-    }
-
-    logEvent('audio', 'disconnecting from', guild.name);
-    connection.destroy();
-  });
-
+  destroyVoiceConnections();
+  client.destroy();
   process.exit();
 })();

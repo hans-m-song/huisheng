@@ -3,9 +3,9 @@ const botToken = process.env.DISCORD_BOT_TOKEN ?? '';
 const botPrefix = process.env.DISCORD_BOT_PREFIX ?? '!';
 const serverId = process.env.DISCORD_SERVER_ID ?? '';
 const modRoleId = process.env.DISCORD_ROLE_ID_MODS ?? '';
-const authorizeUrl =
-  'https://discord.com/api/oauth2/authorize?' +
-  [
+const authorizeUrl
+  = 'https://discord.com/api/oauth2/authorize?'
+  + [
     `client_id=${clientId}`,
     `permissions=${process.env.DISCORD_BOT_PERMISSIONS ?? '3148864'}`,
     'scope=applications.commands%20bot',
@@ -28,12 +28,12 @@ if (!modRoleId) {
 }
 
 export const config = {
-  // bot
+  // Bot
   clientId,
   botToken,
   botPrefix,
 
-  // server
+  // Server
   serverId,
   modRoleId,
   authorizeUrl,

@@ -1,9 +1,26 @@
-import { getVoiceConnection, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice';
-import { VoiceBasedChannel } from 'discord.js';
+import { getVoiceConnection, getVoiceConnections, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice';
+import { Message, VoiceBasedChannel } from 'discord.js';
 
 import { logError, logEvent } from './utils';
 
-export const initializeVoiceConnection = async (channel: VoiceBasedChannel) => {
+export const getVoiceConnectionFromMessage = (message: Message): VoiceConnection | null =>
+  message.guild
+    ? getVoiceConnection(message.guild.id) ?? null
+    : null;
+
+export const messageAuthorVoiceChannel = (message: Message): VoiceBasedChannel | null =>
+  message.guild?.members.cache.get(message.author.id)?.voice?.channel ?? null;
+
+export const initializeVoiceConnectionFromMessage = async (message: Message): Promise<VoiceConnection | null> => {
+  const channel = messageAuthorVoiceChannel(message);
+  if (!channel) {
+    return null;
+  }
+
+  return initializeVoiceConnection(channel);
+};
+
+export const initializeVoiceConnection = async (channel: VoiceBasedChannel): Promise<VoiceConnection> => {
   const existing = getVoiceConnection(channel.guild.id);
   if (existing) {
     return existing;
@@ -24,16 +41,14 @@ export const initializeVoiceConnection = async (channel: VoiceBasedChannel) => {
     });
   });
 
-  return { voice, reason: exitPromise(voice) };
+  return voice;
 };
 
-const exitPromise = (voice: VoiceConnection) =>
-  new Promise((resolve) => {
-    voice.once(VoiceConnectionStatus.Destroyed, () => {
-      resolve('voice connection destroyed');
+export const destroyVoiceConnections = (): void => {
+  getVoiceConnections()
+    .forEach((connection, guildId) => {
+      logEvent('audio', 'disconnecting from', guildId);
+      connection.disconnect();
+      connection.destroy();
     });
-
-    process.once('SIGINT', () => {
-      resolve('received sigint');
-    });
-  });
+};

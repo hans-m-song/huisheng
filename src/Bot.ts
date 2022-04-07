@@ -1,15 +1,11 @@
-import { Client, Intents, Message } from 'discord.js';
+import { Client, Intents } from 'discord.js';
 
 import { messageHandler } from './commands';
 import { config } from './config';
-import { Emoji, emojiGetter } from './emotes';
-import { logError, logEvent } from './utils';
-
-const isBotCommand = ({ author, content }: Message) =>
-  !author.bot && content.startsWith(config.botPrefix) ? content.slice(1) : null;
+import { createCancellablePromise, logError, logEvent } from './utils';
 
 export const initializeClient = async () => {
-  const client = new Client<true>({
+  const client = new Client({
     // Required for direct messages
     partials: [ 'CHANNEL' ],
     intents:  [
@@ -21,15 +17,16 @@ export const initializeClient = async () => {
     ],
   });
 
+  const { cancel, promise: reason } = exitPromise(client);
   client.on('error', (error) => logError('client', error));
-  client.on('messageCreate', messageHandler(client));
+  client.on('messageCreate', messageHandler(client, cancel));
 
   const ready = new Promise<void>((resolve) => {
     client.once('ready', (client) => {
       logEvent('ready', `@${client.user.tag}, invite: ${config.authorizeUrl}`);
       client.user.setPresence({
-        activities: [ { name: 'slaving away' } ],
         status:     'online',
+        activities: [ { type: 'WATCHING' , name: 'Gaining sentience' } ],
       });
       resolve();
     });
@@ -37,27 +34,16 @@ export const initializeClient = async () => {
 
   await Promise.all([ client.login(config.botToken), ready ]);
 
-  return { client, reason: exitPromise(client) };
+  return { client, reason };
 };
 
 const exitPromise = (client: Client<true>) =>
-  new Promise<string>((resolve) => {
+  createCancellablePromise<string>((resolve) => {
     process.once('SIGINT', () => {
       resolve('caught sigint');
     });
 
     client.once('invalidated', () => {
       resolve('session invalidated');
-    });
-
-    client.on('messageCreate', async (message) => {
-      if (isBotCommand(message) !== 'gtfo') {
-        return;
-      }
-
-      const emoji = emojiGetter(client.emojis.cache);
-      await message.react(emoji(Emoji.FeelsCarlosMan));
-      await client.user.setStatus('invisible');
-      resolve('requested disconnect');
     });
   });
