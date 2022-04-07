@@ -1,9 +1,14 @@
-import { createAudioPlayer, joinVoiceChannel, NoSubscriberBehavior, VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice';
+import { getVoiceConnection, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice';
 import { VoiceBasedChannel } from 'discord.js';
 
 import { logError, logEvent } from './utils';
 
-export const initializeVoiceConnection = async (channel: VoiceBasedChannel) =>{
+export const initializeVoiceConnection = async (channel: VoiceBasedChannel) => {
+  const existing = getVoiceConnection(channel.guild.id);
+  if (existing) {
+    return existing;
+  }
+
   const voice = joinVoiceChannel({
     channelId:      channel.id,
     guildId:        channel.guild.id,
@@ -19,14 +24,7 @@ export const initializeVoiceConnection = async (channel: VoiceBasedChannel) =>{
     });
   });
 
-  return { voice, player: initializeAudioPlayer(), reason: exitPromise(voice) };
-};
-
-const initializeAudioPlayer = () => {
-  const player = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause } });
-  player.on('error', (error) => logError('player', error));
-
-  return player;
+  return { voice, reason: exitPromise(voice) };
 };
 
 const exitPromise = (voice: VoiceConnection) =>

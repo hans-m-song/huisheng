@@ -9,6 +9,13 @@ plugins:
   - "@typescript-eslint"
 parser: "@typescript-eslint/parser"
 rules:
+  # suggestions
+  arrow-body-style:
+    - off
+  capitalized-comments:
+    - warn
+    - always
+
   # formatting
   indent:
     - warn

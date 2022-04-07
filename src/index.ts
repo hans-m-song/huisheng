@@ -1,13 +1,12 @@
-import 'source-map-support/register';
-import 'dotenv/config';
-
 import { generateDependencyReport, getVoiceConnection } from '@discordjs/voice';
 
+import 'dotenv/config';
+import 'source-map-support/register';
 import { initializeClient } from './Bot';
 import { logEvent } from './utils';
 
 (async () => {
-  logEvent('voice', '\n', generateDependencyReport());
+  logEvent('audio', '\n', generateDependencyReport());
 
   const { client, reason } = await initializeClient();
 
