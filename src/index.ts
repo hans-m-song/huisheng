@@ -2,9 +2,9 @@ import { generateDependencyReport } from '@discordjs/voice';
 
 import 'dotenv/config';
 import 'source-map-support/register';
-import { destroyVoiceConnections } from './Audio';
 import { initializeClient } from './Bot';
-import { logEvent } from './utils';
+import { destroyVoiceConnections } from './lib/Audio';
+import { logEvent } from './lib/utils';
 
 (async () => {
   logEvent('audio', '\n', generateDependencyReport());

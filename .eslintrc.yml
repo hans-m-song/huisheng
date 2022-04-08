@@ -19,9 +19,6 @@ rules:
     - warn
     - before: true
       after: true
-  capitalized-comments:
-    - warn
-    - always
 
   # formatting
   indent:

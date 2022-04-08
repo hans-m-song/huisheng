@@ -1,13 +1,13 @@
 import { AudioPlayerStatus, VoiceConnection } from '@discordjs/voice';
 import { Client, Message } from 'discord.js';
 
-import { getVoiceConnectionFromMessage, initializeVoiceConnectionFromMessage, messageAuthorVoiceChannel } from './Audio';
 import { config } from './config';
 import { Emoji, emojiGetter } from './emotes';
-import { linkQueueItem, player, playNext, queue } from './Player';
-import { logEvent, logMessage } from './utils';
-import { youtube } from './Youtube';
-
+import { getVoiceConnectionFromMessage, initializeVoiceConnectionFromMessage, messageAuthorVoiceChannel } from './lib/Audio';
+import { player, playNext } from './lib/Player';
+import { linkQueueItem, queue } from './lib/Queue';
+import { logEvent, logMessage } from './lib/utils';
+import { youtube } from './lib/Youtube';
 
 const botCommand = (message: Message): string | null =>
   !message.author.bot && message.content.startsWith(config.botPrefix)
@@ -68,6 +68,7 @@ export const messageHandler = (client: Client, cancel: Cancel) => async (message
     }
 
     case 'summon': {
+      // TODO throttle?
       await voiceCommand(message, true, true, async () => {
         await message.react(emoji(Emoji.peepoHappy));
       });
@@ -76,6 +77,7 @@ export const messageHandler = (client: Client, cancel: Cancel) => async (message
     }
 
     case 'play': {
+      // TODO throttle
       await voiceCommand(message, true, true, async () => {
         if (args.length < 1 && player.state.status === AudioPlayerStatus.Paused) {
           player.unpause();
@@ -128,6 +130,7 @@ export const messageHandler = (client: Client, cancel: Cancel) => async (message
     }
 
     case 'pause': {
+      // TODO throttle?
       await voiceCommand(message, true, false, async () => {
         switch(player.state.status) {
           case AudioPlayerStatus.Paused:
@@ -144,6 +147,7 @@ export const messageHandler = (client: Client, cancel: Cancel) => async (message
     }
 
     case 'skip': {
+      // TODO throttle?
       await voiceCommand(message, true, false, async () => {
         player.stop();
         playNext();

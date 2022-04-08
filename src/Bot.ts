@@ -2,7 +2,15 @@ import { Client, Intents } from 'discord.js';
 
 import { messageHandler } from './commands';
 import { config } from './config';
-import { createCancellablePromise, logError, logEvent } from './utils';
+import { createCancellablePromise, logError, logEvent } from './lib/utils';
+
+const authorizeUrl
+  = 'https://discord.com/api/oauth2/authorize?'
+  + [
+    `client_id=${config.clientId}`,
+    `permissions=${process.env.DISCORD_BOT_PERMISSIONS ?? '3148864'}`,
+    'scope=applications.commands%20bot',
+  ].join('&');
 
 export const initializeClient = async () => {
   const client = new Client({
@@ -23,7 +31,7 @@ export const initializeClient = async () => {
 
   const ready = new Promise<void>((resolve) => {
     client.once('ready', (client) => {
-      logEvent('ready', `@${client.user.tag}, invite: ${config.authorizeUrl}`);
+      logEvent('ready', `@${client.user.tag}, invite: ${authorizeUrl}`);
       client.user.setPresence({
         status:     'online',
         activities: [ { type: 'WATCHING' , name: 'Gaining sentience' } ],

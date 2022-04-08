@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { config } from './config';
+import { config } from '../config';
 import { logError } from './utils';
 
 const MATCH_VIDEO_HREF = /^https:\/\/((www|music)\.)?youtube.com\/watch\?v=[^\s]+$/;
@@ -40,6 +40,14 @@ export interface YoutubeSearchResult {
     liveBroadcastContent: string
   }
 }
+
+export const normaliseYoutubeUrl = (url: string) =>
+  url
+    .replace('youtu.be/', 'youtube.com/watch?v=')
+    .replace('youtube.com/embed/', 'youtube.com/watch?v=')
+    .replace('/v/', '/watch?v=')
+    .replace('/watch#', '/watch?')
+    .replace('youtube.com/shorts/', 'youtube.com/watch?v=');
 
 const api = axios.create({
   baseURL: config.youtubeBaseUrl,
