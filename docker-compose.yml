@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  huisheng:
+    build:
+      context: ./
+      target: runtime
+    env_file: .env
+    container_name: huisheng
+    volumes:
+      - youtube-dl-cache:/var/lib/youtube-dl/cache
+    profiles:
+      - production
+
+  huisheng-debug:
+    build:
+      context: ./
+      target: debug
+    env_file: .env
+    container_name: huisheng-debug
+    volumes:
+      - ./:/app
+      - youtube-dl-cache:/var/lib/youtube-dl/cache
+    profiles:
+      - debug
+
+volumes:
+  youtube-dl-cache:
