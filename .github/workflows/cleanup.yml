@@ -1,0 +1,32 @@
+name: Cleanup Untagged Images
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: 0 0 * * 0
+
+jobs:
+  cleanup:
+    name: Cleanup
+    runs-on: self-hosted
+
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+
+      - run: |
+          # list images
+          IMAGES=$( aws ecr-public describe-images --region us-east-1 --repository-name huisheng )
+          # filter by untagged
+          IMAGES_TO_REMOVE=$( echo $IMAGES | jq '.imageDetails | map(select(.imageTags | not)) | map({imageDigest: .imageDigest})' )
+          # delete
+          RESULT=$( aws ecr-public batch-delete-image --region us-east-1 --repository-name huisheng --image-ids $IMAGES_TO_REMOVE )
+          # check for failures
+          FAILED=$( echo $RESULT | '.failures | length > 0' )
+          echo $RESULT
+          if [ $FAILED == "true" ]; then
+            exit 1
+          fi
