@@ -22,6 +22,7 @@ export const initializeClient = async () => {
       Intents.FLAGS.GUILDS,
       Intents.FLAGS.GUILD_MESSAGES,
       Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+      Intents.FLAGS.GUILD_VOICE_STATES,
     ],
   });
 
@@ -34,7 +35,7 @@ export const initializeClient = async () => {
       logEvent('ready', `@${client.user.tag}, invite: ${authorizeUrl}`);
       client.user.setPresence({
         status:     'online',
-        activities: [ { type: 'WATCHING' , name: 'Gaining sentience' } ],
+        activities: [ { type: 'WATCHING' , name: 'Shrek 2' } ],
       });
       resolve();
     });

@@ -23,8 +23,7 @@
     "dotenv": "^16.0.0",
     "source-map-support": "^0.5.21",
     "ts-pattern": "^4.0.1",
-    "tweetnacl": "^1.0.3",
-    "youtube-dl-exec": "^2.0.9"
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
     "@types/node": "^17.0.23",

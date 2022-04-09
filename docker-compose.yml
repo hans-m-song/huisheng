@@ -8,7 +8,7 @@ services:
     env_file: .env
     container_name: huisheng
     volumes:
-      - youtube-dl-cache:/var/lib/youtube-dl/cache
+      - youtube-dl-cache:/var/lib/huisheng/cache
     profiles:
       - production
 
@@ -20,7 +20,7 @@ services:
     container_name: huisheng-debug
     volumes:
       - ./:/app
-      - youtube-dl-cache:/var/lib/youtube-dl/cache
+      - ./.cache:/var/lib/huisheng/cache
     profiles:
       - debug
 

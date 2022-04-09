@@ -3,6 +3,14 @@ import { promises as fs } from 'fs';
 import { isMatching } from 'ts-pattern';
 
 export type GuardType<T> = T extends (arg: any) => arg is infer G ? G : T
+export type Resolver<T> = (value: T | PromiseLike<T>) => void
+export type Rejecter = (reason: any) => void
+
+export const isNotNullish = <T>(value: T | null | undefined): value is T =>
+  value !== null && value !== undefined;
+
+export const clamp = (value: number, lower: number, upper: number) =>
+  Math.max(lower, Math.min(upper, value));
 
 export const numEnv = (
   value: string | undefined,
@@ -17,15 +25,7 @@ export const numEnv = (
     return options.default;
   }
 
-  const lower = typeof options.min === 'number'
-    ? Math.max(options.min, parsed)
-    : parsed;
-
-  const upper = typeof options.max === 'number'
-    ? Math.min(options.max, lower)
-    : lower;
-
-  return upper;
+  return clamp(parsed, options.min ?? parsed, options.max ?? parsed);
 };
 
 export const logEvent = (event: string, ...args: unknown[]) => {
@@ -42,9 +42,6 @@ export const logMessage = (message: Message) =>
 
 export const logError = (event: string, error: any, ...args: unknown[]) =>
   logEvent(event, '[ERROR]', ...args, '\n', error, );
-
-type Resolver<T> = (value: T | PromiseLike<T>) => void
-type Rejecter = (reason: any) => void
 
 export const createCancellablePromise = <T>(
   executor: (resolve: Resolver<T>, reject: Rejecter) => void,
@@ -85,4 +82,20 @@ export const tryParseJSON = (raw: string) => {
     logError('tryParseJSON', error, raw);
     return null;
   }
+};
+
+export const slugify = (input: string) =>
+  input.toLowerCase()
+    .replace(/\s{1,}/g, '-')
+    .replace(/[^a-zA-Z0-9-_]/g, '');
+
+export const secToMin = (duration?: number): string | undefined => {
+  if (duration === undefined) {
+    return duration;
+  }
+
+  const mins = Math.floor(duration / 60);
+  const secs = duration % 60;
+
+  return `${mins}m ${secs}s`;
 };
