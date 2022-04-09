@@ -1,6 +1,8 @@
 name: Build
 
 on:
+  check_run:
+
   push:
     branches:
       - master
@@ -21,7 +23,7 @@ jobs:
           AWS_REGION: us-east-1
 
       - run: |
-          docker pull $IMAGE || true
+          # docker pull $IMAGE
           docker build --cache-from $IMAGE -t $IMAGE .
           docker push $IMAGE
         env:
