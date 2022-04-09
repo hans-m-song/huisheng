@@ -22,6 +22,10 @@ jobs:
           # this seems to be the only endpoint available for ECR?
           AWS_REGION: us-east-1
 
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
       - run: |
           # docker pull $IMAGE
           docker build --cache-from $IMAGE -t $IMAGE .
