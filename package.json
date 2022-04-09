@@ -23,7 +23,8 @@
     "dotenv": "^16.0.0",
     "source-map-support": "^0.5.21",
     "ts-pattern": "^4.0.1",
-    "tweetnacl": "^1.0.3"
+    "tweetnacl": "^1.0.3",
+    "typescript": "^4.6.3"
   },
   "devDependencies": {
     "@types/node": "^17.0.23",
@@ -32,8 +33,7 @@
     "eslint": "^8.12.0",
     "eslint-plugin-import": "^2.26.0",
     "nodemon": "^2.0.15",
-    "ts-node": "^10.7.0",
-    "typescript": "^4.6.3"
+    "ts-node": "^10.7.0"
   },
   "engines": {
     "node": ">=16"
