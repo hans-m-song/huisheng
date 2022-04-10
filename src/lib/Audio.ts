@@ -7,7 +7,7 @@ import { logError, logEvent } from './utils';
 export const voiceCommand = async (
   message: Message,
   allowConnect: boolean,
-  callback: (player: Player) => Promise<void> | void
+  callback: (player: Player, connection: VoiceConnection) => Promise<void> | void
 ): Promise<void> => {
   if (!message.guild) {
     await message.channel.send('Must be in a server');
@@ -38,7 +38,7 @@ export const voiceCommand = async (
     connection.subscribe(player.instance);
   }
 
-  await callback(player);
+  await callback(player, connection);
 };
 
 export const initializeVoiceConnection = async (channel: VoiceBasedChannel): Promise<VoiceConnection> => {

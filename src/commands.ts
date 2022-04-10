@@ -33,10 +33,10 @@ export const messageHandler = (client: Client) => async (message: Message) => {
     }
 
     case 'gtfo': {
-      await voiceCommand(message, false, async (player) => {
+      await voiceCommand(message, false, async (player, connection) => {
         player.instance.pause();
         await message.react(emoji(emojis.FeelsCarlosMan));
-        await message.member?.voice.disconnect();
+        connection.disconnect();
       });
       return;
     }
@@ -112,6 +112,10 @@ export const messageHandler = (client: Client) => async (message: Message) => {
           await message.channel.send('Nothing queued');
           return;
         }
+
+        // TODO remove debugging
+        logEvent('queue', player.playlist.map((item, i) =>
+          `${i}. ${item.metadata.toLink()}`).join('\n'));
 
         const embed = new MessageEmbed()
           .setTitle('Queued items')
