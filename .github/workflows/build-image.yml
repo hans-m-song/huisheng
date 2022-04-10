@@ -1,8 +1,6 @@
 name: Build
 
 on:
-  check_run:
-
   push:
     branches:
       - master
@@ -27,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       - run: |
-          # docker pull $IMAGE
+          docker pull $IMAGE
           docker build --cache-from $IMAGE --target runtime -t $IMAGE .
           docker push $IMAGE
         env:
