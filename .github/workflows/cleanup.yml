@@ -18,16 +18,19 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
 
-      - run: |
+      - env:
+          AWS_REGION: us-east-1
+          REPO_NAME: huisheng
+        run: |
           # list images
-          IMAGES=$( aws ecr-public describe-images --region us-east-1 --repository-name huisheng )
+          IMAGES=$( aws ecr-public describe-images --repository-name $REPO_NAME )
           # filter by untagged
           IMAGES_TO_REMOVE=$( echo $IMAGES | jq '.imageDetails | map(select(.imageTags | not)) | map({imageDigest: .imageDigest})' )
+          SHOULD_DELETE=$(echo $IMAGES_TO_REMOVE | jq 'length > 0')
+          [ $SHOULD_DELETE == "false" ] || exit 0
           # delete
-          RESULT=$( aws ecr-public batch-delete-image --region us-east-1 --repository-name huisheng --image-ids $IMAGES_TO_REMOVE )
+          RESULT=$( aws ecr-public batch-delete-image --repository-name $REPO_NAME --image-ids $IMAGES_TO_REMOVE )
           # check for failures
           FAILED=$( echo $RESULT | '.failures | length > 0' )
           echo $RESULT
-          if [ $FAILED == "true" ]; then
-            exit 1
-          fi
+          [ $FAILED == "true" ] || exit 1
