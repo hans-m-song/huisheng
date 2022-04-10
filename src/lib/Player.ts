@@ -2,43 +2,59 @@ import { AudioPlayerStatus, AudioResource, createAudioPlayer, NoSubscriberBehavi
 
 import { AudioFile } from './AudioFile';
 import { Queue } from './Queue';
-import { logError, logEvent } from './utils';
+import { Alias, logError, logEvent } from './utils';
 
-export const playlist = new Queue<AudioResource<AudioFile>>();
-export const player = createAudioPlayer({
-  behaviors: { noSubscriber: NoSubscriberBehavior.Pause },
-});
+export class Player {
+  playlist = new Queue<AudioResource<AudioFile>>();
+  instance = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause } });
 
-export const playNext = () => {
-  const next = playlist.next();
-  if (next) {
-    player.play(next);
+  constructor() {
+    this.instance.on('error', (error) => {
+      logError('player', error, 'playing', this.playlist.current?.metadata?.toShortJSON() ?? 'unknown');
+
+      // Attempt a recovery
+      this.next();
+    });
+
+    this.instance.on(AudioPlayerStatus.Idle, () => {
+      this.next();
+    });
+
+    this.instance.on(AudioPlayerStatus.Playing, () => {
+      logEvent('player', 'playing', this.playlist.current?.metadata?.toShortJSON() ?? 'unknown');
+    });
   }
-};
 
-export const playPause = () => {
-  switch(player.state.status) {
-    case AudioPlayerStatus.Paused:
-      player.unpause();
-      return;
-
-    case AudioPlayerStatus.Playing:
-      player.pause(true);
-      return;
+  next() {
+    const next = this.playlist.next();
+    if (next) {
+      this.instance.play(next);
+    }
   }
+
+  playPause() {
+    switch(this.instance.state.status) {
+      case AudioPlayerStatus.Paused:
+        this.instance.unpause();
+        return;
+
+      case AudioPlayerStatus.Playing:
+        this.instance.pause(true);
+        return;
+    }
+  }
+}
+
+type guildid = Alias<string>
+const players = new Map<guildid, Player>();
+
+export const getPlayer = (guildId: string): Player => {
+  const existing = players.get(guildId);
+  if (existing) {
+    return existing;
+  }
+
+  const player = new Player();
+  players.set(guildId, player);
+  return player;
 };
-
-player.on('error', (error) => {
-  logError('player', error, 'playing', playlist.current?.metadata?.toShortJSON() ?? 'unknown');
-
-  // Attempt a recovery
-  playNext();
-});
-
-player.on(AudioPlayerStatus.Idle, () => {
-  playNext();
-});
-
-player.on(AudioPlayerStatus.Playing, () => {
-  logEvent('player', 'playing', playlist.current?.metadata?.toShortJSON() ?? 'unknown');
-});

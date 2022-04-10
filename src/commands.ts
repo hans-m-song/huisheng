@@ -1,13 +1,12 @@
-import { AudioPlayerStatus, createAudioResource, demuxProbe, VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice';
+import { AudioPlayerStatus, createAudioResource, demuxProbe } from '@discordjs/voice';
 import { Client, Message, MessageEmbed } from 'discord.js';
 import { createReadStream } from 'fs';
 
 import { config } from './config';
 import { emojiGetter, emojis } from './emotes';
-import { getVoiceConnectionFromMessage, initializeVoiceConnectionFromMessage, messageAuthorVoiceChannel } from './lib/Audio';
+import { voiceCommand } from './lib/Audio';
 import { cache } from './lib/AudioCache';
 import { AudioFile } from './lib/AudioFile';
-import { player, playNext, playlist, playPause } from './lib/Player';
 import { logEvent, logMessage } from './lib/utils';
 import { youtube } from './lib/Youtube';
 
@@ -16,40 +15,7 @@ const botCommand = (message: Message): string | null =>
     ? message.content.slice(1)
     : null;
 
-const voiceCommand = async (
-  message: Message,
-  checkAuthorChannel: boolean,
-  allowConnect: boolean,
-  callback: (connection: VoiceConnection) => Promise<void> | void
-): Promise<void> => {
-  if (checkAuthorChannel && !messageAuthorVoiceChannel(message)) {
-    await message.channel.send('Must be in a voice channel');
-    return;
-  }
-
-  const existing = getVoiceConnectionFromMessage(message);
-  if (!existing && !allowConnect) {
-    logEvent('voiceCommand', 'not executing', { reason: 'no existing connection and not allowed to connect' });
-    return;
-  }
-
-  const connection = existing ?? await initializeVoiceConnectionFromMessage(message);
-  if (!connection) {
-    logEvent('voiceCommand', 'not executing', { reason: 'could not establish connection' });
-    return;
-  }
-
-  if (connection.state.status !== VoiceConnectionStatus.Destroyed && !connection.state.subscription) {
-    logEvent('voiceCommand', 'subscribing to player');
-    connection.subscribe(player);
-  }
-
-  await callback(connection);
-};
-
-type Cancel = (reason: string) => void
-
-export const messageHandler = (client: Client, cancel: Cancel) => async (message: Message) => {
+export const messageHandler = (client: Client) => async (message: Message) => {
   const content = botCommand(message);
   if (!content) {
     return;
@@ -67,27 +33,27 @@ export const messageHandler = (client: Client, cancel: Cancel) => async (message
     }
 
     case 'gtfo': {
-      await message.react(emoji(emojis.FeelsCarlosMan));
-      await client.user?.setStatus('invisible');
-      cancel('requested disconnect');
-
+      await voiceCommand(message, false, async (player) => {
+        player.instance.pause();
+        await message.react(emoji(emojis.FeelsCarlosMan));
+        await message.member?.voice.disconnect();
+      });
       return;
     }
 
     case 'summon': {
       // TODO throttle?
-      await voiceCommand(message, true, true, async () => {
+      await voiceCommand(message, true, async () => {
         await message.react(emoji(emojis.peepoHappy));
       });
-
       return;
     }
 
     case 'play': {
       // TODO throttle
-      await voiceCommand(message, true, true, async () => {
-        if (args.length < 1 && player.state.status === AudioPlayerStatus.Paused) {
-          player.unpause();
+      await voiceCommand(message, true, async (player) => {
+        if (args.length < 1 && player.instance.state.status === AudioPlayerStatus.Paused) {
+          player.instance.unpause();
           return;
         }
 
@@ -103,77 +69,80 @@ export const messageHandler = (client: Client, cancel: Cancel) => async (message
         const file = await cache.load(videoId) ?? await AudioFile.fromUrl(url);
         if (!file) {
           const embed = new MessageEmbed().setTitle('Failed to load').setURL(url);
-          await Promise.all([
-            message.react('❌'),
-            message.channel.send({ embeds: [ embed ] }),
-          ]);
+          await message.react('❌');
+          await message.channel.send({ embeds: [ embed ] });
           return;
         }
 
-        console.log(file);
         file.title ??= title;
         file.uploader ??= channelTitle;
 
         const { stream, type } = await demuxProbe(createReadStream(file.filepath));
         const resource = createAudioResource(stream, { inputType: type, metadata: file });
         logEvent('enqueue', { videoId, path: file.filepath });
-        playlist.enqueue(resource);
+        player.playlist.enqueue(resource);
 
-        const embed = file.toEmbed().setTitle(`Enqueued - ${file.title ?? 'Unknown'}`);
+        const embed = file.toEmbed().setDescription('Enqueued');
         await message.channel.send({ embeds: [ embed ] });
 
-        if (!playlist.current) {
-          playNext();
+        if (!player.playlist.current) {
+          player.next();
         }
       });
-
-      break;
+      return;
     }
 
     case 'np': {
-      if (playlist.current) {
-        await message.channel.send(`Now playing: ${playlist.current.metadata.toLink()}`);
-        return;
-      }
+      await voiceCommand(message, false, async (player) => {
+        if (player.playlist.current) {
+          const embed = player.playlist.current.metadata.toEmbed()
+            .setDescription('Now playing');
+          await message.channel.send({ embeds: [ embed ] });
+          return;
+        }
 
-      await message.channel.send('Not playing anything');
-
+        await message.channel.send('Not playing anything');
+      });
       return;
     }
 
     case 'queue': {
-      if (playlist.length < 1) {
-        await message.channel.send('Nothing queued');
-        return;
-      }
+      await voiceCommand(message, false, async (player) => {
+        if (player.playlist.length < 1) {
+          await message.channel.send('Nothing queued');
+          return;
+        }
 
-      const embed = new MessageEmbed()
-        .setTitle('Queued items')
-        .setDescription( playlist.map((item, i) =>
-          `${i}. ${item.metadata.toLink()}`).join('\n') );
-      await message.channel.send({ embeds: [ embed ] });
-
+        const embed = new MessageEmbed()
+          .setTitle('Queued items')
+          .setDescription( player.playlist.map((item, i) =>
+            `${i}. ${item.metadata.toLink()}`).join('\n') );
+        await message.channel.send({ embeds: [ embed ] });
+      });
       return;
     }
 
     case 'stop': {
-      await voiceCommand(message, true, false, () => { player.stop(); });
+      await voiceCommand(message, false, (player) => {
+        player.instance.stop();
+      });
       return;
     }
 
     case 'pause': {
       // TODO throttle?
-      await voiceCommand(message, true, false, playPause);
+      await voiceCommand(message, false, (player) => {
+        player.playPause();
+      });
       return;
     }
 
     case 'skip': {
       // TODO throttle?
-      await voiceCommand(message, true, false, () => {
-        player.stop();
-        playNext();
+      await voiceCommand(message, false, (player) => {
+        player.instance.stop();
+        player.next();
       });
-
       return;
     }
   }

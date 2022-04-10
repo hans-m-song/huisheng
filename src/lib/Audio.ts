@@ -1,23 +1,44 @@
 import { getVoiceConnection, getVoiceConnections, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice';
 import { Message, VoiceBasedChannel } from 'discord.js';
 
+import { getPlayer, Player } from './Player';
 import { logError, logEvent } from './utils';
 
-export const getVoiceConnectionFromMessage = (message: Message): VoiceConnection | null =>
-  message.guild
-    ? getVoiceConnection(message.guild.id) ?? null
-    : null;
-
-export const messageAuthorVoiceChannel = (message: Message): VoiceBasedChannel | null =>
-  message.guild?.members.cache.get(message.author.id)?.voice?.channel ?? null;
-
-export const initializeVoiceConnectionFromMessage = async (message: Message): Promise<VoiceConnection | null> => {
-  const channel = messageAuthorVoiceChannel(message);
-  if (!channel) {
-    return null;
+export const voiceCommand = async (
+  message: Message,
+  allowConnect: boolean,
+  callback: (player: Player) => Promise<void> | void
+): Promise<void> => {
+  if (!message.guild) {
+    await message.channel.send('Must be in a server');
+    return;
   }
 
-  return initializeVoiceConnection(channel);
+  const channel = message.member?.voice.channel;
+  if (!channel) {
+    await message.channel.send('Must be in a voice channel');
+    return;
+  }
+
+  const existing = getVoiceConnection(message.guild.id);
+  if (!existing && !allowConnect) {
+    logEvent('voiceCommand', 'not executing', { reason: 'no existing connection and not allowed to connect' });
+    return;
+  }
+
+  const connection = existing ?? await initializeVoiceConnection(channel);
+  if (!connection) {
+    logEvent('voiceCommand', 'not executing', { reason: 'could not establish connection' });
+    return;
+  }
+
+  const player = getPlayer(message.guild.id);
+  if (connection.state.status !== VoiceConnectionStatus.Destroyed && !connection.state.subscription) {
+    logEvent('voiceCommand', 'subscribing to player');
+    connection.subscribe(player.instance);
+  }
+
+  await callback(player);
 };
 
 export const initializeVoiceConnection = async (channel: VoiceBasedChannel): Promise<VoiceConnection> => {
