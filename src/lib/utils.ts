@@ -2,6 +2,8 @@ import { Message } from 'discord.js';
 import { promises as fs } from 'fs';
 import { isMatching } from 'ts-pattern';
 
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type Alias<T> = T & {}
 export type GuardType<T> = T extends (arg: any) => arg is infer G ? G : T
 export type Resolver<T> = (value: T | PromiseLike<T>) => void
 export type Rejecter = (reason: any) => void

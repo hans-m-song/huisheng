@@ -59,6 +59,7 @@ export class AudioFile implements AudioFileMetadata {
   toEmbed() {
     return new MessageEmbed()
       .setURL(this.url)
+      .setTitle(this.title ?? 'Unknown')
       .addField('Artist', this.artist ?? 'Unknown', true)
       .addField('Uploader', this.uploader ?? 'Unknown', true)
       .addField('Duration', secToMin(this.duration) ?? 'Unknown', true);

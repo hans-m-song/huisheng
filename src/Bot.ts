@@ -26,9 +26,9 @@ export const initializeClient = async () => {
     ],
   });
 
-  const { cancel, promise: reason } = exitPromise(client);
+  const { promise: reason } = exitPromise(client);
   client.on('error', (error) => logError('client', error));
-  client.on('messageCreate', messageHandler(client, cancel));
+  client.on('messageCreate', messageHandler(client));
 
   const ready = new Promise<void>((resolve) => {
     client.once('ready', (client) => {
