@@ -1,10 +1,9 @@
-import { getVoiceConnection } from '@discordjs/voice';
 import { Client, Intents } from 'discord.js';
 
-import { messageHandler } from './commands';
 import { config } from './config';
-import { getPlayer } from './lib/Player';
 import { createCancellablePromise, logError, logEvent } from './lib/utils';
+import { messageHandler } from './messageHandler';
+import { voiceStateHandler } from './voiceStateHandler';
 
 const authorizeUrl
   = 'https://discord.com/api/oauth2/authorize?'
@@ -31,38 +30,7 @@ export const initializeClient = async () => {
   const { promise: reason } = exitPromise(client);
   client.on('error', (error) => logError('client', error));
   client.on('messageCreate', messageHandler(client));
-  client.on('voiceStateUpdate', (oldState, newState) => {
-    if (!client.user) {
-      // client isn't ready for voice
-      return;
-    }
-
-    if (oldState.channel && newState.channel) {
-      // user did not join or leave
-      return;
-    }
-
-    if (!oldState.channel && !newState.channel) {
-      // wtf would have happened?
-      return;
-    }
-
-    if (newState.channel) {
-      // user joined
-      logEvent('voiceState', { user: newState.member?.user.tag ?? '?', action: 'joined' });
-      return;
-    }
-
-    if (oldState.channel) {
-      // user left
-      // was two members, including bot
-      const self = oldState.channel?.members.get(client.user.id);
-      const willDisconnect = self && oldState.channel?.members.size < 3;
-      logEvent('voiceState', { user: oldState.member?.user.tag ?? '?', action: 'left', willDisconnect });
-      getPlayer(oldState.channel.guild.id).instance.pause();
-      getVoiceConnection(oldState.channel.guild.id)?.disconnect();
-    }
-  });
+  client.on('voiceStateUpdate', voiceStateHandler(client));
 
   const ready = new Promise<void>((resolve) => {
     client.once('ready', (client) => {
