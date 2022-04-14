@@ -2,7 +2,7 @@ import axios from 'axios';
 import { isMatching, P } from 'ts-pattern';
 
 import { config } from '../config';
-import { GuardType, logError } from './utils';
+import { GuardType, logError, logEvent } from './utils';
 
 export type YoutubeSearchResult = GuardType<typeof isYoutubeSearchResult>
 export const isYoutubeSearchResult = isMatching({
@@ -39,6 +39,27 @@ export const isYoutubeVideoListResponse = isMatching({
   items: P.array(P.when(isYoutubeVideoListResponseItem)),
 });
 
+export type YoutubePlaylistItemListResponseItem = GuardType<typeof isYoutubePlaylistItemListResponseItem>
+export const isYoutubePlaylistItemListResponseItem = isMatching({
+  kind:    'youtube#playlistItem',
+  id:      P.string,
+  snippet: {
+    title:        P.string,
+    channelTitle: P.string,
+    resourceId:   {
+      kind:    'youtube#video',
+      videoId: P.string,
+    },
+  },
+});
+
+export type YoutubePlaylistItemListResponse = GuardType<typeof isYoutubePlaylistItemListResponse>
+export const isYoutubePlaylistItemListResponse = isMatching({
+  kind:     'youtube#playlistItemListResponse',
+  items:    P.array(P.when(isYoutubePlaylistItemListResponseItem)),
+  pageInfo: { totalResults: P.number },
+});
+
 const api = axios.create({
   baseURL: config.youtubeBaseUrl,
   params:  { key: config.youtubeApiKey },
@@ -64,12 +85,22 @@ const get = (id: string) =>
     },
   });
 
+const list = (playlistId: string, limit = 25) =>
+  api.get<YoutubePlaylistItemListResponse>('/playlistItems', {
+    params: {
+      part:       'snippet',
+      maxResults: limit,
+      playlistId,
+    },
+  });
+
 const normaliseYoutubeUrl = (url: string) =>
   url
     .replace('youtu.be/', 'youtube.com/watch?v=')
     .replace('youtube.com/embed/', 'youtube.com/watch?v=')
     .replace('/v/', '/watch?v=')
     .replace('/watch#', '/watch?')
+    .replace('/playlist', '/watch')
     .replace('youtube.com/shorts/', 'youtube.com/watch?v=');
 
 const MATCH_VIDEO_HREF = /^https:\/\/(www\.)?youtube.com\/watch\?v=[^\s]+$/;
@@ -80,30 +111,49 @@ export interface QueryResult {
   channelTitle: string
 }
 
-const query = async (raw: string): Promise<QueryResult | null> => {
+const query = async (raw: string): Promise<QueryResult[] | null> => {
   const queryStr = normaliseYoutubeUrl(raw);
 
   if (MATCH_VIDEO_HREF.test(queryStr)) {
-    const id = new URL(queryStr).searchParams.get('v');
-    if (!id) {
-      return null;
+    const { searchParams } = new URL(queryStr);
+
+    const playlistId = searchParams.get('list');
+    if (playlistId) {
+      logEvent('youtube', 'searching by playlist id', `"${playlistId}"`);
+      const response = await list(playlistId).then((result) => result.data).catch((error) => {
+        logError('youtube', error, { queryStr, playlistId });
+        return null;
+      });
+
+      if (response?.items?.length) {
+        return response.items.map((item) => ({
+          videoId:      item.snippet.resourceId.videoId,
+          title:        item.snippet.title,
+          channelTitle: item.snippet.channelTitle,
+        }));
+      }
     }
 
-    const response = await get(id).then((result) => result.data).catch((error) => {
-      logError('youtube', error, { queryStr });
-      return null;
-    });
+    const videoId = searchParams.get('v');
+    if (videoId) {
+      logEvent('youtube', 'searching by video id', `"${videoId}"`);
+      const response = await get(videoId).then((result) => result.data).catch((error) => {
+        logError('youtube', error, { queryStr, id: videoId });
+        return null;
+      });
 
-    if (response?.items?.length) {
-      return {
-        videoId:      response.items[0].id ,
-        title:        response.items[0].snippet.title,
-        channelTitle: response.items[0].snippet.channelTitle,
-      };
+      if (response?.items?.length) {
+        return [ {
+          videoId:      response.items[0].id ,
+          title:        response.items[0].snippet.title,
+          channelTitle: response.items[0].snippet.channelTitle,
+        } ];
+      }
     }
 
   }
 
+  logEvent('youtube', 'fuzzy text search', `"${queryStr}"`);
   const response = await search(queryStr).catch((error) => {
     logError('youtube', error, { queryStr });
     return null;
@@ -113,11 +163,11 @@ const query = async (raw: string): Promise<QueryResult | null> => {
     return null;
   }
 
-  return {
+  return [ {
     videoId:      response.data.items[0].id.videoId,
     title:        response.data.items[0].snippet.title,
     channelTitle: response.data.items[0].snippet.channelTitle,
-  };
+  } ];
 };
 
-export const youtube = { query, get };
+export const youtube = { query, get, list };

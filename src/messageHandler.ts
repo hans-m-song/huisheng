@@ -1,12 +1,9 @@
-import { AudioPlayerStatus, createAudioResource, demuxProbe, getVoiceConnections } from '@discordjs/voice';
+import { AudioPlayerStatus, getVoiceConnections } from '@discordjs/voice';
 import { Client, Message, MessageEmbed } from 'discord.js';
-import { createReadStream } from 'fs';
 
 import { config } from './config';
 import { emojiGetter, emojis } from './emotes';
 import { voiceCommand } from './lib/Audio';
-import { cache } from './lib/AudioCache';
-import { AudioFile } from './lib/AudioFile';
 import { logEvent, logMessage } from './lib/utils';
 import { youtube } from './lib/Youtube';
 
@@ -28,7 +25,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
   const allArgs = args.join(' ').trim();
   switch (command) {
     case 'ping': {
-      await message.channel.send ('pong');
+      await message.channel.send('pong');
       return;
     }
 
@@ -57,32 +54,26 @@ export const messageHandler = (client: Client) => async (message: Message) => {
           return;
         }
 
-        const result = await youtube.query(allArgs);
-        if (!result) {
+        const results = await youtube.query(allArgs);
+        if (!results || results.length < 1) {
           await message.channel.send('No results found');
           return;
         }
 
-        const { videoId, channelTitle, title } = result;
-        const url = `https://youtube.com/watch?v=${videoId}`;
+        const { successes, errors } = await player.enqueue(results);
 
-        const file = await cache.load(videoId) ?? await AudioFile.fromUrl(url);
-        if (!file) {
-          const embed = new MessageEmbed().setTitle('Failed to load').setURL(url);
+        const embed = player.getQueueEmbed();
+
+        if (errors.length > 0) {
           await message.react('❌');
-          await message.channel.send({ embeds: [ embed ] });
-          return;
+          const errorDetail = errors.map((error) => {
+            const url = `https://youtube.com/watch?v=${error.videoId}`;
+            return `${error.title} - ${error.channelTitle} [:link:](${url})`;
+          }).join('\n');
+          embed.setDescription(embed.description += '\n' + errorDetail);
+          embed.setTitle(successes.length > 0 ? 'Loaded with errors' : 'Error loading');
         }
 
-        file.title ??= title;
-        file.uploader ??= channelTitle;
-
-        const { stream, type } = await demuxProbe(createReadStream(file.filepath));
-        const resource = createAudioResource(stream, { inputType: type, metadata: file });
-        logEvent('enqueue', { videoId, path: file.filepath });
-        player.playlist.enqueue(resource);
-
-        const embed = file.toEmbed().setDescription('Enqueued');
         await message.channel.send({ embeds: [ embed ] });
 
         if (!player.playlist.current) {
@@ -161,23 +152,24 @@ export const messageHandler = (client: Client) => async (message: Message) => {
 
     case 'debug': {
       const connections = Array.from(getVoiceConnections().entries());
+      const connectionsStatus = connections.length < 1
+        ? 'none'
+        : connections
+          .map(([ id, conn ]) => `${id}: ${conn.state.status}`)
+          .join(', ');
+
       const embed = new MessageEmbed()
         .setTitle('Debugging information')
-        .addField('Github Sha', config.githubSha)
-        .addField('Prefix', config.botPrefix)
+        .addField('Bot Prefix', config.botPrefix)
         .addField('Cache Dir', config.cacheDir)
-        .addField('Youtube Base Url', config.youtubeBaseUrl)
-        .addField('Youtube Dl Executable', config.youtubeDLExecutable)
-        .addField('Youtube Dl Retries', `${config.youtubeDLRetries}`)
-        .addField('Youtube Dl Cache Ttl', `${config.youtubeDLCacheTTL}`)
-        .addField(
-          'Connections',
-          connections.length < 1
-            ? 'none'
-            : connections
-              .map(([ id, conn ]) => `${id}: ${conn.state.status}`)
-              .join(', ')
-        );
+        .addField('Youtube Base URL', config.youtubeBaseUrl)
+        .addField('Youtube DL Executable', config.youtubeDLExecutable)
+        .addField('Youtube DL Max Concurrency', `${config.youtubeDLMaxConcurrency}`)
+        .addField('Youtube DL Retries', `${config.youtubeDLRetries}`)
+        .addField('Youtube DL Cache TTL', `${config.youtubeDLCacheTTL}`)
+        .addField('Connections', connectionsStatus)
+        .setFooter({ text: `Github Sha: ${config.githubSha}` })
+        .setTimestamp();
       await message.channel.send({ embeds: [ embed ] });
       return;
     }

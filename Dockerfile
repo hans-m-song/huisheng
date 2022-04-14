@@ -16,12 +16,6 @@ RUN apt-get update \
 WORKDIR /app
 COPY ./tsconfig.json ./package.json ./yarn.lock ./
 
-FROM dependencies AS debug
-RUN yarn install
-ARG GITHUB_SHA=unknown
-ENV GITHUB_SHA=${GITHUB_SHA}
-CMD yarn debug
-
 FROM dependencies AS runtime
 ENV NODE_ENV=production
 RUN yarn install --frozen-lockfile --production
@@ -30,3 +24,9 @@ RUN yarn compile
 ARG GITHUB_SHA=unknown
 ENV GITHUB_SHA=${GITHUB_SHA}
 CMD node dist/index.js
+
+FROM dependencies AS debug
+RUN yarn install
+ARG GITHUB_SHA=unknown
+ENV GITHUB_SHA=${GITHUB_SHA}
+CMD yarn debug
