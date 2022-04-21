@@ -27,6 +27,7 @@ export const voiceCommand = async (
   }
 
   const connection = existing ?? await initializeVoiceConnection(channel);
+  logEvent('voiceCommand', { connectionStatus: connection.state.status });
   if (!connection) {
     logEvent('voiceCommand', 'not executing', { reason: 'could not establish connection' });
     return;

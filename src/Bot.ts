@@ -10,7 +10,7 @@ const authorizeUrl
   + [
     `client_id=${config.clientId}`,
     `permissions=${process.env.DISCORD_BOT_PERMISSIONS ?? '3148864'}`,
-    'scope=applications.commands%20bot',
+    `scope=${encodeURIComponent([ 'applications.commands', 'bot' ].join('&'))}`,
   ].join('&');
 
 export const initializeClient = async () => {
