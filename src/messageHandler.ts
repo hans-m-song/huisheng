@@ -1,4 +1,4 @@
-import { AudioPlayerStatus, createAudioResource, demuxProbe } from '@discordjs/voice';
+import { AudioPlayerStatus, createAudioResource, demuxProbe, getVoiceConnections } from '@discordjs/voice';
 import { Client, Message, MessageEmbed } from 'discord.js';
 import { createReadStream } from 'fs';
 
@@ -95,7 +95,8 @@ export const messageHandler = (client: Client) => async (message: Message) => {
     case 'np': {
       await voiceCommand(message, false, async (player) => {
         if (player.playlist.current) {
-          const embed = player.playlist.current.metadata.toEmbed()
+          const embed = player.playlist.current.metadata
+            .toEmbed()
             .setDescription('Now playing');
           await message.channel.send({ embeds: [ embed ] });
           return;
@@ -114,13 +115,20 @@ export const messageHandler = (client: Client) => async (message: Message) => {
         }
 
         // TODO remove debugging
-        logEvent('queue', player.playlist.map((item, i) =>
-          `${i}. ${item.metadata.toLink()}`).join('\n'));
+        logEvent(
+          'queue',
+          player.playlist
+            .map((item, i) => `${i}. ${item.metadata.toLink()}`)
+            .join('\n')
+        );
 
         const embed = new MessageEmbed()
           .setTitle('Queued items')
-          .setDescription( player.playlist.map((item, i) =>
-            `${i}. ${item.metadata.toLink()}`).join('\n') );
+          .setDescription(
+            player.playlist
+              .map((item, i) => `${i}. ${item.metadata.toLink()}`)
+              .join('\n')
+          );
         await message.channel.send({ embeds: [ embed ] });
       });
       return;
@@ -147,6 +155,25 @@ export const messageHandler = (client: Client) => async (message: Message) => {
         player.instance.stop();
         player.next();
       });
+      return;
+    }
+
+    case 'debug': {
+      const embed = new MessageEmbed()
+        .setTitle('Debugging information')
+        .addField('Prefix', config.botPrefix)
+        .addField('Cache Dir', config.cacheDir)
+        .addField('Youtube Base Url', config.youtubeBaseUrl)
+        .addField('Youtube Dl Executable', config.youtubeDLExecutable)
+        .addField('Youtube Dl Retries', `${config.youtubeDLRetries}`)
+        .addField('Youtube Dl Cache Ttl', `${config.youtubeDLCacheTTL}`)
+        .addField(
+          'Connections',
+          Array.from(getVoiceConnections().entries())
+            .map(([ id, conn ]) => `${id}: ${conn.state.status}`)
+            .join(', ')
+        );
+      await message.channel.send({ embeds: [ embed ] });
       return;
     }
   }
