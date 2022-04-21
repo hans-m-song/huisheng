@@ -161,12 +161,12 @@ export const messageHandler = (client: Client) => async (message: Message) => {
     case 'debug': {
       const embed = new MessageEmbed()
         .setTitle('Debugging information')
-        .addField('Prefix', config.botPrefix)
-        .addField('Cache Dir', config.cacheDir)
-        .addField('Youtube Base Url', config.youtubeBaseUrl)
-        .addField('Youtube Dl Executable', config.youtubeDLExecutable)
-        .addField('Youtube Dl Retries', `${config.youtubeDLRetries}`)
-        .addField('Youtube Dl Cache Ttl', `${config.youtubeDLCacheTTL}`)
+        .addField('Prefix', config.botPrefix ?? '?')
+        .addField('Cache Dir', config.cacheDir ?? '?')
+        .addField('Youtube Base Url', config.youtubeBaseUrl ?? '?')
+        .addField('Youtube Dl Executable', config.youtubeDLExecutable ?? '?')
+        .addField('Youtube Dl Retries', `${config.youtubeDLRetries ?? '?'}`)
+        .addField('Youtube Dl Cache Ttl', `${config.youtubeDLCacheTTL ?? '?'}`)
         .addField(
           'Connections',
           Array.from(getVoiceConnections().entries())
