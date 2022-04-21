@@ -159,6 +159,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
     }
 
     case 'debug': {
+      const connections = Array.from(getVoiceConnections().entries());
       const embed = new MessageEmbed()
         .setTitle('Debugging information')
         .addField('Prefix', config.botPrefix ?? '?')
@@ -169,9 +170,11 @@ export const messageHandler = (client: Client) => async (message: Message) => {
         .addField('Youtube Dl Cache Ttl', `${config.youtubeDLCacheTTL ?? '?'}`)
         .addField(
           'Connections',
-          Array.from(getVoiceConnections().entries())
-            .map(([ id, conn ]) => `${id}: ${conn.state.status}`)
-            .join(', ')
+          connections.length < 1
+            ? 'none'
+            : connections
+              .map(([ id, conn ]) => `${id}: ${conn.state.status}`)
+              .join(', ')
         );
       await message.channel.send({ embeds: [ embed ] });
       return;
