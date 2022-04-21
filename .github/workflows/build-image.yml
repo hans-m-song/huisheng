@@ -26,7 +26,7 @@ jobs:
 
       - run: |
           docker pull $IMAGE
-          docker build --cache-from $IMAGE --target runtime -t $IMAGE .
+          docker build --cache-from $IMAGE --target runtime --build-arg GITHUB_SHA=$GITHUB_SHA -t $IMAGE .
           docker push $IMAGE
         env:
           IMAGE: public.ecr.aws/t4g8t3e5/huisheng:latest

@@ -4,6 +4,7 @@ const MS_IN_ONE_HOUR = 1000 * 60 * 60;
 const MS_IN_THREE_DAYS = MS_IN_ONE_HOUR * 24 * 3;
 const MS_IN_ONE_WEEK = MS_IN_ONE_HOUR * 24 * 7;
 
+const githubSha = process.env.GITHUB_SHA ?? 'unknown';
 const clientId = process.env.DISCORD_CLIENT_ID ?? '';
 const botToken = process.env.DISCORD_BOT_TOKEN ?? '';
 const botPrefix = process.env.DISCORD_BOT_PREFIX ?? '!';
@@ -27,6 +28,8 @@ if (!youtubeApiKey) {
 }
 
 export const config = {
+  githubSha,
+
   // Bot
   clientId,
   botToken,
@@ -44,6 +47,7 @@ export const config = {
 console.log(
   'config',
   {
+    githubSha,
     botPrefix,
     cacheDir,
     youtubeBaseUrl,
