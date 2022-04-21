@@ -117,6 +117,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
         // TODO remove debugging
         logEvent(
           'queue',
+          { count: player.playlist.length },
           player.playlist
             .map((item, i) => `${i}. ${item.metadata.toLink()}`)
             .join('\n')
