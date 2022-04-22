@@ -12,6 +12,7 @@ const cacheDir = process.env.CACHE_DIR ?? '/var/lib/huisheng/cache';
 const youtubeBaseUrl = process.env.YOUTUBE_BASE_URL ?? 'https://www.googleapis.com/youtube/v3';
 const youtubeApiKey = process.env.YOUTUBE_API_KEY ?? '';
 const youtubeDLExecutable = process.env.YOUTUBE_DL_EXECUTABLE ?? 'yt-dlp';
+const youtubeDLMaxConcurrency = numEnv(process.env.YOUTUBE_DL_MAX_CONCURRENCY, { default: 1, min: 1, max: 5 });
 const youtubeDLRetries = numEnv(process.env.YOUTUBE_DL_RETRIES, { default: 3 , min: 1, max: 5 });
 const youtubeDLCacheTTL = numEnv(process.env.YOUTUBE_DL_CACHE_TTL, { default: MS_IN_THREE_DAYS, min: MS_IN_THREE_DAYS , max: MS_IN_ONE_WEEK });
 
@@ -40,6 +41,7 @@ export const config = {
   youtubeBaseUrl,
   youtubeApiKey,
   youtubeDLExecutable,
+  youtubeDLMaxConcurrency,
   youtubeDLRetries,
   youtubeDLCacheTTL,
 };
@@ -52,6 +54,7 @@ console.log(
     cacheDir,
     youtubeBaseUrl,
     youtubeDLExecutable,
+    youtubeDLMaxConcurrency,
     youtubeDLRetries,
     youtubeDLCacheTTL,
   }
