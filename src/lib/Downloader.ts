@@ -1,11 +1,10 @@
 import { spawn } from 'child_process';
-import plimit from 'p-limit';
 import path from 'path';
 
 import { config } from '../config';
 import { logError, logEvent, tryParseJSON } from './utils';
 
-const limit = plimit(config.youtubeDLMaxConcurrency);
+const plimit = import('p-limit');
 export const downloaderCacheDir = path.join(config.cacheDir, 'ytdl');
 export const downloaderOutputDir = path.join(config.cacheDir, 'out');
 const args = [
@@ -81,6 +80,7 @@ const execute = async (target: string) => {
 
 export const download = async (target: string): Promise<unknown | null> => {
   logEvent('downloader', 'downloading', { target });
+  const limit = (await plimit as any)(config.youtubeDLMaxConcurrency);
   const process = await limit(() => execute(target));
   if (!process) {
     return null;
