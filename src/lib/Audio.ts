@@ -33,6 +33,10 @@ export const voiceCommand = async (
     return;
   }
 
+  if (connection.state.status === VoiceConnectionStatus.Disconnected) {
+    connection.rejoin();
+  }
+
   const player = getPlayer(message.guild.id);
   if (connection.state.status !== VoiceConnectionStatus.Destroyed && !connection.state.subscription) {
     logEvent('voiceCommand', 'subscribing to player');
