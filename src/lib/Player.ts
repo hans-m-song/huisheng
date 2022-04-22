@@ -68,6 +68,7 @@ export class Player {
       const resource = createAudioResource(stream, { inputType: type, metadata: file });
       logEvent('enqueue', { videoId, path: file.filepath });
       this.playlist.enqueue(resource);
+      successes.push(file);
     }));
 
     return { errors, successes };
@@ -85,7 +86,7 @@ export class Player {
   }
 }
 
-interface EnqueueResult {
+export interface EnqueueResult {
   errors: QueryResult[]
   successes: AudioFile[]
 }

@@ -4,7 +4,12 @@ import path from 'path';
 import { config } from '../config';
 import { logError, logEvent, tryParseJSON } from './utils';
 
-const plimit = import('p-limit');
+let limit: any;
+const plimit = Function('return import("p-limit")')() as Promise<typeof import('p-limit')>;
+plimit.then((plimit) => {
+  limit = (plimit as any).default(config.youtubeDLMaxConcurrency);
+});
+
 export const downloaderCacheDir = path.join(config.cacheDir, 'ytdl');
 export const downloaderOutputDir = path.join(config.cacheDir, 'out');
 const args = [
@@ -80,7 +85,6 @@ const execute = async (target: string) => {
 
 export const download = async (target: string): Promise<unknown | null> => {
   logEvent('downloader', 'downloading', { target });
-  const limit = (await plimit as any)(config.youtubeDLMaxConcurrency);
   const process = await limit(() => execute(target));
   if (!process) {
     return null;

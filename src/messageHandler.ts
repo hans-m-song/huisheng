@@ -4,6 +4,7 @@ import { Client, Message, MessageEmbed } from 'discord.js';
 import { config } from './config';
 import { emojiGetter, emojis } from './emotes';
 import { voiceCommand } from './lib/Audio';
+import { EnqueueResult } from './lib/Player';
 import { logEvent, logMessage } from './lib/utils';
 import { youtube } from './lib/Youtube';
 
@@ -60,21 +61,11 @@ export const messageHandler = (client: Client) => async (message: Message) => {
           return;
         }
 
-        const { successes, errors } = await player.enqueue(results);
-
-        const embed = player.getQueueEmbed();
-
-        if (errors.length > 0) {
+        const enqueueResult = await player.enqueue(results);
+        await message.channel.send({ embeds: [ reportEnqueueResult(enqueueResult) ] });
+        if (enqueueResult.errors.length > 0) {
           await message.react('❌');
-          const errorDetail = errors.map((error) => {
-            const url = `https://youtube.com/watch?v=${error.videoId}`;
-            return `${error.title} - ${error.channelTitle} [:link:](${url})`;
-          }).join('\n');
-          embed.setDescription(embed.description += '\n' + errorDetail);
-          embed.setTitle(successes.length > 0 ? 'Loaded with errors' : 'Error loading');
         }
-
-        await message.channel.send({ embeds: [ embed ] });
 
         if (!player.playlist.current) {
           player.next();
@@ -109,19 +100,10 @@ export const messageHandler = (client: Client) => async (message: Message) => {
         logEvent(
           'queue',
           { count: player.playlist.length },
-          player.playlist
-            .map((item, i) => `${i}. ${item.metadata.toLink()}`)
-            .join('\n')
+          player.playlist.map((item) => item.metadata.toShortJSON())
         );
 
-        const embed = new MessageEmbed()
-          .setTitle('Queued items')
-          .setDescription(
-            player.playlist
-              .map((item, i) => `${i}. ${item.metadata.toLink()}`)
-              .join('\n')
-          );
-        await message.channel.send({ embeds: [ embed ] });
+        await message.channel.send({ embeds: [ player.getQueueEmbed() ] });
       });
       return;
     }
@@ -174,4 +156,35 @@ export const messageHandler = (client: Client) => async (message: Message) => {
       return;
     }
   }
+};
+
+const reportEnqueueResult = ({ successes, errors }: EnqueueResult): MessageEmbed => {
+  const errorContent = errors.map((query) => {
+    const url = `https://youtube.com/watch?v=${query.videoId}`;
+    return `${query.title} - ${query.channelTitle} - [:link:](${url})`;
+  });
+
+  const errorText = errorContent.length > 0
+    ? [ '', 'Errors:', ...errorContent ].join('\n')
+    : '';
+
+  if (successes.length < 1) {
+    return new MessageEmbed()
+      .setTitle('An error occurred')
+      .setDescription(errorContent.join('\n'));
+  }
+
+  if (successes.length === 1) {
+    return successes[0].toEmbed()
+      .setTitle(successes[0].title ?? 'Unknown')
+      .setDescription(errorText);
+  }
+
+  return new MessageEmbed()
+    .setTitle(`Enqueued ${successes.length} items`)
+    .setDescription(
+      successes.map((file, i) =>
+        `${i}. ${file.toLink()} - ${file.artist} - ${file.uploader}`)
+      + errorText
+    );
 };
