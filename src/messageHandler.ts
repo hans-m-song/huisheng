@@ -4,7 +4,8 @@ import { Client, Message, MessageEmbed } from 'discord.js';
 import { config } from './config';
 import { emojiGetter, emojis } from './emotes';
 import { voiceCommand } from './lib/Audio';
-import { EnqueueResult } from './lib/Player';
+import { clearCollection } from './lib/Database';
+import { EnqueueResult, PLAYER_COLLECTION_NAME } from './lib/Player';
 import { logEvent, logMessage } from './lib/utils';
 import { youtube } from './lib/Youtube';
 
@@ -130,6 +131,12 @@ export const messageHandler = (client: Client) => async (message: Message) => {
         player.instance.stop();
         player.next();
       });
+      return;
+    }
+
+    case 'clearcache': {
+      await message.react(emoji(emojis.FiteHard));
+      await clearCollection(PLAYER_COLLECTION_NAME);
       return;
     }
 
