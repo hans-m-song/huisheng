@@ -61,6 +61,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
           return;
         }
 
+        await message.react('🤔');
         const enqueueResult = await player.enqueue(results);
         await message.channel.send({ embeds: [ reportEnqueueResult(enqueueResult) ] });
         if (enqueueResult.errors.length > 0) {
@@ -142,16 +143,17 @@ export const messageHandler = (client: Client) => async (message: Message) => {
 
       const embed = new MessageEmbed()
         .setTitle('Debugging information')
-        .addField('Bot Prefix', config.botPrefix)
-        .addField('Cache Dir', config.cacheDir)
-        .addField('Youtube Base URL', config.youtubeBaseUrl)
-        .addField('Youtube DL Executable', config.youtubeDLExecutable)
-        .addField('Youtube DL Max Concurrency', `${config.youtubeDLMaxConcurrency}`)
-        .addField('Youtube DL Retries', `${config.youtubeDLRetries}`)
-        .addField('Youtube DL Cache TTL', `${config.youtubeDLCacheTTL}`)
-        .addField('Connections', connectionsStatus)
-        .setFooter({ text: `Github Sha: ${config.githubSha}` })
-        .setTimestamp();
+        .addField('Github SHA', `\`${config.githubSha}\``, true)
+        .addField('Bot Prefix', `\`${config.botPrefix}\``, true)
+        .addField('Cache Dir', `\`${config.cacheDir}\``, true)
+        .addField('Youtube Base URL', `\`${config.youtubeBaseUrl}\``, true)
+        .addField('Youtube DL Executable', `\`${config.youtubeDLExecutable}\``, true)
+        .addField('Youtube DL Max Concurrency', `\`${config.youtubeDLMaxConcurrency}\``, true)
+        .addField('Youtube DL Retries', `\`${config.youtubeDLRetries}\``, true)
+        .addField('Youtube DL Cache TTL', `\`${config.youtubeDLCacheTTL}\``, true)
+        .addField('Mongo URI', `\`${config.mongoHost}:${config.mongoPort}\``, true)
+        .addField('Mongo DB Name', `\`${config.mongoDbName}\``, true)
+        .addField('Connections', connectionsStatus, true);
       await message.channel.send({ embeds: [ embed ] });
       return;
     }

@@ -49,36 +49,30 @@ docker run -d \
 
 ### With docker-compose
 
-```yaml
-# docker-compose.yml
+Refer to the `docker-compose.yml` file within this repo for an example.
 
-version: '3'
-
-services:
-  huisheng:
-    build:
-      context: ./
-      target: runtime
-    environment:
-      
-    container_name: huisheng
-    volumes:
-      - youtube-dl-cache:/var/lib/huisheng/cache
-
-volumes:
-  youtube-dl-cache:
+```bash
+docker-compose up -d --build
 ```
 
 ## Configuration
 
 Set these values in your environment:
 
-- `DISCORD_CLIENT_ID` - **REQUIRED** Discord App client id (make one [here](https://discord.com/developers/applications)), a good guide [here](https://discordjs.guide/preparations/setting-up-a-bot-application.html).
-- `DISCORD_BOT_TOKEN` - **REQUIRED** Token for the bot associated with the app.
+These values are required:
+
+- `DISCORD_CLIENT_ID` - Discord App client id (make one [here](https://discord.com/developers/applications)), a good guide [here](https://discordjs.guide/preparations/setting-up-a-bot-application.html).
+- `DISCORD_BOT_TOKEN` - Token for the bot associated with the app.
+- `YOUTUBE_API_KEY` - Youtube API developer key.
+
+These values are optional:
+
 - `DISCORD_BOT_PREFIX` - Character to prefix commands with (default: `!`)
 - `CACHE_DIR` - Path to a cache directory (default: `/var/lib/huisheng/cache`)
 - `YOUTUBE_BASE_URL` - Youtube API base url (default: `https://www.googleapis.com/youtube/v3`)
-- `YOUTUBE_API_KEY` - **REQUIRED** Youtube API developer key.
 - `YOUTUBE_DL_EXECUTABLE` - Executable for yt-dlp, can use a relative or absolute path as well, e.g. `./my-yt-dlp` (default: `yt-dlp`)
+- `YOUTUBE_DL_MAX_CONCURRENCY` - Maximum number of concurrent downloads (default: `1`)
 - `YOUTUBE_DL_RETRIES` - Number of times to retry a download (default: `3`)
 - `YOUTUBE_DL_CACHE_TTL` - Time to invalidate download cache (currently doesn't work)
+- `MONGO_USER`, `MONGO_PASS`, `MONGO_HOST`, `MONGO_PORT` - MongoDB connection parameters, (default: `mongo`, `mongo`, `mongo`, `27017`)
+- `MONGO_DB_NAME` - Name of database within MongoDB (default: `huisheng`)
