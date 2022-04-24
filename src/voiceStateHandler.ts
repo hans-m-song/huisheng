@@ -27,9 +27,8 @@ export const voiceStateHandler = (client: Client) => (oldState: VoiceState, newS
   if (oldState.channel) {
     // user left
     const voiceMembers = oldState.channel.members.mapValues((member) => member.user.tag);
-    const isConnected = oldState.channel.members.find((member) => member.user.id === client.user?.id);
-    const shouldDisconnect = isConnected && voiceMembers.size < 3;
-    logEvent('voiceState', { user: oldState.member?.user.tag ?? '?', action: 'left', isConnected, shouldDisconnect, voiceMembers });
+    const shouldLeave = voiceMembers.size === 1 && voiceMembers.has(client.user.id);
+    logEvent('voiceState', { user: oldState.member?.user.tag ?? '?', action: 'left', voiceMembers: voiceMembers.size, shouldLeave });
     // getPlayer(oldState.channel.guild.id).instance.pause();
     // getVoiceConnection(oldState.channel.guild.id)?.disconnect();
   }

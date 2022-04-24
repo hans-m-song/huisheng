@@ -52,8 +52,9 @@ export class AudioFile implements AudioFileMetadata {
   }
 
   static fromInfoJson(data: any): AudioFile | null {
-    const { id, webpage_url, title, uploader, duration, artist, ext } = data ?? {};
-    const filepath = path.join(downloaderOutputDir, `${id}.${ext}`);
+    const { id, webpage_url, title, uploader, duration, artist, acodec } = data ?? {};
+    logEvent('AudioFile.fromInfoJson', data);
+    const filepath = path.join(downloaderOutputDir, `${id}.${acodec}`);
     const metadata = {
       videoId:        id,
       url:            webpage_url,
@@ -65,6 +66,7 @@ export class AudioFile implements AudioFileMetadata {
       createdAt:      Date.now(),
       lastAccessedAt: Date.now(),
     };
+
     if (!isAudioFileMetadata(metadata)) {
       logError('AudioFile.fromInfoJson', 'data was not of type AudioFileMetadata', data);
       return null;
@@ -84,7 +86,7 @@ export class AudioFile implements AudioFileMetadata {
       return null;
     }
 
-    logEvent('AudioFile', 'loaded file metadata from collection');
+    logEvent('AudioFile', 'loaded file metadata from collection', result);
     return new AudioFile(result);
   }
 

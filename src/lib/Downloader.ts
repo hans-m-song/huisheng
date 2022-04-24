@@ -6,7 +6,7 @@ import { logError, logEvent, tryParseJSON } from './utils';
 
 let limit: any;
 const plimit = Function('return import("p-limit")')() as Promise<typeof import('p-limit')>;
-plimit.then((plimit) => {
+const importPlimit = plimit.then((plimit) => {
   limit = (plimit as any).default(config.youtubeDLMaxConcurrency);
 });
 
@@ -29,7 +29,7 @@ const args = [
   '--paths',
   downloaderOutputDir,
   '--output',
-  '%(id)s.%(audio_ext)s',
+  '%(id)s.%(ext)s',
   '--no-overwrites',
   '--continue',
   '--cache-dir',
@@ -85,6 +85,7 @@ const execute = async (target: string) => {
 
 export const download = async (target: string): Promise<unknown | null> => {
   logEvent('downloader', 'downloading', { target });
+  await importPlimit;
   const process = await limit(() => execute(target));
   if (!process) {
     return null;

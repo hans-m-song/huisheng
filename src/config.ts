@@ -17,6 +17,7 @@ const youtubeDLExecutable = process.env.YOUTUBE_DL_EXECUTABLE ?? 'yt-dlp';
 const youtubeDLMaxConcurrency = numEnv(process.env.YOUTUBE_DL_MAX_CONCURRENCY, { default: 1, min: 1, max: 5 });
 const youtubeDLRetries = numEnv(process.env.YOUTUBE_DL_RETRIES, { default: 3 , min: 1, max: 5 });
 const youtubeDLCacheTTL = numEnv(process.env.YOUTUBE_DL_CACHE_TTL, { default: MS_IN_THREE_DAYS, min: MS_IN_THREE_DAYS , max: MS_IN_ONE_WEEK });
+const mongoWaitFor = (process.env.MONGO_WAIT_FOR ?? 'false') === 'true';
 const mongoUser = process.env.MONGO_USER ?? 'mongo';
 const mongoPass = process.env.MONGO_PASS ?? 'mongo';
 const mongoHost = process.env.MONGO_HOST ?? 'mongo';
@@ -53,6 +54,7 @@ export const config = {
   youtubeDLCacheTTL,
 
   // mongo
+  mongoWaitFor,
   mongoUser,
   mongoPass,
   mongoPassObscured: mongoPass.replace(/./g, '*'),
@@ -72,6 +74,7 @@ console.log(
     youtubeDLMaxConcurrency,
     youtubeDLRetries,
     youtubeDLCacheTTL,
+    mongoWaitFor,
     mongoUser,
     mongoPass: config.mongoPassObscured,
     mongoHost,
