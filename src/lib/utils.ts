@@ -91,13 +91,27 @@ export const slugify = (input: string) =>
     .replace(/\s{1,}/g, '-')
     .replace(/[^a-zA-Z0-9-_]/g, '');
 
-export const secToMin = (duration?: number): string | undefined => {
-  if (duration === undefined) {
-    return duration;
-  }
+export const secToTime = (duration: number): string | undefined => {
+  const hours = Math.floor(duration / 3600);
+  const hourLeftover = duration % 3600;
+  const mins = Math.floor(hourLeftover / 60);
+  const minsLeftover = hourLeftover % 60;
+  const secs = minsLeftover % 60;
 
-  const mins = Math.floor(duration / 60);
-  const secs = duration % 60;
-
-  return `${mins}m ${secs}s`;
+  return [
+    hours && `${hours}h`,
+    mins && `${mins}m`,
+    secs && `${secs}s`,
+  ].filter(Boolean).join(' ');
 };
+
+type FirstParameter<F extends (...args: any[]) => any> =
+  F extends (first: infer First, ...args: any) => any ? First : never
+
+type RestParameters<F extends (...args: any[]) => any> =
+  F extends (first: any, ...args: infer Rest) => any ? Rest : never
+
+export const curry = <F extends (...args: any[]) => any>(fn: F) =>
+  (first: FirstParameter<F>) =>
+    <Result = ReturnType<F>>(...args: RestParameters<F>): Result =>
+      fn(first, ...args);

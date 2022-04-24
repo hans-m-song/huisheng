@@ -29,7 +29,7 @@ const args = [
   '--paths',
   downloaderOutputDir,
   '--output',
-  '%(id)s.%(ext)s',
+  '%(id)s.%(audio_ext)s',
   '--no-overwrites',
   '--continue',
   '--cache-dir',

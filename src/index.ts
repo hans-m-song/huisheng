@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import 'source-map-support/register';
 
 import { generateDependencyReport } from '@discordjs/voice';
@@ -7,6 +6,7 @@ import { promises as fs } from 'fs';
 import { initializeClient } from './Bot';
 import { config } from './config';
 import { destroyVoiceConnections } from './lib/Audio';
+import { db } from './lib/Database';
 import { logEvent } from './lib/utils';
 
 (async () => {
@@ -21,5 +21,6 @@ import { logEvent } from './lib/utils';
   destroyVoiceConnections();
   client.user?.setStatus('invisible');
   client.destroy();
+  await db.disconnect();
   process.exit();
 })();

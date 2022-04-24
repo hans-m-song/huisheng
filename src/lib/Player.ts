@@ -2,11 +2,13 @@ import { AudioPlayerStatus, AudioResource, createAudioPlayer, createAudioResourc
 import { MessageEmbed } from 'discord.js';
 import { createReadStream } from 'fs';
 
-import { cache } from './AudioCache';
 import { AudioFile } from './AudioFile';
+import { getCollection } from './Database';
 import { Queue } from './Queue';
-import { Alias, logError, logEvent, secToMin } from './utils';
+import { logError, logEvent, secToTime } from './utils';
 import { QueryResult } from './Youtube';
+
+export const PLAYER_COLLECTION_NAME = 'player-cache';
 
 export class Player {
   playlist = new Queue<AudioResource<AudioFile>>();
@@ -52,18 +54,18 @@ export class Player {
     const errors: QueryResult[] = [];
     const successes: AudioFile[] = [];
 
+    const collection = await getCollection(PLAYER_COLLECTION_NAME);
+
     await Promise.all(results.map(async ( result ) => {
-      const { videoId, channelTitle, title } = result;
+      const { videoId } = result;
       const url = `https://youtube.com/watch?v=${videoId}`;
-      const file = await cache.load(videoId) ?? await AudioFile.fromUrl(url);
+      const file = await AudioFile.fromCollection(collection, result.videoId) ?? await AudioFile.fromUrl(url);
       if (!file) {
         errors.push(result);
         return;
       }
 
-      file.title ??= title;
-      file.uploader ??= channelTitle;
-
+      await file.saveToCollection(collection);
       const { stream, type } = await demuxProbe(createReadStream(file.filepath));
       const resource = createAudioResource(stream, { inputType: type, metadata: file });
       logEvent('enqueue', { videoId, path: file.filepath });
@@ -76,7 +78,7 @@ export class Player {
 
   getQueueEmbed() {
     const queue = this.playlist.map(({ metadata: { title, artist, duration, url } }, i) => {
-      const details = [ title ?? '?', artist ?? '?', secToMin(duration) ?? '?' ].join(' - ');
+      const details = [ title, artist ?? '?', secToTime(duration) ].join(' - ');
       return `${i}. ${details} [:link:](${url})`;
     }).join('\n');
 
@@ -91,8 +93,7 @@ export interface EnqueueResult {
   successes: AudioFile[]
 }
 
-type guildid = Alias<string>
-const players = new Map<guildid, Player>();
+const players = new Map<string, Player>();
 
 export const getPlayer = (guildId: string): Player => {
   const existing = players.get(guildId);
