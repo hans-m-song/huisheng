@@ -79,7 +79,7 @@ export class Player {
   getQueueEmbed() {
     const queue = this.playlist.map(({ metadata: { title, artist, duration, url } }, i) => {
       const details = [ title, artist ?? '?', secToTime(duration) ].join(' - ');
-      return `${i}. ${details} [:link:](${url})`;
+      return `\`${i}.\` ${details} [:link:](${url})`;
     }).join('\n');
 
     return new MessageEmbed()
