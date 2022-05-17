@@ -5,6 +5,7 @@ import { config } from './config';
 import { emojiGetter, emojis } from './emotes';
 import { voiceCommand } from './lib/Audio';
 import { AudioFile } from './lib/AudioFile';
+import { clearCollection } from './lib/Database';
 import { EnqueueResult, PLAYER_COLLECTION_NAME } from './lib/Player';
 import { logEvent, logMessage } from './lib/utils';
 import { youtube } from './lib/Youtube';
