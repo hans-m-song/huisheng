@@ -4,7 +4,7 @@ import { Client, Message, MessageEmbed } from 'discord.js';
 import { config } from './config';
 import { emojiGetter, emojis } from './emotes';
 import { voiceCommand } from './lib/Audio';
-import { clearCollection } from './lib/Database';
+import { AudioFile } from './lib/AudioFile';
 import { EnqueueResult, PLAYER_COLLECTION_NAME } from './lib/Player';
 import { logEvent, logMessage } from './lib/utils';
 import { youtube } from './lib/Youtube';
@@ -145,7 +145,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
       const connectionsStatus = connections.length < 1
         ? 'none'
         : connections
-          .map(([ id, conn ]) => `${id}: ${conn.state.status}`)
+          .map(([ id, conn ]) => `${id}: \`${conn.state.status}\``)
           .join(', ');
 
       const embed = new MessageEmbed()
@@ -189,11 +189,10 @@ const reportEnqueueResult = ({ successes, errors }: EnqueueResult): MessageEmbed
       .setDescription(errorText);
   }
 
+  const queueEntryStr = (file: AudioFile, index: number) =>
+    `\`${index}.\` ${file.toLink()} - ${file.artist} - ${file.uploader}`;
+
   return new MessageEmbed()
     .setTitle(`Enqueued ${successes.length} items`)
-    .setDescription(
-      successes.map((file, i) =>
-        `${i}. ${file.toLink()} - ${file.artist} - ${file.uploader}`)
-      + errorText
-    );
+    .setDescription(`${successes.map(queueEntryStr).join('\n')}\n${errorText}`);
 };
