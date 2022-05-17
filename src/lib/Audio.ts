@@ -37,6 +37,12 @@ export const voiceCommand = async (
     connection.rejoin();
   }
 
+  if (connection.state.status === VoiceConnectionStatus.Signalling) {
+    // if connection is stuck in signalling, attempt to create a new one
+    connection.destroy();
+    await initializeVoiceConnection(channel);
+  }
+
   const player = getPlayer(message.guild.id);
   if (connection.state.status !== VoiceConnectionStatus.Destroyed && !connection.state.subscription) {
     logEvent('voiceCommand', 'subscribing to player');
