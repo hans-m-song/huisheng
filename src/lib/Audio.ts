@@ -4,11 +4,19 @@ import { Message, VoiceBasedChannel } from 'discord.js';
 import { getPlayer, Player } from './Player';
 import { logError, logEvent } from './utils';
 
+type VoiceCommandOptions = {allowConnect?: boolean , allowRetry?: boolean}
+
 export const voiceCommand = async (
   message: Message,
-  allowConnect: boolean,
-  callback: (player: Player, connection: VoiceConnection) => Promise<void> | void
+  options: VoiceCommandOptions,
+  callback: (player: Player, connection: VoiceConnection) => Promise<void> | void,
 ): Promise<void> => {
+  const { allowConnect, allowRetry } = {
+    allowConnect: false,
+    allowRetry:   true,
+    ...options,
+  };
+
   if (!message.guild) {
     await message.channel.send('Must be in a server');
     return;
@@ -37,10 +45,13 @@ export const voiceCommand = async (
     connection.rejoin();
   }
 
-  if (connection.state.status === VoiceConnectionStatus.Signalling) {
-    // if connection is stuck in signalling, attempt to create a new one
+  if (connection.state.status === VoiceConnectionStatus.Signalling && allowRetry) {
+    // if connection is stuck in signalling, attempt to create a new one and retry
+    logEvent('voiceCommand', 'recreating connection', { channel: channel.name });
+
     connection.destroy();
     await initializeVoiceConnection(channel);
+    return voiceCommand(message, { ...options, allowRetry: false }, callback);
   }
 
   const player = getPlayer(message.guild.id);

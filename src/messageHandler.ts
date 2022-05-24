@@ -1,11 +1,14 @@
 import { AudioPlayerStatus, getVoiceConnections } from '@discordjs/voice';
 import { Client, Message, MessageEmbed } from 'discord.js';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 import { config } from './config';
 import { emojiGetter, emojis } from './emotes';
 import { voiceCommand } from './lib/Audio';
 import { AudioFile } from './lib/AudioFile';
 import { clearCollection } from './lib/Database';
+import { downloaderOutputDir } from './lib/Downloader';
 import { EnqueueResult, PLAYER_COLLECTION_NAME } from './lib/Player';
 import { logEvent, logMessage } from './lib/utils';
 import { youtube } from './lib/Youtube';
@@ -33,7 +36,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
     }
 
     case 'gtfo': {
-      await voiceCommand(message, false, async (player, connection) => {
+      await voiceCommand(message, { allowConnect: false }, async (player, connection) => {
         player.instance.pause();
         await message.react(emoji(emojis.FeelsCarlosMan));
         connection.disconnect();
@@ -43,7 +46,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
 
     case 'summon': {
       // TODO throttle?
-      await voiceCommand(message, true, async () => {
+      await voiceCommand(message, { allowConnect: true }, async () => {
         await message.react(emoji(emojis.peepoHappy));
       });
       return;
@@ -51,7 +54,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
 
     case 'play': {
       // TODO throttle
-      await voiceCommand(message, true, async (player) => {
+      await voiceCommand(message, { allowConnect: true }, async (player) => {
         if (args.length < 1 && player.instance.state.status === AudioPlayerStatus.Paused) {
           player.instance.unpause();
           return;
@@ -78,7 +81,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
     }
 
     case 'np': {
-      await voiceCommand(message, false, async (player) => {
+      await voiceCommand(message, { allowConnect: false }, async (player) => {
         if (player.playlist.current) {
           const embed = player.playlist.current.metadata
             .toEmbed()
@@ -93,7 +96,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
     }
 
     case 'queue': {
-      await voiceCommand(message, false, async (player) => {
+      await voiceCommand(message, { allowConnect: false }, async (player) => {
         if (player.playlist.length < 1) {
           await message.channel.send('Nothing queued');
           return;
@@ -112,7 +115,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
     }
 
     case 'stop': {
-      await voiceCommand(message, false, (player) => {
+      await voiceCommand(message, { allowConnect: false }, (player) => {
         player.instance.stop();
       });
       return;
@@ -120,7 +123,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
 
     case 'pause': {
       // TODO throttle?
-      await voiceCommand(message, false, (player) => {
+      await voiceCommand(message, { allowConnect: false }, (player) => {
         player.playPause();
       });
       return;
@@ -128,7 +131,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
 
     case 'skip': {
       // TODO throttle?
-      await voiceCommand(message, false, (player) => {
+      await voiceCommand(message, { allowConnect: false }, (player) => {
         player.instance.stop();
         player.next();
       });
@@ -138,6 +141,22 @@ export const messageHandler = (client: Client) => async (message: Message) => {
     case 'clearcache': {
       await message.react(emoji(emojis.FiteHard));
       await clearCollection(PLAYER_COLLECTION_NAME);
+      return;
+    }
+
+    case 'debugcache': {
+      const cachedFiles = await fs.readdir(downloaderOutputDir);
+      const cachedFileSizes = await Promise.all(cachedFiles.map((filename) =>
+        fs.stat(path.join(downloaderOutputDir, filename))
+          .then((stats) => stats.isFile() ? stats.size : null)
+          .catch(() => null)));
+      const totalSize = cachedFileSizes.reduce((total: number, size) => total + (size ?? 0), 0);
+
+      const embed = new MessageEmbed()
+        .setTitle('Cache information')
+        .addField('Files cached', `${cachedFiles.length}`)
+        .addField('Storage used', `${(totalSize / 1000000).toFixed(2)}mb`);
+      await message.channel.send({ embeds: [ embed ] });
       return;
     }
 
