@@ -1,12 +1,13 @@
 import { Message } from 'discord.js';
 import { promises as fs } from 'fs';
+import internal from 'stream';
 import { isMatching } from 'ts-pattern';
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type Alias<T> = T & {}
-export type GuardType<T> = T extends (arg: any) => arg is infer G ? G : T
-export type Resolver<T> = (value: T | PromiseLike<T>) => void
-export type Rejecter = (reason: any) => void
+export type Alias<T> = T & {};
+export type GuardType<T> = T extends (arg: any) => arg is infer G ? G : T;
+export type Resolver<T> = (value: T | PromiseLike<T>) => void;
+export type Rejecter = (reason: any) => void;
 
 export const isNotNullish = <T>(value: T | null | undefined): value is T =>
   value !== null && value !== undefined;
@@ -16,7 +17,7 @@ export const clamp = (value: number, lower: number, upper: number) =>
 
 export const numEnv = (
   value: string | undefined,
-  options: {default: number, min?: number, max?: number}
+  options: { default: number; min?: number; max?: number },
 ): number => {
   if (!value) {
     return options.default;
@@ -30,6 +31,15 @@ export const numEnv = (
   return clamp(parsed, options.min ?? parsed, options.max ?? parsed);
 };
 
+export const assertEnv = (key: string): string => {
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`required env is not defined: "${value}"`);
+  }
+
+  return value;
+};
+
 export const logEvent = (event: string, ...args: unknown[]) => {
   console.log(`[${event}]`, ...args);
 };
@@ -39,11 +49,11 @@ export const logMessage = (message: Message) =>
     'message',
     `#${(message.channel as any)?.name ?? message.channel.type}`,
     `@${message.author.tag}`,
-    `"${message.content}"`
+    `"${message.content}"`,
   );
 
 export const logError = (event: string, error: any, ...args: unknown[]) =>
-  logEvent(event, '[ERROR]', ...args, '\n', error, );
+  logEvent(event, '[ERROR]', ...args, '\n', error);
 
 export const createCancellablePromise = <T>(
   executor: (resolve: Resolver<T>, reject: Rejecter) => void,
@@ -67,7 +77,6 @@ export const tryReadFile = async (filepath: string): Promise<string | null> => {
     const result = await fs.readFile(filepath);
     return result.toString();
   } catch (error) {
-
     if (isMatching({ code: 'ENOENT' })) {
       return null;
     }
@@ -87,7 +96,8 @@ export const tryParseJSON = (raw: string) => {
 };
 
 export const slugify = (input: string) =>
-  input.toLowerCase()
+  input
+    .toLowerCase()
     .replace(/\s{1,}/g, '-')
     .replace(/[^a-zA-Z0-9-_]/g, '');
 
@@ -98,20 +108,49 @@ export const secToTime = (duration: number): string | undefined => {
   const minsLeftover = hourLeftover % 60;
   const secs = minsLeftover % 60;
 
-  return [
-    hours && `${hours}h`,
-    mins && `${mins}m`,
-    secs && `${secs}s`,
-  ].filter(Boolean).join(' ');
+  return [hours && `${hours}h`, mins && `${mins}m`, secs && `${secs}s`].filter(Boolean).join(' ');
 };
 
-type FirstParameter<F extends (...args: any[]) => any> =
-  F extends (first: infer First, ...args: any) => any ? First : never
+type FirstParameter<F extends (...args: any[]) => any> = F extends (
+  first: infer First,
+  ...args: any
+) => any
+  ? First
+  : never;
 
-type RestParameters<F extends (...args: any[]) => any> =
-  F extends (first: any, ...args: infer Rest) => any ? Rest : never
+type RestParameters<F extends (...args: any[]) => any> = F extends (
+  first: any,
+  ...args: infer Rest
+) => any
+  ? Rest
+  : never;
 
-export const curry = <F extends (...args: any[]) => any>(fn: F) =>
+export const curry =
+  <F extends (...args: any[]) => any>(fn: F) =>
   (first: FirstParameter<F>) =>
-    <Result = ReturnType<F>>(...args: RestParameters<F>): Result =>
-      fn(first, ...args);
+  <Result = ReturnType<F>>(...args: RestParameters<F>): Result =>
+    fn(first, ...args);
+
+type LastElement<T extends any[]> = T extends [...any, infer Last] ? Last : never;
+
+type RestLastElement<T extends any[]> = T extends [...infer Rest, any] ? Rest : never;
+
+export const curryLast =
+  <F extends (...args: any[]) => any>(fn: F) =>
+  (...args: RestLastElement<Parameters<F>>) =>
+  <Result = ReturnType<F>>(last: LastElement<Parameters<F>>): Result =>
+    fn(...args, last);
+
+export const encodeUriParams = (params: Record<string, string>) =>
+  Object.entries(params)
+    .map((pair) => pair.map(encodeURIComponent).join('='))
+    .join('&');
+
+export const readStream = <T = Buffer>(stream: internal.Readable): Promise<T[]> => {
+  const data: T[] = [];
+  return new Promise((resolve, reject) => {
+    stream.on('error', reject);
+    stream.on('end', () => resolve(data));
+    stream.on('data', (chunk) => data.push(chunk));
+  });
+};

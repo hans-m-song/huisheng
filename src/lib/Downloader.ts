@@ -53,7 +53,7 @@ const execute = async (target: string) => {
   const stdout: any[] = [];
 
   try {
-    const process = spawn(config.youtubeDLExecutable, [ target, ...args ]);
+    const process = spawn(config.youtubeDLExecutable, [target, ...args]);
     await new Promise<void>((resolve, reject) => {
       process.on('close', (code, signal) => {
         if (code !== 0) {
@@ -64,14 +64,11 @@ const execute = async (target: string) => {
         resolve();
       });
 
-      process.on('error', (error) =>
-        logError('downloader', error));
+      process.on('error', (error) => logError('downloader', error));
 
-      process.stdout.on('data', (chunk) =>
-        chunk?.toString && stdout.push(chunk.toString()));
+      process.stdout.on('data', (chunk) => chunk?.toString && stdout.push(chunk.toString()));
 
-      process.stderr.on('data', (chunk) =>
-        chunk?.toString && stdout.push(chunk.toString()));
+      process.stderr.on('data', (chunk) => chunk?.toString && stdout.push(chunk.toString()));
     });
 
     return { stderr: stderr.join(''), stdout: stdout.join('') };

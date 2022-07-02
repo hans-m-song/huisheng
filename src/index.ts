@@ -6,14 +6,14 @@ import { promises as fs } from 'fs';
 import { initializeClient } from './Bot';
 import { config } from './config';
 import { destroyVoiceConnections } from './lib/Audio';
-import { db, pollMongoConnection } from './lib/Database';
+import { Bucket } from './lib/Bucket';
 import { logEvent } from './lib/utils';
 
 (async () => {
   logEvent('audio', '\n', generateDependencyReport());
 
   await fs.mkdir(config.cacheDir, { recursive: true });
-  await pollMongoConnection();
+  await Bucket.ping();
   const { client, reason } = await initializeClient();
 
   console.log();
@@ -22,6 +22,5 @@ import { logEvent } from './lib/utils';
   destroyVoiceConnections();
   client.user?.setStatus('invisible');
   client.destroy();
-  await db.disconnect();
   process.exit();
 })();

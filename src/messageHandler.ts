@@ -1,15 +1,11 @@
 import { AudioPlayerStatus, getVoiceConnections } from '@discordjs/voice';
 import { Client, Message, MessageEmbed } from 'discord.js';
-import { promises as fs } from 'fs';
-import path from 'path';
 
 import { config } from './config';
 import { emojiGetter, emojis } from './emotes';
 import { voiceCommand } from './lib/Audio';
 import { AudioFile } from './lib/AudioFile';
-import { clearCollection } from './lib/Database';
-import { downloaderOutputDir } from './lib/Downloader';
-import { EnqueueResult, PLAYER_COLLECTION_NAME } from './lib/Player';
+import { EnqueueResult } from './lib/Player';
 import { logEvent, logMessage } from './lib/utils';
 import { youtube } from './lib/Youtube';
 
@@ -27,7 +23,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
   logMessage(message);
   const emoji = emojiGetter(client.emojis.cache);
 
-  const [ command, ...args ] = content.split(/\s{1,}/g);
+  const [command, ...args] = content.split(/\s{1,}/g);
   const allArgs = args.join(' ').trim();
   switch (command) {
     case 'ping': {
@@ -68,7 +64,9 @@ export const messageHandler = (client: Client) => async (message: Message) => {
 
         await message.react('🤔');
         const enqueueResult = await player.enqueue(results);
-        await message.channel.send({ embeds: [ reportEnqueueResult(enqueueResult) ] });
+        await message.channel.send({
+          embeds: [reportEnqueueResult(enqueueResult)],
+        });
         if (enqueueResult.errors.length > 0) {
           await message.react('❌');
         }
@@ -83,10 +81,8 @@ export const messageHandler = (client: Client) => async (message: Message) => {
     case 'np': {
       await voiceCommand(message, { allowConnect: false }, async (player) => {
         if (player.playlist.current) {
-          const embed = player.playlist.current.metadata
-            .toEmbed()
-            .setDescription('Now playing');
-          await message.channel.send({ embeds: [ embed ] });
+          const embed = player.playlist.current.metadata.toEmbed().setDescription('Now playing');
+          await message.channel.send({ embeds: [embed] });
           return;
         }
 
@@ -106,10 +102,10 @@ export const messageHandler = (client: Client) => async (message: Message) => {
         logEvent(
           'queue',
           { count: player.playlist.length },
-          player.playlist.map((item) => item.metadata.toShortJSON())
+          player.playlist.map((item) => item.metadata.toShortJSON()),
         );
 
-        await message.channel.send({ embeds: [ player.getQueueEmbed() ] });
+        await message.channel.send({ embeds: [player.getQueueEmbed()] });
       });
       return;
     }
@@ -138,35 +134,12 @@ export const messageHandler = (client: Client) => async (message: Message) => {
       return;
     }
 
-    case 'clearcache': {
-      await message.react(emoji(emojis.FiteHard));
-      await clearCollection(PLAYER_COLLECTION_NAME);
-      return;
-    }
-
-    case 'debugcache': {
-      const cachedFiles = await fs.readdir(downloaderOutputDir);
-      const cachedFileSizes = await Promise.all(cachedFiles.map((filename) =>
-        fs.stat(path.join(downloaderOutputDir, filename))
-          .then((stats) => stats.isFile() ? stats.size : null)
-          .catch(() => null)));
-      const totalSize = cachedFileSizes.reduce((total: number, size) => total + (size ?? 0), 0);
-
-      const embed = new MessageEmbed()
-        .setTitle('Cache information')
-        .addField('Files cached', `${cachedFiles.length}`)
-        .addField('Storage used', `${(totalSize / 1000000).toFixed(2)}mb`);
-      await message.channel.send({ embeds: [ embed ] });
-      return;
-    }
-
     case 'debug': {
       const connections = Array.from(getVoiceConnections().entries());
-      const connectionsStatus = connections.length < 1
-        ? 'none'
-        : connections
-          .map(([ id, conn ]) => `${id}: \`${conn.state.status}\``)
-          .join(', ');
+      const connectionsStatus =
+        connections.length < 1
+          ? 'none'
+          : connections.map(([id, conn]) => `${id}: \`${conn.state.status}\``).join(', ');
 
       const embed = new MessageEmbed()
         .setTitle('Debugging information')
@@ -177,11 +150,10 @@ export const messageHandler = (client: Client) => async (message: Message) => {
         .addField('Youtube DL Executable', `\`${config.youtubeDLExecutable}\``, true)
         .addField('Youtube DL Max Concurrency', `\`${config.youtubeDLMaxConcurrency}\``, true)
         .addField('Youtube DL Retries', `\`${config.youtubeDLRetries}\``, true)
-        .addField('Youtube DL Cache TTL', `\`${config.youtubeDLCacheTTL}\``, true)
-        .addField('Mongo URI', `\`${config.mongoHost}:${config.mongoPort}\``, true)
-        .addField('Mongo DB Name', `\`${config.mongoDbName}\``, true)
+        .addField('Bucket Name', `\`${config.minioBucketName}\``)
+        .addField('Bucket Access Key', `\`${config.minioAccessKeyObscured}\``)
         .addField('Connections', connectionsStatus, true);
-      await message.channel.send({ embeds: [ embed ] });
+      await message.channel.send({ embeds: [embed] });
       return;
     }
   }
@@ -193,24 +165,21 @@ const reportEnqueueResult = ({ successes, errors }: EnqueueResult): MessageEmbed
     return `${query.title} - ${query.channelTitle} - [:link:](${url})`;
   });
 
-  const errorText = errorContent.length > 0
-    ? [ '', 'Errors:', ...errorContent ].join('\n')
-    : '';
+  const errorText = errorContent.length > 0 ? ['', 'Errors:', ...errorContent].join('\n') : '';
 
   if (successes.length < 1) {
-    return new MessageEmbed()
-      .setTitle('An error occurred')
-      .setDescription(errorContent.join('\n'));
+    return new MessageEmbed().setTitle('An error occurred').setDescription(errorContent.join('\n'));
   }
 
   if (successes.length === 1) {
-    return successes[0].toEmbed()
+    return successes[0]
+      .toEmbed()
       .setTitle(successes[0].title ?? 'Unknown')
       .setDescription(errorText);
   }
 
   const queueEntryStr = (file: AudioFile, index: number) =>
-    `\`${index}.\` ${file.toLink()} - ${file.artist} - ${file.uploader}`;
+    `\`${index}.\` ${file.toLink()} - ${file.artist}`;
 
   return new MessageEmbed()
     .setTitle(`Enqueued ${successes.length} items`)
