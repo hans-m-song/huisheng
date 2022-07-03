@@ -36,18 +36,16 @@ jobs:
             -e AWS_SDK_LOAD_CONFIG=true \
             gcr.io/kaniko-project/executor:debug \
               --cache \
+              --destination=public.ecr.aws/t4g8t3e5/huisheng:latest \
               --reproducible \
-              --destination=public.ecr.aws/t4g8t3e5/huisheng:latest
+              --target=runtime
         env:
           IMAGE: public.ecr.aws/t4g8t3e5/huisheng:latest
           AWS_REGION: us-east-1
           AWS_ACCESS_KEY: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
 
-      - env:
-          AWS_REGION: us-east-1
-          REPO_NAME: huisheng
-        run: |
+      - run: |
           # list images
           IMAGES=$( aws ecr-public describe-images --repository-name $REPO_NAME )
           # filter by untagged
@@ -60,3 +58,6 @@ jobs:
           FAILED=$( echo $RESULT | '.failures | length > 0' )
           echo $RESULT
           [ $FAILED == "true" ] || exit 1
+        env:
+          AWS_REGION: us-east-1
+          REPO_NAME: huisheng
