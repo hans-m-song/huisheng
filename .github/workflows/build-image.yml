@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-  workflow_dispatch:
 
 jobs:
   build:
@@ -27,10 +26,12 @@ jobs:
           docker run --rm gcr.io/kaniko-project/executor:debug \
             --cache \
             --reproducible \
-            --context=git://github.com/hans-m-song/huisheng.git#refs/heads/master \
             --destination=public.ecr.aws/t4g8t3e5/huisheng:latest
         env:
           IMAGE: public.ecr.aws/t4g8t3e5/huisheng:latest
+          AWS_REGION: us-east-1
+          AWS_ACCESS_KEY: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
 
   cleanup:
     name: Cleanup
