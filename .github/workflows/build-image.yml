@@ -20,25 +20,16 @@ jobs:
           # this seems to be the only endpoint available for ECR?
           AWS_REGION: us-east-1
 
-      - uses: actions/checkout@v3
-
       - run: |
-          docker run --rm gcr.io/kaniko-project/executor:debug \
-            --cache \
-            --reproducible \
-            --destination=public.ecr.aws/t4g8t3e5/huisheng:latest
+          docker run --rm gcr.io/kaniko-project/executor:debug --cache --reproducible \
+              --destination=public.ecr.aws/t4g8t3e5/huisheng:latest \
+              --context=${{ github.repositoryUrl }}#${{ github.ref }}
         env:
           IMAGE: public.ecr.aws/t4g8t3e5/huisheng:latest
           AWS_REGION: us-east-1
           AWS_ACCESS_KEY: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
 
-  cleanup:
-    name: Cleanup
-    runs-on: self-hosted
-    needs: build
-
-    steps:
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-east-1
