@@ -20,24 +20,29 @@ jobs:
           # this seems to be the only endpoint available for ECR?
           AWS_REGION: us-east-1
 
-      - uses: actions/checkout@v3
-
-      - run: |
-          docker run --rm -v $(pwd):/workspace gcr.io/kaniko-project/executor:debug \
-            --cache \
-            --reproducible \
-            --destination=public.ecr.aws/t4g8t3e5/huisheng:latest
-        env:
-          IMAGE: public.ecr.aws/t4g8t3e5/huisheng:latest
-          AWS_REGION: us-east-1
-          AWS_ACCESS_KEY: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
-
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-east-1
           aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+
+      - uses: actions/checkout@v3
+
+      - run: |
+          docker run --rm \
+            -v $(pwd):/workspace \
+            -e AWS_ACCESS_KEY \
+            -e AWS_SECRET_ACCESS_KEY \
+            -e AWS_SDK_LOAD_CONFIG=true \
+            gcr.io/kaniko-project/executor:debug \
+              --cache \
+              --reproducible \
+              --destination=public.ecr.aws/t4g8t3e5/huisheng:latest
+        env:
+          IMAGE: public.ecr.aws/t4g8t3e5/huisheng:latest
+          AWS_REGION: us-east-1
+          AWS_ACCESS_KEY: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
 
       - env:
           AWS_REGION: us-east-1
