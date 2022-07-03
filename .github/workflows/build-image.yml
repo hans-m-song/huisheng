@@ -25,8 +25,38 @@ jobs:
           fetch-depth: 0
 
       - run: |
-          docker pull $IMAGE
-          docker build --cache-from $IMAGE --target runtime --build-arg GITHUB_SHA=$GITHUB_SHA -t $IMAGE .
-          docker push $IMAGE
+          docker run --rm -it gcr.io/kaniko-project/executor:debug \
+            --cache \
+            --reproducible \
+            --context=git://github.com/hans-m-song/huisheng.git#refs/heads/master \
+            --destination=public.ecr.aws/t4g8t3e5/huisheng:latest
         env:
           IMAGE: public.ecr.aws/t4g8t3e5/huisheng:latest
+
+  cleanup:
+    name: Cleanup
+    runs-on: self-hosted
+
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+
+      - env:
+          AWS_REGION: us-east-1
+          REPO_NAME: huisheng
+        run: |
+          # list images
+          IMAGES=$( aws ecr-public describe-images --repository-name $REPO_NAME )
+          # filter by untagged
+          IMAGES_TO_REMOVE=$( echo $IMAGES | jq '.imageDetails | map(select(.imageTags | not)) | map({imageDigest: .imageDigest})' )
+          SHOULD_DELETE=$(echo $IMAGES_TO_REMOVE | jq 'length > 0')
+          [ $SHOULD_DELETE == "false" ] || exit 0
+          # delete
+          RESULT=$( aws ecr-public batch-delete-image --repository-name $REPO_NAME --image-ids $IMAGES_TO_REMOVE )
+          # check for failures
+          FAILED=$( echo $RESULT | '.failures | length > 0' )
+          echo $RESULT
+          [ $FAILED == "true" ] || exit 1
