@@ -20,10 +20,12 @@ jobs:
           # this seems to be the only endpoint available for ECR?
           AWS_REGION: us-east-1
 
+      - uses: actions/checkout@v3
+
       - run: |
-          docker run --rm gcr.io/kaniko-project/executor:debug --cache --reproducible \
-              --destination=public.ecr.aws/t4g8t3e5/huisheng:latest \
-              --context=${{ github.repositoryUrl }}#${{ github.ref }}
+          docker run --rm -v $(pwd):/workspace 
+            gcr.io/kaniko-project/executor:debug --cache --reproducible \
+              --destination=public.ecr.aws/t4g8t3e5/huisheng:latest
         env:
           IMAGE: public.ecr.aws/t4g8t3e5/huisheng:latest
           AWS_REGION: us-east-1
