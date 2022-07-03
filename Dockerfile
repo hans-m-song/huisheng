@@ -17,8 +17,7 @@ WORKDIR /app
 COPY ./tsconfig.json ./package.json ./yarn.lock ./
 
 FROM dependencies AS runtime
-ENV NODE_ENV=production
-RUN yarn install --frozen-lockfile --production
+RUN yarn install
 COPY ./src ./src
 RUN yarn compile
 ARG GITHUB_SHA=unknown
