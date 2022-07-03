@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 jobs:
   build:
@@ -21,11 +22,9 @@ jobs:
           AWS_REGION: us-east-1
 
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - run: |
-          docker run --rm -it gcr.io/kaniko-project/executor:debug \
+          docker run --rm gcr.io/kaniko-project/executor:debug \
             --cache \
             --reproducible \
             --context=git://github.com/hans-m-song/huisheng.git#refs/heads/master \
@@ -36,6 +35,7 @@ jobs:
   cleanup:
     name: Cleanup
     runs-on: self-hosted
+    needs: build
 
     steps:
       - uses: aws-actions/configure-aws-credentials@v1
