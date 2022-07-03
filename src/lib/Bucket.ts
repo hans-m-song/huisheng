@@ -29,76 +29,95 @@ export class Bucket {
   static ping = async () => {
     try {
       await client.bucketExists(config.minioBucketName);
-      logEvent('database.ping', 'success');
+      logEvent('Bucket.ping', 'success');
       return true;
     } catch (error) {
-      logError('database.ping', error);
+      logError('Bucket.ping', error, { bucket: config.minioBucketName });
       return false;
     }
   };
 
-  static getTags = async (name: string): Promise<Minio.TagList> => {
-    const result = await client.getObjectTagging(config.minioBucketName, name);
-    return flattenTagList(result);
+  static getTags = async (name: string): Promise<Minio.TagList | null> => {
+    try {
+      const result = await client.getObjectTagging(config.minioBucketName, name);
+      const tags = flattenTagList(result.flat());
+      logEvent('Bucket.getTags', { name, tags });
+      return tags;
+    } catch (error) {
+      logError('Bucket.getTags', error, { name });
+      return null;
+    }
   };
 
-  static setTags = async (name: string, tags?: TagInput): Promise<void> => {
+  static setTags = async (name: string, tags?: TagInput): Promise<boolean> => {
     if (tags && Object.keys(tags).length > 0) {
-      const normalised = encodeTagList(tags);
-      await client.setObjectTagging(config.minioBucketName, name, normalised);
+      try {
+        const normalised = encodeTagList(tags);
+        await client.setObjectTagging(config.minioBucketName, name, normalised);
+        return true;
+      } catch (error) {
+        logError('Bucket.setTags', error, { name, tags });
+        return false;
+      }
     }
+
+    logEvent('Bucket.setTags', 'no tags to set', { name });
+    return true;
   };
 
   static list = async (prefix: string, recursive = true): Promise<Minio.BucketItem[] | null> => {
     try {
       const stream = client.listObjectsV2(config.minioBucketName, prefix, recursive);
       const results = await readStream<Minio.BucketItem>(stream);
-      logEvent('database.list', { count: results.length });
+      logEvent('Bucket.list', { prefix, count: results.length });
       return results;
     } catch (error) {
-      logError('database.list', error);
+      logError('Bucket.list', error, { prefix });
       return null;
     }
   };
 
-  static put = async (src: string, dest: string, tags?: TagInput): Promise<boolean> => {
+  static put = async (src: string, dest: string): Promise<boolean> => {
     try {
       const result = await client.fPutObject(config.minioBucketName, dest, src);
-      await this.setTags(dest, tags);
-      logEvent('database.put', { src, dest, result });
+      logEvent('Bucket.put', { src, dest, result });
       return true;
     } catch (error) {
-      logError('database.put', error, { src, dest, tags });
+      logError('Bucket.put', error, { src, dest });
       return false;
     }
   };
 
-  static stat = async (
-    name: string,
-  ): Promise<{
-    stats: Minio.BucketItemStat;
-    tags: Minio.TagList;
-  } | null> => {
+  static stat = async (name: string): Promise<Minio.BucketItemStat | null> => {
     try {
-      const [stats, tags] = await Promise.all([
-        client.statObject(config.minioBucketName, name),
-        this.getTags(name),
-      ]);
-      logEvent('database.stat', { stats, tags });
-      return { stats, tags };
+      const stats = await client.statObject(config.minioBucketName, name);
+      logEvent('Bucket.stat', { name, stats });
+      return stats;
     } catch (error) {
-      logError('database.stat', error);
+      logError('Bucket.stat', error, { name });
       return null;
     }
   };
 
   static getStream = async (name: string): Promise<internal.Readable | null> => {
     try {
+      const stats = await client.statObject(config.minioBucketName, name);
+      if (!stats) {
+        throw new Error(`object does not exist: "${name}"`);
+      }
+
+      const contentType = stats?.metaData?.['content-type'];
+      if (!contentType) {
+        throw new Error(
+          `object does not have a content-type: "${name}", ${JSON.stringify(stats.metaData)}`,
+        );
+      }
+
       const stream = await client.getObject(config.minioBucketName, name);
-      logEvent('database.getStream', { name });
+      logEvent('Bucket.getStream', { name, contentType });
       return stream;
     } catch (error) {
-      logError('database.getStream', error);
+      logError('Bucket.getStream', error, { name });
       return null;
     }
   };
@@ -108,10 +127,10 @@ export class Bucket {
       const stream = await client.getObject(config.minioBucketName, name);
       const chunks = await readStream(stream);
       const data = chunks.reduce((result, current) => Buffer.concat([result, current]));
-      logEvent('database.get', { name, size: data.length });
+      logEvent('Bucket.get', { name, size: data.length });
       return data;
     } catch (error) {
-      logError('database.get', error);
+      logError('Bucket.get', error, { name });
       return null;
     }
   };

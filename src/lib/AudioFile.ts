@@ -1,5 +1,4 @@
-import { MessageEmbed } from 'discord.js';
-import { promises as fs } from 'fs';
+import { EmbedField, MessageEmbed } from 'discord.js';
 import path from 'path';
 import { isMatching, P } from 'ts-pattern';
 
@@ -48,6 +47,8 @@ export class AudioFile implements AudioFileMetadata {
 
   static fromInfoJson(data: any): AudioFile | null {
     const { id, webpage_url, title, duration, uploader, artist, acodec } = data ?? {};
+    const { ext, audio_ext, _filename } = data ?? {};
+    console.log({ acodec, ext, audio_ext, _filename });
     const filepath = path.join(downloaderOutputDir, `${id}.${acodec}`);
     const metadata: AudioFileMetadata = {
       videoId: id,
@@ -69,14 +70,19 @@ export class AudioFile implements AudioFileMetadata {
     return new AudioFile(metadata);
   }
 
-  static async fromBucket(id: string): Promise<AudioFile | null> {
-    const exists = await Bucket.stat(path.join('cache', id));
+  static async fromBucketTags(id: string): Promise<AudioFile | null> {
+    const objectName = path.join('cache', id);
+    const exists = await Bucket.stat(objectName);
     if (!exists) {
       return null;
     }
 
-    const { tags } = exists;
-    const metadata = { ...tags, duration: parseInt(tags.duration) };
+    const tags = await Bucket.getTags(objectName);
+    if (!tags) {
+      return null;
+    }
+
+    const metadata = { ...tags, duration: parseInt(tags?.duration) };
     if (!isAudioFileMetadata(metadata)) {
       logEvent('AudioFile', 'bucket tags was not of type AudioFileMetadata', metadata);
       return null;
@@ -88,14 +94,16 @@ export class AudioFile implements AudioFileMetadata {
 
   async saveToBucket() {
     const dest = path.join('cache', this.videoId);
-    await Bucket.put(this.filepath, dest, { ...this.toJSON(), duration: `${this.duration}` });
-    await fs
-      .unlink(this.filepath)
-      .catch((error) => logError('database.saveToBucket', error, 'failed to remove file'));
+    await Bucket.put(this.filepath, dest);
   }
 
-  async stream() {
-    return Bucket.get(path.join('cache', this.videoId));
+  async updateBucketMetadata() {
+    const dest = path.join('cache', this.videoId);
+    await Bucket.setTags(dest, { ...this.toJSON(), duration: `${this.duration}` });
+  }
+
+  async streamFromBucket() {
+    return Bucket.getStream(path.join('cache', this.videoId));
   }
 
   toEmbed() {
@@ -105,6 +113,21 @@ export class AudioFile implements AudioFileMetadata {
       .addField('Artist', this.artist ?? 'Unknown', true)
       .addField('Uploader', this.uploader, true)
       .addField('Duration', secToTime(this.duration) ?? 'Unknown', true);
+  }
+
+  toEmbedField(prefix?: string): EmbedField {
+    const name = [prefix, this.title].filter(Boolean).join(' - ');
+    const value = [
+      this.artist,
+      this.uploader,
+      secToTime(this.duration),
+      `[:link:](${this.url})`,
+    ].join(' - ');
+    return { name, value, inline: false };
+  }
+
+  toQueueString() {
+    return [this.title, this.artist, secToTime(this.duration), `[:link:](${this.url})`].join(' - ');
   }
 
   toShortJSON() {

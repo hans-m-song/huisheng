@@ -81,7 +81,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
     case 'np': {
       await voiceCommand(message, { allowConnect: false }, async (player) => {
         if (player.playlist.current) {
-          const embed = player.playlist.current.metadata.toEmbed().setDescription('Now playing');
+          const embed = player.playlist.current.toEmbed().setDescription('Now playing');
           await message.channel.send({ embeds: [embed] });
           return;
         }
@@ -93,16 +93,10 @@ export const messageHandler = (client: Client) => async (message: Message) => {
 
     case 'queue': {
       await voiceCommand(message, { allowConnect: false }, async (player) => {
-        if (player.playlist.length < 1) {
-          await message.channel.send('Nothing queued');
-          return;
-        }
-
         // TODO remove debugging
         logEvent(
           'queue',
-          { count: player.playlist.length },
-          player.playlist.map((item) => item.metadata.toShortJSON()),
+          player.playlist.map((item) => item.toShortJSON()),
         );
 
         await message.channel.send({ embeds: [player.getQueueEmbed()] });
