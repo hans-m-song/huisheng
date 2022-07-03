@@ -1,9 +1,14 @@
-import { AudioPlayerStatus, AudioResource, createAudioPlayer, createAudioResource, demuxProbe, NoSubscriberBehavior } from '@discordjs/voice';
+import {
+  AudioPlayerStatus,
+  createAudioPlayer,
+  createAudioResource,
+  demuxProbe,
+  NoSubscriberBehavior,
+} from '@discordjs/voice';
 import { MessageEmbed } from 'discord.js';
-import { createReadStream } from 'fs';
+import { promises as fs } from 'fs';
 
 import { AudioFile } from './AudioFile';
-import { getCollection } from './Database';
 import { Queue } from './Queue';
 import { logError, logEvent, secToTime } from './utils';
 import { QueryResult } from './Youtube';
@@ -11,12 +16,12 @@ import { QueryResult } from './Youtube';
 export const PLAYER_COLLECTION_NAME = 'player-cache';
 
 export class Player {
-  playlist = new Queue<AudioResource<AudioFile>>();
+  playlist = new Queue<AudioFile>();
   instance = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause } });
 
   constructor() {
     this.instance.on('error', (error) => {
-      logError('player', error, 'playing', this.playlist.current?.metadata?.toShortJSON() ?? 'unknown');
+      logError('player', error, 'playing', this.playlist.current?.toShortJSON() ?? 'unknown');
 
       // Attempt a recovery
       this.next();
@@ -27,19 +32,29 @@ export class Player {
     });
 
     this.instance.on(AudioPlayerStatus.Playing, () => {
-      logEvent('player', 'playing', this.playlist.current?.metadata?.toShortJSON() ?? 'unknown');
+      logEvent('player', 'playing', this.playlist.current?.toShortJSON() ?? 'unknown');
     });
   }
 
-  next() {
+  async next() {
     const next = this.playlist.next();
-    if (next) {
-      this.instance.play(next);
+    if (!next) {
+      return;
     }
+
+    const bucketStream = await next.streamFromBucket();
+    if (!bucketStream) {
+      logError('player', new Error(`failed to create stream for file: "${next.videoId}"`));
+      return;
+    }
+
+    const { stream, type } = await demuxProbe(bucketStream);
+    const resource = createAudioResource(stream, { inputType: type, metadata: next });
+    this.instance.play(resource);
   }
 
   playPause() {
-    switch(this.instance.state.status) {
+    switch (this.instance.state.status) {
       case AudioPlayerStatus.Paused:
         this.instance.unpause();
         return;
@@ -54,43 +69,50 @@ export class Player {
     const errors: QueryResult[] = [];
     const successes: AudioFile[] = [];
 
-    const collection = await getCollection(PLAYER_COLLECTION_NAME);
+    await Promise.all(
+      results.map(async (result) => {
+        const { videoId } = result;
+        const url = `https://youtube.com/watch?v=${videoId}`;
+        const fromBucket = await AudioFile.fromBucketTags(result.videoId);
+        const file = fromBucket ?? (await AudioFile.fromUrl(url));
+        if (!file) {
+          errors.push(result);
+          return;
+        }
 
-    await Promise.all(results.map(async ( result ) => {
-      const { videoId } = result;
-      const url = `https://youtube.com/watch?v=${videoId}`;
-      const file = await AudioFile.fromCollection(collection, result.videoId) ?? await AudioFile.fromUrl(url);
-      if (!file) {
-        errors.push(result);
-        return;
-      }
+        if (!fromBucket) {
+          await file.saveToBucket();
+          await fs.unlink(file.filepath).catch((error) => {
+            logError('Player.enqueue', error, 'failed to remove file', { path: file.filepath });
+          });
+        }
 
-      await file.saveToCollection(collection);
-      const { stream, type } = await demuxProbe(createReadStream(file.filepath));
-      const resource = createAudioResource(stream, { inputType: type, metadata: file });
-      logEvent('enqueue', { videoId, path: file.filepath });
-      this.playlist.enqueue(resource);
-      successes.push(file);
-    }));
+        await file.updateBucketMetadata();
+        logEvent('enqueue', { videoId, path: file.filepath });
+        this.playlist.enqueue(file);
+        successes.push(file);
+      }),
+    );
 
     return { errors, successes };
   }
 
   getQueueEmbed() {
-    const queue = this.playlist.map(({ metadata: { title, artist, duration, url } }, i) => {
-      const details = [ title, artist ?? '?', secToTime(duration) ].join(' - ');
-      return `\`${i}.\` ${details} [:link:](${url})`;
-    }).join('\n');
-
     return new MessageEmbed()
       .setTitle('Queue')
-      .setDescription(queue);
+      .addField('Now playing', this.playlist.current?.toQueueString() ?? 'N/A')
+      .addFields(
+        this.playlist.map((file, i) => ({
+          name: `\`${i}.\` - ${file.title}`,
+          value: [file.artist, file.uploader, secToTime(file.duration)].join(' - '),
+        })),
+      );
   }
 }
 
 export interface EnqueueResult {
-  errors: QueryResult[]
-  successes: AudioFile[]
+  errors: QueryResult[];
+  successes: AudioFile[];
 }
 
 const players = new Map<string, Player>();

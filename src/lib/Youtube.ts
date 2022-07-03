@@ -4,76 +4,78 @@ import { isMatching, P } from 'ts-pattern';
 import { config } from '../config';
 import { GuardType, logError, logEvent } from './utils';
 
-export type YoutubeSearchResult = GuardType<typeof isYoutubeSearchResult>
+export type YoutubeSearchResult = GuardType<typeof isYoutubeSearchResult>;
 export const isYoutubeSearchResult = isMatching({
   kind: 'youtube#searchResult',
-  id:   {
-    kind:    'youtube#video',
+  id: {
+    kind: 'youtube#video',
     videoId: P.string,
   },
   snippet: {
-    title:        P.string,
+    title: P.string,
     channelTitle: P.string,
   },
 });
 
-export type YoutubeSearchListResult = GuardType<typeof isYoutubeSearchListResult>
+export type YoutubeSearchListResult = GuardType<typeof isYoutubeSearchListResult>;
 const isYoutubeSearchListResult = isMatching({
-  kind:  'youtube#searchListResponse',
+  kind: 'youtube#searchListResponse',
   items: P.array(P.when(isYoutubeSearchResult)),
 });
 
-export type YoutubeVideoListResponseItem = GuardType<typeof isYoutubeVideoListResponseItem>
+export type YoutubeVideoListResponseItem = GuardType<typeof isYoutubeVideoListResponseItem>;
 export const isYoutubeVideoListResponseItem = isMatching({
-  'kind':  'youtube#video',
-  id:      P.string,
+  kind: 'youtube#video',
+  id: P.string,
   snippet: {
-    title:        P.string,
+    title: P.string,
     channelTitle: P.string,
   },
 });
 
-export type YoutubeVideoListResponse = GuardType<typeof isYoutubeVideoListResponse>
+export type YoutubeVideoListResponse = GuardType<typeof isYoutubeVideoListResponse>;
 export const isYoutubeVideoListResponse = isMatching({
-  kind:  'youtube#videoListResponse',
+  kind: 'youtube#videoListResponse',
   items: P.array(P.when(isYoutubeVideoListResponseItem)),
 });
 
-export type YoutubePlaylistItemListResponseItem = GuardType<typeof isYoutubePlaylistItemListResponseItem>
+export type YoutubePlaylistItemListResponseItem = GuardType<
+  typeof isYoutubePlaylistItemListResponseItem
+>;
 export const isYoutubePlaylistItemListResponseItem = isMatching({
-  kind:    'youtube#playlistItem',
-  id:      P.string,
+  kind: 'youtube#playlistItem',
+  id: P.string,
   snippet: {
-    title:        P.string,
+    title: P.string,
     channelTitle: P.string,
-    resourceId:   {
-      kind:    'youtube#video',
+    resourceId: {
+      kind: 'youtube#video',
       videoId: P.string,
     },
   },
 });
 
-export type YoutubePlaylistItemListResponse = GuardType<typeof isYoutubePlaylistItemListResponse>
+export type YoutubePlaylistItemListResponse = GuardType<typeof isYoutubePlaylistItemListResponse>;
 export const isYoutubePlaylistItemListResponse = isMatching({
-  kind:     'youtube#playlistItemListResponse',
-  items:    P.array(P.when(isYoutubePlaylistItemListResponseItem)),
+  kind: 'youtube#playlistItemListResponse',
+  items: P.array(P.when(isYoutubePlaylistItemListResponseItem)),
   pageInfo: { totalResults: P.number },
 });
 
 const api = axios.create({
   baseURL: config.youtubeBaseUrl,
-  params:  { key: config.youtubeApiKey },
+  params: { key: config.youtubeApiKey },
 });
 
 const search = (query: string, limit = 1) =>
   api.get<YoutubeSearchListResult>('/search', {
     params: {
-      part:       'snippet',
-      order:      'relevance',
+      part: 'snippet',
+      order: 'relevance',
       safeSearch: 'none',
-      type:       'video',
+      type: 'video',
       maxResults: limit,
-      q:          query,
+      q: query,
     },
   });
 
@@ -88,7 +90,7 @@ const get = (id: string) =>
 const list = (playlistId: string, limit = 25) =>
   api.get<YoutubePlaylistItemListResponse>('/playlistItems', {
     params: {
-      part:       'snippet',
+      part: 'snippet',
       maxResults: limit,
       playlistId,
     },
@@ -106,9 +108,9 @@ const normaliseYoutubeUrl = (url: string) =>
 const MATCH_VIDEO_HREF = /^https:\/\/(www\.)?youtube.com\/watch\?v=[^\s]+$/;
 
 export interface QueryResult {
-  videoId: string
-  title: string
-  channelTitle: string
+  videoId: string;
+  title: string;
+  channelTitle: string;
 }
 
 const query = async (raw: string): Promise<QueryResult[] | null> => {
@@ -120,15 +122,17 @@ const query = async (raw: string): Promise<QueryResult[] | null> => {
     const playlistId = searchParams.get('list');
     if (playlistId) {
       logEvent('youtube', 'searching by playlist id', `"${playlistId}"`);
-      const response = await list(playlistId).then((result) => result.data).catch((error) => {
-        logError('youtube', error, { queryStr, playlistId });
-        return null;
-      });
+      const response = await list(playlistId)
+        .then((result) => result.data)
+        .catch((error) => {
+          logError('youtube', error, { queryStr, playlistId });
+          return null;
+        });
 
       if (response?.items?.length) {
         return response.items.map((item) => ({
-          videoId:      item.snippet.resourceId.videoId,
-          title:        item.snippet.title,
+          videoId: item.snippet.resourceId.videoId,
+          title: item.snippet.title,
           channelTitle: item.snippet.channelTitle,
         }));
       }
@@ -137,20 +141,23 @@ const query = async (raw: string): Promise<QueryResult[] | null> => {
     const videoId = searchParams.get('v');
     if (videoId) {
       logEvent('youtube', 'searching by video id', `"${videoId}"`);
-      const response = await get(videoId).then((result) => result.data).catch((error) => {
-        logError('youtube', error, { queryStr, id: videoId });
-        return null;
-      });
+      const response = await get(videoId)
+        .then((result) => result.data)
+        .catch((error) => {
+          logError('youtube', error, { queryStr, id: videoId });
+          return null;
+        });
 
       if (response?.items?.length) {
-        return [ {
-          videoId:      response.items[0].id ,
-          title:        response.items[0].snippet.title,
-          channelTitle: response.items[0].snippet.channelTitle,
-        } ];
+        return [
+          {
+            videoId: response.items[0].id,
+            title: response.items[0].snippet.title,
+            channelTitle: response.items[0].snippet.channelTitle,
+          },
+        ];
       }
     }
-
   }
 
   logEvent('youtube', 'fuzzy text search', `"${queryStr}"`);
@@ -163,11 +170,13 @@ const query = async (raw: string): Promise<QueryResult[] | null> => {
     return null;
   }
 
-  return [ {
-    videoId:      response.data.items[0].id.videoId,
-    title:        response.data.items[0].snippet.title,
-    channelTitle: response.data.items[0].snippet.channelTitle,
-  } ];
+  return [
+    {
+      videoId: response.data.items[0].id.videoId,
+      title: response.data.items[0].snippet.title,
+      channelTitle: response.data.items[0].snippet.channelTitle,
+    },
+  ];
 };
 
 export const youtube = { query, get, list };
