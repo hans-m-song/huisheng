@@ -20,10 +20,11 @@ const youtubeDLRetries = numEnv(process.env.YOUTUBE_DL_RETRIES, {
   min: 1,
   max: 5,
 });
-const minioEndpoint = process.env.MINIO_ENDPOINT ?? '';
+const minioEndpoint = process.env.MINIO_ENDPOINT ?? 'api.minio.k8s.axatol.xyz';
+const minioPort = numEnv(process.env.MINIO_ENDPOINT, { default: 443 });
 const minioBucketName = process.env.MINIO_BUCKET_NAME ?? 'huisheng';
-const minioAccessKey = process.env.MINIO_ACCESS_KEY ?? '';
-const minioSecretKey = process.env.MINIO_SECRET_KEY ?? '';
+const minioAccessKey = assertEnv('MINIO_ACCESS_KEY');
+const minioSecretKey = assertEnv('MINIO_SECRET_KEY');
 
 if (!clientId) {
   throw new Error('Discord client id must be set in "DISCORD_CLIENT_ID"');
@@ -58,6 +59,7 @@ export const config = {
 
   // minio
   minioEndpoint,
+  minioPort,
   minioBucketName,
   minioAccessKey,
   minioAccessKeyObscured,
@@ -73,6 +75,7 @@ console.log('config', {
   youtubeDLMaxConcurrency,
   youtubeDLRetries,
   minioEndpoint,
+  minioPort,
   minioBucketName,
   minioAccessKey: minioAccessKeyObscured,
 });

@@ -5,7 +5,8 @@ import { config } from '../config';
 import { logError, logEvent, readStream } from './utils';
 
 const client = new Minio.Client({
-  endPoint: 'api.minio.k8s.axatol.xyz',
+  endPoint: config.minioEndpoint,
+  port: config.minioPort,
   useSSL: true,
   accessKey: config.minioAccessKey,
   secretKey: config.minioSecretKey,
