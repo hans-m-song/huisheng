@@ -21,8 +21,8 @@ const youtubeDLRetries = numEnv(process.env.YOUTUBE_DL_RETRIES, {
   max: 5,
 });
 const minioEndpoint = process.env.MINIO_ENDPOINT ?? 'api.minio.k8s.axatol.xyz';
-const minioPort = numEnv(process.env.MINIO_ENDPOINT, { default: 443 });
-const minioUseSSL = boolEnv(process.env.MINI_USE_SSL, true);
+const minioEndpointPort = numEnv(process.env.MINIO_ENDPOINT_PORT, { default: 443 });
+const minioEndpointSSL = boolEnv(process.env.MINIO_ENDPOINT_SSL, true);
 const minioBucketName = process.env.MINIO_BUCKET_NAME ?? 'huisheng';
 const minioAccessKey = assertEnv('MINIO_ACCESS_KEY');
 const minioSecretKey = assertEnv('MINIO_SECRET_KEY');
@@ -60,8 +60,8 @@ export const config = {
 
   // minio
   minioEndpoint,
-  minioPort,
-  minioUseSSL,
+  minioEndpointPort,
+  minioEndpointSSL,
   minioBucketName,
   minioAccessKey,
   minioAccessKeyObscured,
@@ -77,8 +77,8 @@ console.log('config', {
   youtubeDLMaxConcurrency,
   youtubeDLRetries,
   minioEndpoint,
-  minioPort,
-  minioUseSSL,
+  minioEndpointPort,
+  minioEndpointSSL,
   minioBucketName,
   minioAccessKey: minioAccessKeyObscured,
 });
