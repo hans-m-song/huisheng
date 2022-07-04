@@ -7,7 +7,7 @@ import { logError, logEvent, readStream } from './utils';
 const client = new Minio.Client({
   endPoint: config.minioEndpoint,
   port: config.minioPort,
-  useSSL: true,
+  useSSL: config.minioUseSSL,
   accessKey: config.minioAccessKey,
   secretKey: config.minioSecretKey,
 });

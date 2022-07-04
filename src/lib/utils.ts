@@ -31,6 +31,9 @@ export const numEnv = (
   return clamp(parsed, options.min ?? parsed, options.max ?? parsed);
 };
 
+export const boolEnv = (value: string | undefined, defaultValue: boolean) =>
+  typeof value === 'string' ? value === 'true' : defaultValue;
+
 export const assertEnv = (key: string): string => {
   const value = process.env[key];
   if (!value) {

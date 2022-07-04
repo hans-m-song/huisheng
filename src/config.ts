@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import { assertEnv, numEnv } from './lib/utils';
+import { assertEnv, boolEnv, numEnv } from './lib/utils';
 
 const githubSha = process.env.GITHUB_SHA ?? 'unknown';
 const clientId = assertEnv('DISCORD_CLIENT_ID');
@@ -22,6 +22,7 @@ const youtubeDLRetries = numEnv(process.env.YOUTUBE_DL_RETRIES, {
 });
 const minioEndpoint = process.env.MINIO_ENDPOINT ?? 'api.minio.k8s.axatol.xyz';
 const minioPort = numEnv(process.env.MINIO_ENDPOINT, { default: 443 });
+const minioUseSSL = boolEnv(process.env.MINI_USE_SSL, true);
 const minioBucketName = process.env.MINIO_BUCKET_NAME ?? 'huisheng';
 const minioAccessKey = assertEnv('MINIO_ACCESS_KEY');
 const minioSecretKey = assertEnv('MINIO_SECRET_KEY');
@@ -60,6 +61,7 @@ export const config = {
   // minio
   minioEndpoint,
   minioPort,
+  minioUseSSL,
   minioBucketName,
   minioAccessKey,
   minioAccessKeyObscured,
@@ -76,6 +78,7 @@ console.log('config', {
   youtubeDLRetries,
   minioEndpoint,
   minioPort,
+  minioUseSSL,
   minioBucketName,
   minioAccessKey: minioAccessKeyObscured,
 });
