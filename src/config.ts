@@ -27,18 +27,6 @@ const minioBucketName = process.env.MINIO_BUCKET_NAME ?? 'huisheng';
 const minioAccessKey = assertEnv('MINIO_ACCESS_KEY');
 const minioSecretKey = assertEnv('MINIO_SECRET_KEY');
 
-if (!clientId) {
-  throw new Error('Discord client id must be set in "DISCORD_CLIENT_ID"');
-}
-
-if (!botToken) {
-  throw new Error('Discord bot token must be set in "DISCORD_BOT_TOKEN"');
-}
-
-if (!youtubeApiKey) {
-  throw new Error('Youtube api key must be set in "YOUTUBE_API_KEY"');
-}
-
 const minioAccessKeyObscured =
   minioAccessKey.slice(0, 4) + minioAccessKey.slice(4).replace(/./g, '*');
 

@@ -11,15 +11,6 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - uses: docker/login-action@v2
-        with:
-          registry: public.ecr.aws
-          username: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
-          password: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
-        env:
-          # this seems to be the only endpoint available for ECR?
-          AWS_REGION: us-east-1
-
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-east-1
@@ -36,7 +27,7 @@ jobs:
             -e AWS_SDK_LOAD_CONFIG=true \
             gcr.io/kaniko-project/executor:debug \
               --cache \
-              --destination=public.ecr.aws/t4g8t3e5/huisheng:latest \
+              --destination=${{ env.IMAGE }} \
               --reproducible \
               --target=runtime
         env:
