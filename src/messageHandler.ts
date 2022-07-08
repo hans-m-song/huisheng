@@ -5,7 +5,7 @@ import { config } from './config';
 import { emojiGetter, emojis } from './emotes';
 import { voiceCommand } from './lib/Audio';
 import { AudioFile } from './lib/AudioFile';
-import { EnqueueResult } from './lib/Player';
+import { EnqueueResult, getPlayer } from './lib/Player';
 import { logEvent, logMessage } from './lib/utils';
 import { youtube } from './lib/Youtube';
 
@@ -134,6 +134,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
         connections.length < 1
           ? 'none'
           : connections.map(([id, conn]) => `${id}: \`${conn.state.status}\``).join(', ');
+      const playerStatus = getPlayer(message.guild?.id ?? '').instance.state.status;
 
       const embed = new MessageEmbed()
         .setTitle('Debugging information')
@@ -146,7 +147,8 @@ export const messageHandler = (client: Client) => async (message: Message) => {
         .addField('Youtube DL Retries', `\`${config.youtubeDLRetries}\``, true)
         .addField('Bucket Name', `\`${config.minioBucketName}\``, true)
         .addField('Bucket Access Key', `\`${config.minioAccessKeyObscured}\``, true)
-        .addField('Connections', connectionsStatus, true);
+        .addField('Connections', connectionsStatus, true)
+        .addField('Player Status', playerStatus);
       await message.channel.send({ embeds: [embed] });
       return;
     }
