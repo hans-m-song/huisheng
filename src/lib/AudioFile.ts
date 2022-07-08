@@ -1,11 +1,10 @@
 import { EmbedField, MessageEmbed } from 'discord.js';
-import { promises as fs } from 'fs';
 import path from 'path';
 import { isMatching, P } from 'ts-pattern';
 
 import { Bucket } from './Bucket';
 import { download, downloaderOutputDir } from './Downloader';
-import { GuardType, logError, logEvent, secToTime, sleep } from './utils';
+import { GuardType, logError, logEvent, secToTime } from './utils';
 
 export type AudioFileMetadata = GuardType<typeof isAudioFileMetadata>;
 export const isAudioFileMetadata = isMatching({
@@ -48,19 +47,7 @@ export class AudioFile implements AudioFileMetadata {
 
   static async fromInfoJson(data: any): Promise<AudioFile | null> {
     const { id, webpage_url, title, duration, uploader, artist, acodec } = data ?? {};
-    const { ext, audio_ext, _filename } = data ?? {};
-    console.log({ acodec, ext, audio_ext, _filename });
     const filepath = path.join(downloaderOutputDir, `${id}.${acodec}`);
-    const exists = await fs.stat(filepath).catch((error) => {
-      logError('AudioFile.fromInfoJson', error, 'failed to stat infojson', { filepath });
-      return null;
-    });
-
-    if (!exists) {
-      await sleep();
-      console.log('file does not exist', { dir: await fs.readdir(downloaderOutputDir) });
-      return null;
-    }
 
     const metadata: AudioFileMetadata = {
       videoId: id,
