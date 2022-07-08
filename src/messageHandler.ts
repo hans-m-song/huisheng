@@ -144,8 +144,8 @@ export const messageHandler = (client: Client) => async (message: Message) => {
         .addField('Youtube DL Executable', `\`${config.youtubeDLExecutable}\``, true)
         .addField('Youtube DL Max Concurrency', `\`${config.youtubeDLMaxConcurrency}\``, true)
         .addField('Youtube DL Retries', `\`${config.youtubeDLRetries}\``, true)
-        .addField('Bucket Name', `\`${config.minioBucketName}\``)
-        .addField('Bucket Access Key', `\`${config.minioAccessKeyObscured}\``)
+        .addField('Bucket Name', `\`${config.minioBucketName}\``, true)
+        .addField('Bucket Access Key', `\`${config.minioAccessKeyObscured}\``, true)
         .addField('Connections', connectionsStatus, true);
       await message.channel.send({ embeds: [embed] });
       return;

@@ -75,6 +75,8 @@ export const createCancellablePromise = <T>(
   return { promise, cancel };
 };
 
+export const sleep = (t = 1000) => new Promise((resolve) => setTimeout(resolve, t));
+
 export const tryReadFile = async (filepath: string): Promise<string | null> => {
   try {
     const result = await fs.readFile(filepath);
