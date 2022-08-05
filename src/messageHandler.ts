@@ -64,12 +64,13 @@ export const messageHandler = (client: Client) => async (message: Message) => {
 
         await message.react('🤔');
         const enqueueResult = await player.enqueue(results);
+        if (enqueueResult.errors.length > 0 || enqueueResult.successes.length < 1) {
+          await message.react('❌');
+        }
+
         await message.channel.send({
           embeds: [reportEnqueueResult(enqueueResult)],
         });
-        if (enqueueResult.errors.length > 0) {
-          await message.react('❌');
-        }
 
         if (!player.playlist.current) {
           player.next();
@@ -100,6 +101,27 @@ export const messageHandler = (client: Client) => async (message: Message) => {
         );
 
         await message.channel.send({ embeds: [player.getQueueEmbed()] });
+      });
+      return;
+    }
+
+    case 'clear': {
+      await voiceCommand(message, { allowConnect: false }, async (player) => {
+        player.playlist.clear();
+        await message.react('🗑️');
+      });
+      return;
+    }
+
+    case 'remove': {
+      await voiceCommand(message, { allowConnect: false }, async (player) => {
+        const [position] = args;
+        if (typeof position !== 'number') {
+          return;
+        }
+
+        player.playlist.remove(position);
+        await message.react('🗑️');
       });
       return;
     }
@@ -148,7 +170,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
         .addField('Bucket Name', `\`${config.minioBucketName}\``, true)
         .addField('Bucket Access Key', `\`${config.minioAccessKeyObscured}\``, true)
         .addField('Connections', connectionsStatus, true)
-        .addField('Player Status', playerStatus);
+        .addField('Player Status', `\`${playerStatus}\``, true);
       await message.channel.send({ embeds: [embed] });
       return;
     }

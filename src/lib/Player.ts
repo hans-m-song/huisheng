@@ -17,24 +17,19 @@ export const PLAYER_COLLECTION_NAME = 'player-cache';
 
 export class Player {
   playlist = new Queue<AudioFile>();
-  instance = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause } });
-
-  constructor() {
-    this.instance.on('error', (error) => {
-      logError('player', error, 'playing', this.playlist.current?.toShortJSON() ?? 'unknown');
+  instance = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause } })
+    .on('error', (error) => {
+      logError('Player', error, 'playing', this.playlist.current?.toShortJSON() ?? 'unknown');
 
       // Attempt a recovery
       this.next();
-    });
-
-    this.instance.on(AudioPlayerStatus.Idle, () => {
+    })
+    .on(AudioPlayerStatus.Idle, () => {
       this.next();
+    })
+    .on(AudioPlayerStatus.Playing, () => {
+      logEvent('Player', 'playing', this.playlist.current?.toShortJSON() ?? 'unknown');
     });
-
-    this.instance.on(AudioPlayerStatus.Playing, () => {
-      logEvent('player', 'playing', this.playlist.current?.toShortJSON() ?? 'unknown');
-    });
-  }
 
   async next() {
     const next = this.playlist.next();
@@ -44,7 +39,7 @@ export class Player {
 
     const bucketStream = await next.streamFromBucket();
     if (!bucketStream) {
-      logError('player', new Error(`failed to create stream for file: "${next.videoId}"`));
+      logError('Player.next', new Error(`failed to create stream for file: "${next.videoId}"`));
       return;
     }
 
@@ -81,16 +76,23 @@ export class Player {
         }
 
         if (!fromBucket) {
-          await file.saveToBucket();
+          if (!(await file.saveToBucket())) {
+            errors.push(result);
+          }
+
           await fs.unlink(file.filepath).catch((error) => {
             logError('Player.enqueue', error, 'failed to remove file', { path: file.filepath });
           });
         }
 
         await file.updateBucketMetadata();
-        logEvent('enqueue', { videoId, path: file.filepath });
+        logEvent('Player.enqueue', { videoId, path: file.filepath });
         this.playlist.enqueue(file);
         successes.push(file);
+
+        if (!this.playlist.current) {
+          this.next();
+        }
       }),
     );
 

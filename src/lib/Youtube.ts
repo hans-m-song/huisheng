@@ -98,6 +98,7 @@ const list = (playlistId: string, limit = 25) =>
 
 const normaliseYoutubeUrl = (url: string) =>
   url
+    .replace('music.youtube.com', 'youtube.com')
     .replace('youtu.be/', 'youtube.com/watch?v=')
     .replace('youtube.com/embed/', 'youtube.com/watch?v=')
     .replace('/v/', '/watch?v=')
@@ -105,7 +106,7 @@ const normaliseYoutubeUrl = (url: string) =>
     .replace('/playlist', '/watch')
     .replace('youtube.com/shorts/', 'youtube.com/watch?v=');
 
-const MATCH_VIDEO_HREF = /^https:\/\/(www\.)?youtube.com\/watch\?v=[^\s]+$/;
+const MATCH_VIDEO_HREF = /^https:\/\/.*?\.youtube.com\/watch\?v=[^\s]+$/;
 
 export interface QueryResult {
   videoId: string;
@@ -160,9 +161,9 @@ const query = async (raw: string): Promise<QueryResult[] | null> => {
     }
   }
 
-  logEvent('youtube', 'fuzzy text search', `"${queryStr}"`);
-  const response = await search(queryStr).catch((error) => {
-    logError('youtube', error, { queryStr });
+  logEvent('youtube', 'fuzzy text search', `"${raw}"`);
+  const response = await search(raw).catch((error) => {
+    logError('youtube', error, { raw });
     return null;
   });
 

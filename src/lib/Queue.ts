@@ -20,6 +20,10 @@ export class Queue<T> {
     return this.current;
   }
 
+  remove(index: number) {
+    this.items = this.items.filter((_, i) => i !== index);
+  }
+
   clear(): void {
     this.items = [];
   }

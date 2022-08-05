@@ -91,9 +91,9 @@ export class AudioFile implements AudioFileMetadata {
     return new AudioFile(metadata);
   }
 
-  async saveToBucket() {
+  async saveToBucket(): Promise<boolean> {
     const dest = path.join('cache', this.videoId);
-    await Bucket.put(this.filepath, dest);
+    return Bucket.put(this.filepath, dest);
   }
 
   async updateBucketMetadata() {
