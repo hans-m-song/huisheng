@@ -105,6 +105,17 @@ export const tryParseJSON = (raw: string) => {
   }
 };
 
+export const trimToJson = (raw: string) => {
+  const objectBeginning = raw.indexOf('{');
+  const arrayBeginning = raw.indexOf('[');
+
+  const endDelim = objectBeginning < arrayBeginning ? '}' : ']';
+  const endIndex = raw.lastIndexOf(endDelim);
+  const startIndex = Math.min(objectBeginning, arrayBeginning);
+
+  return raw.slice(startIndex, endIndex + 1);
+};
+
 export const slugify = (input: string) =>
   input
     .toLowerCase()

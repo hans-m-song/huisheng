@@ -2,7 +2,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 
 import { config } from '../config';
-import { logError, logEvent, tryParseJSON } from './utils';
+import { logError, logEvent, trimToJson, tryParseJSON } from './utils';
 
 let limit: any;
 const plimit = Function('return import("p-limit")')() as Promise<typeof import('p-limit')>;
@@ -98,7 +98,7 @@ export const download = async (target: string): Promise<unknown | null> => {
     return null;
   }
 
-  const result = tryParseJSON(process.stdout);
+  const result = tryParseJSON(trimToJson(process.stdout));
   if (!result) {
     return null;
   }
