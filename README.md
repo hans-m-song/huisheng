@@ -12,6 +12,8 @@ Replace `!` with your configured prefix
 - `!gtfo` - leave the voice channel and terminate
 - `!summon` - join your current voice channel
 - `!play [query]` - join your current voice channel and attempt to search on youtube for your query, can also specify a url
+- `!clear` - clears playlist
+- `!remove index` - remove an item from the playlist at position `index`
 - `!np` - respond with currently playing song
 - `!queue` - respond with songs queued (currently doesn't work)
 - `!stop` - stop currently playing song

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-service
+spec:
+  externalName: deployment-service.minio.svc.cluster.local
+  selector:
+    app: huisheng
+  type: ExternalName

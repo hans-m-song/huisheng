@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+spec:
+  selector:
+    matchLabels:
+      app: huisheng
+  template:
+    metadata:
+      labels:
+        app: huisheng
+    spec:
+      containers:
+        - env:
+            - name: DISCORD_BOT_PREFIX
+              value: '>'
+            - name: CACHE_DIR
+              value: /data
+            - name: MINIO_ENDPOINT
+              value: deployment-service.minio.svc.cluster.local
+            - name: MINIO_ENDPOINT_PORT
+              value: '9000'
+            - name: MINIO_ENDPOINT_SSL
+              value: 'false'
+          envFrom:
+            - secretRef:
+                name: credentials
+          image: public.ecr.aws/axatol/huisheng:latest
+          name: huisheng
+          securityContext:
+            capabilities:
+              add:
+                - SYS_NICE
+          volumeMounts:
+            - mountPath: /data
+              name: data
+      volumes:
+        - hostPath:
+            path: /var/lib/k8s/huisheng
+            type: DirectoryOrCreate
+          name: data

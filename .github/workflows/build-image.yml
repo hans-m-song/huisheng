@@ -31,7 +31,7 @@ jobs:
               --reproducible \
               --target=runtime
         env:
-          IMAGE: public.ecr.aws/t4g8t3e5/huisheng:latest
+          IMAGE: public.ecr.aws/axatol/huisheng:latest
           AWS_REGION: us-east-1
           AWS_ACCESS_KEY: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
