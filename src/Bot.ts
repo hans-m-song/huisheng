@@ -32,6 +32,10 @@ export const initializeClient = async () => {
   client.on('messageCreate', messageHandler(client));
   client.on('voiceStateUpdate', voiceStateHandler(client));
 
+  client.on('invalidated', () => {
+    logEvent('invalidated', 'client received "invalidated" event');
+  });
+
   const ready = new Promise<void>((resolve) => {
     client.once('ready', (client) => {
       logEvent('ready', `@${client.user.tag}, invite: ${authorizeUrl}`);

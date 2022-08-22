@@ -2,7 +2,7 @@ import { AudioPlayerStatus, getVoiceConnections } from '@discordjs/voice';
 import { Client, Message, MessageEmbed } from 'discord.js';
 
 import { config } from './config';
-import { emojiGetter, emojis } from './emotes';
+import { emojiGetter, customEmoji, emojis, numberEmojis } from './emotes';
 import { voiceCommand } from './lib/Audio';
 import { AudioFile } from './lib/AudioFile';
 import { EnqueueResult, getPlayer } from './lib/Player';
@@ -34,16 +34,94 @@ export const messageHandler = (client: Client) => async (message: Message) => {
     case 'gtfo': {
       await voiceCommand(message, { allowConnect: false }, async (player, connection) => {
         player.instance.pause();
-        await message.react(emoji(emojis.FeelsCarlosMan));
+        await message.react(emoji(customEmoji.FeelsCarlosMan));
         connection.disconnect();
       });
       return;
     }
 
     case 'summon': {
-      // TODO throttle?
       await voiceCommand(message, { allowConnect: true }, async () => {
-        await message.react(emoji(emojis.peepoHappy));
+        await message.react(emoji(customEmoji.peepoHappy));
+      });
+      return;
+    }
+
+    case 'search': {
+      await voiceCommand(message, { allowConnect: true }, async (player) => {
+        await message.react(emojis.thinking);
+
+        const results = await youtube.query(allArgs, 5);
+        if (!results || results.length < 1) {
+          await message.channel.send('No results found');
+          return;
+        }
+
+        const sent = await message.channel.send({
+          embeds: [
+            new MessageEmbed({
+              title: 'Search results',
+              description: results
+                .map((result, i) =>
+                  [
+                    `\`${i}\``,
+                    `"${result.title}"`,
+                    result.channelTitle,
+                    `[:link:](https://youtube.com/watch?v=${result.videoId})`,
+                  ].join(' - '),
+                )
+                .join('\n'),
+            }),
+          ],
+        });
+
+        await Promise.all(results.map(async (_, index) => sent.react(numberEmojis[index])));
+
+        const collected = await sent.awaitReactions({
+          max: 1,
+          time: 30000,
+          filter: (reaction, user) =>
+            !user.bot &&
+            !!reaction.emoji.name &&
+            Object.values(numberEmojis).includes(reaction.emoji.name),
+        });
+
+        const reaction = collected.first();
+        await sent.reactions.removeAll();
+        await sent.delete();
+
+        if (!reaction || !reaction.emoji.name) {
+          await message.react(emojis.cross);
+          return;
+        }
+
+        const matched = Object.entries(numberEmojis).find(
+          ([, emoji]) => reaction.emoji.name === emoji,
+        );
+
+        if (!matched) {
+          await message.react(emojis.cross);
+          return;
+        }
+
+        const selected = Number(matched[0]);
+        if (isNaN(selected) || !results[selected]) {
+          await message.react(emojis.cross);
+          return;
+        }
+
+        const enqueueResult = await player.enqueue([results[selected]]);
+        if (enqueueResult.errors.length > 0 || enqueueResult.successes.length < 1) {
+          await message.react(emojis.cross);
+        }
+
+        await message.channel.send({
+          embeds: [reportEnqueueResult(enqueueResult)],
+        });
+
+        if (!player.playlist.current) {
+          player.next();
+        }
       });
       return;
     }
@@ -62,10 +140,10 @@ export const messageHandler = (client: Client) => async (message: Message) => {
           return;
         }
 
-        await message.react('🤔');
+        await message.react(emojis.thinking);
         const enqueueResult = await player.enqueue(results);
         if (enqueueResult.errors.length > 0 || enqueueResult.successes.length < 1) {
-          await message.react('❌');
+          await message.react(emojis.cross);
         }
 
         await message.channel.send({
@@ -110,7 +188,7 @@ export const messageHandler = (client: Client) => async (message: Message) => {
     case 'clear': {
       await voiceCommand(message, { allowConnect: false }, async (player) => {
         player.playlist.clear();
-        await message.react('🗑️');
+        await message.react(emojis.bin);
       });
       return;
     }

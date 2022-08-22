@@ -114,7 +114,7 @@ export interface QueryResult {
   channelTitle: string;
 }
 
-const query = async (raw: string): Promise<QueryResult[] | null> => {
+const query = async (raw: string, fuzzySearchLimit = 1): Promise<QueryResult[] | null> => {
   const queryStr = normaliseYoutubeUrl(raw);
 
   if (MATCH_VIDEO_HREF.test(queryStr)) {
@@ -162,7 +162,7 @@ const query = async (raw: string): Promise<QueryResult[] | null> => {
   }
 
   logEvent('youtube', 'fuzzy text search', `"${raw}"`);
-  const response = await search(raw).catch((error) => {
+  const response = await search(raw, fuzzySearchLimit).catch((error) => {
     logError('youtube', error, { raw });
     return null;
   });
@@ -171,13 +171,11 @@ const query = async (raw: string): Promise<QueryResult[] | null> => {
     return null;
   }
 
-  return [
-    {
-      videoId: response.data.items[0].id.videoId,
-      title: response.data.items[0].snippet.title,
-      channelTitle: response.data.items[0].snippet.channelTitle,
-    },
-  ];
+  return response.data.items.map((item) => ({
+    videoId: item.id.videoId,
+    title: item.snippet.title,
+    channelTitle: item.snippet.channelTitle,
+  }));
 };
 
 export const youtube = { query, get, list };

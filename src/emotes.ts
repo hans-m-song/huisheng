@@ -1,6 +1,27 @@
 import { BaseGuildEmojiManager } from 'discord.js';
 
 export const emojis = {
+  thinking: '🤔',
+  cross: '❌',
+  bin: '🗑️',
+  search: '🔎',
+};
+
+export const numberEmojis: Record<number | string, string> = {
+  0: '0️⃣',
+  1: '1️⃣',
+  2: '2️⃣',
+  3: '3️⃣',
+  4: '4️⃣',
+  5: '5️⃣',
+  6: '6️⃣',
+  7: '7️⃣',
+  8: '8️⃣',
+  9: '9️⃣',
+  10: '🔟',
+};
+
+export const customEmoji = {
   '4Head': '343915917052346378',
   haHAA: '343915920588144641',
   Kreygasm: '343915922861326337',
