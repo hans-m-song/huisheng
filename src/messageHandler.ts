@@ -72,6 +72,8 @@ export const messageHandler = (client: Client) => async (message: Message) => {
           embeds: [reportEnqueueResult(enqueueResult)],
         });
 
+        await message.suppressEmbeds(true);
+
         if (!player.playlist.current) {
           player.next();
         }
