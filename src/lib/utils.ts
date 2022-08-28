@@ -1,7 +1,7 @@
-import { Message } from 'discord.js';
+import { CommandInteraction, Message } from 'discord.js';
 import { promises as fs } from 'fs';
 import internal from 'stream';
-import { isMatching, P } from 'ts-pattern';
+import { isMatching } from 'ts-pattern';
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type Alias<T> = T & {};
@@ -55,13 +55,16 @@ export const logMessage = (message: Message) =>
     `"${message.content}"`,
   );
 
-export const logError = (event: string, error: any, ...args: unknown[]) => {
-  const unpacked = isMatching({ name: P.string, code: P.any, message: P.string }, error)
-    ? { name: error.name, code: error.code, message: error.code }
-    : error;
+export const logCommandInteraction = (interaction: CommandInteraction) =>
+  logEvent(
+    'interaction',
+    `#${interaction.channel?.id ?? 'unknown'}`,
+    `@${interaction.user.tag}`,
+    interaction.commandName,
+  );
 
-  return logEvent(event, '[ERROR]', ...args, '\n', unpacked);
-};
+export const logError = (event: string, error: any, ...args: unknown[]) =>
+  logEvent(event, '[ERROR]', ...args, '\n', error);
 
 export const createCancellablePromise = <T>(
   executor: (resolve: Resolver<T>, reject: Rejecter) => void,
