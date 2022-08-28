@@ -5,7 +5,7 @@ import {
   demuxProbe,
   NoSubscriberBehavior,
 } from '@discordjs/voice';
-import { MessageEmbed } from 'discord.js';
+import { EmbedBuilder } from 'discord.js';
 import { promises as fs } from 'fs';
 
 import { AudioFile } from './AudioFile';
@@ -100,15 +100,13 @@ export class Player {
   }
 
   getQueueEmbed() {
-    return new MessageEmbed()
-      .setTitle('Queue')
-      .addField('Now playing', this.playlist.current?.toQueueString() ?? 'N/A')
-      .addFields(
-        this.playlist.map((file, i) => ({
-          name: `\`${i}.\` - ${file.title}`,
-          value: [file.artist, file.uploader, secToTime(file.duration)].join(' - '),
-        })),
-      );
+    return new EmbedBuilder().setTitle('Queue').addFields([
+      { name: 'Now playing', value: this.playlist.current?.toQueueString() ?? 'N/A' },
+      ...this.playlist.map((file, i) => ({
+        name: `\`${i}.\` - ${file.title}`,
+        value: [file.artist, file.uploader, secToTime(file.duration)].join(' - '),
+      })),
+    ]);
   }
 }
 
@@ -128,4 +126,31 @@ export const getPlayer = (guildId: string): Player => {
   const player = new Player();
   players.set(guildId, player);
   return player;
+};
+
+export const reportEnqueueResult = ({ successes, errors }: EnqueueResult): EmbedBuilder => {
+  const errorContent = errors.map((query) => {
+    const url = `https://youtube.com/watch?v=${query.videoId}`;
+    return `${query.title} - ${query.channelTitle} - [:link:](${url})`;
+  });
+
+  const errorText = errorContent.length > 0 ? ['', 'Errors:', ...errorContent].join('\n') : '';
+
+  if (successes.length < 1) {
+    return new EmbedBuilder().setTitle('An error occurred').setDescription(errorContent.join('\n'));
+  }
+
+  if (successes.length === 1) {
+    return successes[0]
+      .toEmbed()
+      .setTitle(successes[0].title ?? 'Unknown')
+      .setDescription(errorText);
+  }
+
+  const queueEntryStr = (file: AudioFile, index: number) =>
+    `\`${index}.\` ${file.toLink()} - ${file.artist}`;
+
+  return new EmbedBuilder()
+    .setTitle(`Enqueued ${successes.length} items`)
+    .setDescription(`${successes.map(queueEntryStr).join('\n')}\n${errorText}`);
 };

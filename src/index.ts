@@ -16,9 +16,7 @@ import { logEvent } from './lib/utils';
   await Bucket.ping();
   const { client, reason } = await initializeClient();
 
-  console.log();
   logEvent('exit', { reason: await reason });
-
   destroyVoiceConnections();
   client.user?.setStatus('invisible');
   client.destroy();

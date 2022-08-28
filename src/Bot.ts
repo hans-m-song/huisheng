@@ -1,9 +1,14 @@
-import { Client, Intents } from 'discord.js';
+import { ActivityType, Client, GatewayIntentBits, Partials } from 'discord.js';
 
 import { config } from './config';
-import { createCancellablePromise, logError, logEvent } from './lib/utils';
-import { messageHandler } from './messageHandler';
-import { voiceStateHandler } from './voiceStateHandler';
+import {
+  onMessageCreate,
+  onInteractionCreate,
+  onError,
+  onInvalidated,
+  onVoiceStateUpdate,
+} from './events';
+import { createCancellablePromise, logEvent } from './lib/utils';
 
 const authorizeUrl =
   'https://discord.com/api/oauth2/authorize?' +
@@ -16,32 +21,31 @@ const authorizeUrl =
 export const initializeClient = async () => {
   const client = new Client({
     // Required for direct messages
-    partials: ['CHANNEL'],
+    partials: [Partials.Channel],
     intents: [
-      Intents.FLAGS.DIRECT_MESSAGES,
-      Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
-      Intents.FLAGS.GUILDS,
-      Intents.FLAGS.GUILD_MESSAGES,
-      Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-      Intents.FLAGS.GUILD_VOICE_STATES,
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildVoiceStates,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.GuildMessageReactions,
+      GatewayIntentBits.DirectMessages,
+      GatewayIntentBits.DirectMessageReactions,
+      GatewayIntentBits.MessageContent,
     ],
   });
 
   const { promise: reason } = exitPromise(client);
-  client.on('error', (error) => logError('client', error));
-  client.on('messageCreate', messageHandler(client));
-  client.on('voiceStateUpdate', voiceStateHandler(client));
-
-  client.on('invalidated', () => {
-    logEvent('invalidated', 'client received "invalidated" event');
-  });
+  client.on('error', onError);
+  client.on('invalidated', onInvalidated);
+  client.on('messageCreate', onMessageCreate(client));
+  client.on('interactionCreate', onInteractionCreate(client));
+  client.on('voiceStateUpdate', onVoiceStateUpdate(client));
 
   const ready = new Promise<void>((resolve) => {
     client.once('ready', (client) => {
       logEvent('ready', `@${client.user.tag}, invite: ${authorizeUrl}`);
       client.user.setPresence({
         status: 'online',
-        activities: [{ type: 'WATCHING', name: 'Shrek 2' }],
+        activities: [{ type: ActivityType.Watching, name: 'Shrek 2' }],
       });
       resolve();
     });

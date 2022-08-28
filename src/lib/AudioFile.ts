@@ -1,4 +1,4 @@
-import { EmbedField, MessageEmbed } from 'discord.js';
+import { EmbedField, EmbedBuilder } from 'discord.js';
 import path from 'path';
 import { isMatching, P } from 'ts-pattern';
 
@@ -106,12 +106,14 @@ export class AudioFile implements AudioFileMetadata {
   }
 
   toEmbed() {
-    return new MessageEmbed()
+    return new EmbedBuilder()
       .setURL(this.url)
       .setTitle(this.title ?? 'Unknown')
-      .addField('Artist', this.artist ?? 'Unknown', true)
-      .addField('Uploader', this.uploader, true)
-      .addField('Duration', secToTime(this.duration) ?? 'Unknown', true);
+      .addFields([
+        { name: 'Artist', value: this.artist ?? 'Unknown', inline: true },
+        { name: 'Uploader', value: this.uploader, inline: true },
+        { name: 'Duration', value: secToTime(this.duration) ?? 'Unknown', inline: true },
+      ]);
   }
 
   toEmbedField(prefix?: string): EmbedField {
