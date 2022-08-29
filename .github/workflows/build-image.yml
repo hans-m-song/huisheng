@@ -22,9 +22,13 @@ jobs:
 
       - uses: actions/checkout@v3
 
-      - run: docker tag ${{ env.image }} ${{ env.image }}:previous
-
-      - run: docker push ${{ env.image }}:previous
+      - run: |
+          manifest=$( docker manifest inspect ${{ env.image }}:latest )
+          aws ecr-public put-image \
+            --region us-east-1 \
+            --repository-name huisheng \
+            --image-manifest '$manifest' \
+            --image-tag previous
 
       - run: |
           docker run --rm \
