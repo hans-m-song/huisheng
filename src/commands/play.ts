@@ -2,7 +2,7 @@ import { AudioPlayerStatus } from '@discordjs/voice';
 import { SlashCommandBuilder, SlashCommandStringOption } from 'discord.js';
 
 import { emojis } from '../emotes';
-import { voiceCommand } from '../lib/Audio';
+import { messageVoiceCommand } from '../lib/Audio';
 import { Command } from '../lib/commands';
 import { reportEnqueueResult } from '../lib/Player';
 import { youtube } from '../lib/Youtube';
@@ -25,7 +25,7 @@ export const play: Command = {
     ),
 
   onMessage: async (_, message, args) => {
-    await voiceCommand(message, { allowConnect: true }, async (player) => {
+    await messageVoiceCommand(message, { allowConnect: true }, async (player) => {
       if (args.length < 1 && player.instance.state.status === AudioPlayerStatus.Paused) {
         player.instance.unpause();
         return;

@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-import { voiceCommand } from '../lib/Audio';
+import { messageVoiceCommand } from '../lib/Audio';
 import { Command } from '../lib/commands';
 
 export const remove: Command = {
@@ -9,7 +9,7 @@ export const remove: Command = {
     .setDescription('Remove a track from the playlist'),
 
   onMessage: async (_, message, args) => {
-    await voiceCommand(message, { allowConnect: false }, async (player) => {
+    await messageVoiceCommand(message, { allowConnect: false }, async (player) => {
       const [position] = args;
       if (typeof position !== 'number') {
         return;

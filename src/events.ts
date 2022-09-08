@@ -39,24 +39,6 @@ export const onMessageCreate =
 export const onInteractionCreate =
   (client: Client): ClientEventHandler<'interactionCreate'> =>
   async (interaction) => {
-    console.log('interaction', {
-      inGuild: interaction.inGuild(),
-      inCachedGuild: interaction.inCachedGuild(),
-      inRawGuild: interaction.inRawGuild(),
-      type: interaction.type,
-      isButton: interaction.isButton(),
-      isAutocomplete: interaction.isAutocomplete(),
-      isChatInputCommand: interaction.isChatInputCommand(),
-      isCommand: interaction.isCommand(),
-      isContextMenuCommand: interaction.isContextMenuCommand(),
-      isMessageComponent: interaction.isMessageComponent(),
-      isMessageContextMenuCommand: interaction.isMessageContextMenuCommand(),
-      isModalSubmit: interaction.isModalSubmit(),
-      isUserContextMenuCommand: interaction.isUserContextMenuCommand(),
-      isSelectMenu: interaction.isSelectMenu(),
-      isRepliable: interaction.isRepliable(),
-    });
-
     if (!interaction.isChatInputCommand()) {
       return;
     }

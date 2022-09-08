@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 
 import { customEmoji } from '../emotes';
-import { voiceCommand } from '../lib/Audio';
+import { messageVoiceCommand } from '../lib/Audio';
 import { Command } from '../lib/commands';
 
 export const gtfo: Command = {
@@ -10,7 +10,7 @@ export const gtfo: Command = {
     .setDescription('Kick the bot from the voice channel'),
 
   onMessage: async (context, message) => {
-    await voiceCommand(message, { allowConnect: false }, async (player, connection) => {
+    await messageVoiceCommand(message, { allowConnect: false }, async (player, connection) => {
       player.instance.pause();
       await message.react(context.emoji(customEmoji.FeelsCarlosMan));
       connection.disconnect();

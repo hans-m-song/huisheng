@@ -141,10 +141,12 @@ export const reportEnqueueResult = ({ successes, errors }: EnqueueResult): Embed
   }
 
   if (successes.length === 1) {
-    return successes[0]
-      .toEmbed()
-      .setTitle(successes[0].title ?? 'Unknown')
-      .setDescription(errorText);
+    const embed = successes[0].toEmbed().setTitle(successes[0].title ?? 'Unknown');
+    if (errorText.length > 0) {
+      embed.setDescription(errorText);
+    }
+
+    return embed;
   }
 
   const queueEntryStr = (file: AudioFile, index: number) =>

@@ -1,15 +1,18 @@
 import {
   ActionRowBuilder,
   ButtonBuilder,
+  ButtonStyle,
   EmbedBuilder,
+  Message,
   SlashCommandBuilder,
   SlashCommandStringOption,
 } from 'discord.js';
 
 import { emojis, numberEmojis } from '../emotes';
-import { voiceCommand } from '../lib/Audio';
+import { interactionVoiceCommand, messageVoiceCommand } from '../lib/Audio';
 import { Command } from '../lib/commands';
 import { reportEnqueueResult } from '../lib/Player';
+import { collect } from '../lib/utils';
 import { QueryResult, youtube } from '../lib/Youtube';
 
 const searchResultEmbed = (results: QueryResult[]) =>
@@ -41,7 +44,7 @@ export const search: Command = {
     ),
 
   onMessage: async (_, message, args) => {
-    await voiceCommand(message, { allowConnect: true }, async (player) => {
+    await messageVoiceCommand(message, { allowConnect: true }, async (player) => {
       await message.react(emojis.thinking);
 
       const results = await youtube.query(args.join(' '), 5);
@@ -99,5 +102,62 @@ export const search: Command = {
         player.next();
       }
     });
+  },
+
+  onInteraction: async (_, interaction) => {
+    await interactionVoiceCommand(
+      interaction,
+      { allowConnect: true },
+      async (player, _, channel) => {
+        const query = interaction.options.getString('query');
+        if (!query) {
+          await interaction.reply('Must provide a query');
+          return;
+        }
+
+        const results = await youtube.query(query, 5);
+        if (!results || results.length < 1) {
+          await interaction.reply('No results found');
+          return;
+        }
+
+        await interaction.reply({
+          content: 'Pick an option',
+          // embeds: [searchResultEmbed(results)],
+          embeds: [],
+          components: results.map(
+            (result, i) =>
+              new ActionRowBuilder<ButtonBuilder>({
+                components: [
+                  new ButtonBuilder()
+                    .setCustomId(`${i}`)
+                    .setLabel(`${result.title} - ${result.channelTitle}`)
+                    .setStyle(ButtonStyle.Secondary),
+                ],
+              }),
+          ),
+        });
+
+        const collected = await collect(channel.createMessageComponentCollector({ max: 1 }));
+        if (collected.size < 1) {
+          return;
+        }
+
+        const selected = collected.first();
+        const index = Number(selected?.customId);
+        if (!selected || isNaN(index) || !results[index]) {
+          return;
+        }
+
+        await selected.deferUpdate();
+        const enqueueResult = await player.enqueue([results[index]]);
+        await interaction.deleteReply();
+        await channel.send({ embeds: [reportEnqueueResult(enqueueResult)] });
+
+        if (!player.playlist.current) {
+          player.next();
+        }
+      },
+    );
   },
 };

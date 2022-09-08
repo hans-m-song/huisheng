@@ -1,4 +1,4 @@
-import { CommandInteraction, Message } from 'discord.js';
+import { Collection, Collector, CommandInteraction, Message } from 'discord.js';
 import { promises as fs } from 'fs';
 import internal from 'stream';
 import { isMatching } from 'ts-pattern';
@@ -173,3 +173,8 @@ export const readStream = <T = Buffer>(stream: internal.Readable): Promise<T[]> 
     stream.on('data', (chunk) => data.push(chunk));
   });
 };
+
+export const collect = <K, V, F extends unknown[] = []>(collector: Collector<K, V, F>) =>
+  new Promise<Collection<K, V>>((resolve) => {
+    collector.once('end', resolve);
+  });

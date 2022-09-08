@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 
 import { customEmoji } from '../emotes';
-import { voiceCommand } from '../lib/Audio';
+import { messageVoiceCommand } from '../lib/Audio';
 import { Command } from '../lib/commands';
 
 export const summon: Command = {
@@ -10,7 +10,7 @@ export const summon: Command = {
     .setDescription('Summon bot into a voice channel'),
 
   onMessage: async (context, message) => {
-    await voiceCommand(message, { allowConnect: true }, async () => {
+    await messageVoiceCommand(message, { allowConnect: true }, async () => {
       await message.react(context.emoji(customEmoji.peepoHappy));
     });
   },
