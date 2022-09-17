@@ -13,8 +13,6 @@ import { Queue } from './Queue';
 import { logError, logEvent, secToTime } from './utils';
 import { QueryResult } from './Youtube';
 
-export const PLAYER_COLLECTION_NAME = 'player-cache';
-
 export class Player {
   playlist = new Queue<AudioFile>();
   instance = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause } })

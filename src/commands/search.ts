@@ -3,7 +3,6 @@ import {
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
-  Message,
   SlashCommandBuilder,
   SlashCommandStringOption,
 } from 'discord.js';

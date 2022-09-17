@@ -75,6 +75,10 @@ export const onVoiceStateUpdate =
       shouldLeave,
     });
 
+    if (!shouldLeave) {
+      return;
+    }
+
     const connection = getVoiceConnection(oldState.channel.guild.id);
     if (!connection) {
       return;
