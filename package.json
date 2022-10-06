@@ -22,7 +22,7 @@
     "discord.js": "^14.3.0",
     "discord-api-types": "^0.37.5",
     "dotenv": "^16.0.0",
-    "erlpack": "discord/erlpack",
+    "erlpack": "0.1.4",
     "minio": "^7.0.28",
     "p-limit": "^4.0.0",
     "source-map-support": "^0.5.21",
