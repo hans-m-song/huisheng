@@ -24,7 +24,6 @@
     "dotenv": "^16.0.0",
     "erlpack": "discord/erlpack",
     "minio": "^7.0.28",
-    "p-limit": "^4.0.0",
     "source-map-support": "^0.5.21",
     "ts-pattern": "^4.0.1",
     "tweetnacl": "^1.0.3",
