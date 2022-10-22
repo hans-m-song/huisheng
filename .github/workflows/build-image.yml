@@ -14,33 +14,26 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      - uses: actions/checkout@v3
+
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-east-1
           aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
 
-      - uses: actions/checkout@v3
+      - name: Login to Amazon ECR Public
+        id: login-ecr-public
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          registry-type: public
 
-      # TODO tag previous image
+      - uses: axatol/actions/build-push@release
+        with:
+          registry: public.ecr.aws/axatol
+          repository: huisheng
 
-      - run: |
-          docker run --rm \
-            -v $(pwd):/workspace \
-            -e AWS_ACCESS_KEY \
-            -e AWS_SECRET_ACCESS_KEY \
-            -e AWS_SDK_LOAD_CONFIG=true \
-            gcr.io/kaniko-project/executor:debug \
-              --cache \
-              --destination=${{ env.image }}:latest \
-              --reproducible \
-              --target=runtime
-        env:
-          AWS_REGION: us-east-1
-          AWS_ACCESS_KEY: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
-
-      - uses: hans-m-song/actions/prune-ecr-repository@master
+      - uses: axatol/actions/prune-ecr-repository@release
         with:
           aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
