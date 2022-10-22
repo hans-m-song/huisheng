@@ -106,7 +106,7 @@ const normaliseYoutubeUrl = (url: string) =>
     .replace('/playlist', '/watch')
     .replace('youtube.com/shorts/', 'youtube.com/watch?v=');
 
-const MATCH_VIDEO_HREF = /^https:\/\/.*?\.youtube.com\/watch\?v=[^\s]+$/;
+const MATCH_VIDEO_HREF = /^https:\/\/.*?\.youtube.com\//;
 
 export interface QueryResult {
   videoId: string;
