@@ -17,8 +17,6 @@ WORKDIR /app
 COPY ./tsconfig.json ./package.json ./yarn.lock ./
 
 RUN yarn install
-COPY ./src ./src
-RUN yarn compile
 ARG GITHUB_SHA=unknown
 ENV GITHUB_SHA=${GITHUB_SHA}
-CMD node dist/index.js
+CMD yarn debug
