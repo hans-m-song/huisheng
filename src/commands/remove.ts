@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 
+import { emojis } from '../emotes';
 import { messageVoiceCommand } from '../lib/Audio';
 import { Command } from '../lib/commands';
 
@@ -11,11 +12,13 @@ export const remove: Command = {
   onMessage: async (_, message, args) => {
     await messageVoiceCommand(message, { allowConnect: false }, async (player) => {
       const [position] = args;
-      if (typeof position !== 'number') {
+      const index = parseInt(position);
+      if (isNaN(index)) {
+        await message.react(emojis.cross);
         return;
       }
 
-      player.playlist.remove(position);
+      player.playlist.remove(index);
       await message.react('🗑️');
     });
   },
