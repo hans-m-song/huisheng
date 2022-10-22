@@ -62,37 +62,37 @@ export class Player {
     const errors: QueryResult[] = [];
     const successes: AudioFile[] = [];
 
-    await Promise.all(
-      results.map(async (result) => {
-        const { videoId } = result;
-        const url = `https://youtube.com/watch?v=${videoId}`;
-        const fromBucket = await AudioFile.fromBucketTags(result.videoId);
-        const file = fromBucket ?? (await AudioFile.fromUrl(url));
-        if (!file) {
+    await results.reduce(async (previous, result) => {
+      await previous;
+      const { videoId } = result;
+
+      const url = `https://youtube.com/watch?v=${videoId}`;
+      const fromBucket = await AudioFile.fromBucketTags(result.videoId);
+      const file = fromBucket ?? (await AudioFile.fromUrl(url));
+      if (!file) {
+        errors.push(result);
+        return;
+      }
+
+      if (!fromBucket) {
+        if (!(await file.saveToBucket())) {
           errors.push(result);
-          return;
         }
 
-        if (!fromBucket) {
-          if (!(await file.saveToBucket())) {
-            errors.push(result);
-          }
+        await fs.unlink(file.filepath).catch((error) => {
+          logError('Player.enqueue', error, 'failed to remove file', { path: file.filepath });
+        });
+      }
 
-          await fs.unlink(file.filepath).catch((error) => {
-            logError('Player.enqueue', error, 'failed to remove file', { path: file.filepath });
-          });
-        }
+      await file.updateBucketMetadata();
+      logEvent('Player.enqueue', { videoId, path: file.filepath });
+      this.playlist.enqueue(file);
+      successes.push(file);
 
-        await file.updateBucketMetadata();
-        logEvent('Player.enqueue', { videoId, path: file.filepath });
-        this.playlist.enqueue(file);
-        successes.push(file);
-
-        if (!this.playlist.current) {
-          this.next();
-        }
-      }),
-    );
+      if (!this.playlist.current) {
+        this.next();
+      }
+    }, Promise.resolve());
 
     return { errors, successes };
   }
