@@ -4,7 +4,6 @@ services:
   huisheng:
     build:
       context: ./
-      target: runtime
     env_file: .env
     container_name: huisheng
     volumes:
@@ -15,7 +14,7 @@ services:
   huisheng-debug:
     build:
       context: ./
-      target: debug
+      dockerfile: Dockerfile.debug
     env_file: .env
     container_name: huisheng-debug
     volumes:
