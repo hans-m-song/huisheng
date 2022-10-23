@@ -32,6 +32,7 @@ jobs:
         with:
           registry: public.ecr.aws/axatol
           repository: huisheng
+          build-args: --build-arg ${{ github.sha }}
 
       - uses: axatol/actions/prune-ecr-repository@release
         with:
