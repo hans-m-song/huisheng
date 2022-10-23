@@ -12,6 +12,9 @@ export type Rejecter = (reason: any) => void;
 export const isNotNullish = <T>(value: T | null | undefined): value is T =>
   value !== null && value !== undefined;
 
+export const isNotNullishEntry = <T>(pair: [string, T | null | undefined]): pair is [string, T] =>
+  pair[1] !== null && pair[1] !== undefined;
+
 export const clamp = (value: number, lower: number, upper: number) =>
   Math.max(lower, Math.min(upper, value));
 

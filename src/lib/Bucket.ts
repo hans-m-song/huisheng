@@ -2,7 +2,7 @@ import * as Minio from 'minio';
 import internal from 'stream';
 
 import { config } from '../config';
-import { logError, logEvent, readStream } from './utils';
+import { isNotNullishEntry, logError, logEvent, readStream } from './utils';
 
 const client = new Minio.Client({
   endPoint: config.minioEndpoint,
@@ -15,16 +15,14 @@ const client = new Minio.Client({
 type TagInput = Record<string, string | number | boolean | undefined | null>;
 
 const encodeTagList = (tags: TagInput): Minio.TagList =>
-  Object.entries(tags).reduce(
-    (result, [key, value]) =>
-      value === undefined || value === null
-        ? result
-        : { ...result, [key]: encodeURIComponent(value) },
-    {} as Minio.TagList,
+  Object.fromEntries(
+    Object.entries(tags)
+      .filter(isNotNullishEntry)
+      .map(([key, value]) => [key, encodeURIComponent(value)]),
   );
 
 const flattenTagList = (tags: Minio.Tag[]): Minio.TagList =>
-  tags.reduce((result, { Key, Value }) => ({ ...result, [Key]: decodeURIComponent(Value) }), {});
+  Object.fromEntries(tags.map(({ Key, Value }) => [Key, decodeURIComponent(Value)]));
 
 export class Bucket {
   static ping = async () => {
@@ -50,20 +48,20 @@ export class Bucket {
     }
   };
 
-  static setTags = async (name: string, tags?: TagInput): Promise<boolean> => {
-    if (tags && Object.keys(tags).length > 0) {
-      try {
-        const normalised = encodeTagList(tags);
-        await client.setObjectTagging(config.minioBucketName, name, normalised);
-        return true;
-      } catch (error) {
-        logError('Bucket.setTags', error, { name, tags });
-        return false;
-      }
+  static setTags = async (name: string, tags: TagInput): Promise<boolean> => {
+    if (Object.keys(tags).length < 1) {
+      logEvent('Bucket.setTags', 'no tags to set', { name });
+      return true;
     }
 
-    logEvent('Bucket.setTags', 'no tags to set', { name });
-    return true;
+    try {
+      const normalised = encodeTagList(tags);
+      await client.setObjectTagging(config.minioBucketName, name, normalised);
+      return true;
+    } catch (error) {
+      logError('Bucket.setTags', error, { name, tags });
+      return false;
+    }
   };
 
   static list = async (prefix: string, recursive = true): Promise<Minio.BucketItem[] | null> => {
@@ -95,7 +93,10 @@ export class Bucket {
       logEvent('Bucket.stat', { name, stats });
       return stats;
     } catch (error) {
-      logError('Bucket.stat', error, { name });
+      if (!(error as any).message.includes('Not Found')) {
+        logError('Bucket.stat', error, { name });
+      }
+
       return null;
     }
   };
