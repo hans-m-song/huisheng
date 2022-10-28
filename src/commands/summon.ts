@@ -11,7 +11,8 @@ export const summon: Command = {
 
   onMessage: async (context, message) => {
     await messageVoiceCommand(message, { allowConnect: true }, async () => {
-      await message.react(context.emoji(customEmoji.peepoHappy));
+      const reaction = Math.random() < 0.1 ? customEmoji.FiteGASM : customEmoji.peepoHappy;
+      await message.react(context.emoji(reaction));
     });
   },
 };
