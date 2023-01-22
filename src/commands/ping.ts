@@ -7,7 +7,9 @@ export const ping: Command = {
     .setName('ping')
     .setDescription('Check if bot is healthy and configured correctly'),
 
-  onMessage: async (_, message) => {
-    await message.channel.send('pong');
+  onMessage: async ({ client }, message) => {
+    const ping = client.ws.ping;
+    const latency = Date.now() - message.createdTimestamp;
+    await message.channel.send(`pong\nping: ${ping}, latency: ${latency}`);
   },
 };
