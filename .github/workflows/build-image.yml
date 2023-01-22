@@ -28,7 +28,7 @@ jobs:
         with:
           registry-type: public
 
-      - uses: axatol/actions/build-push@release
+      - uses: axatol/actions/docker-build-push@release
         with:
           registry: public.ecr.aws/axatol
           repository: huisheng
@@ -36,6 +36,4 @@ jobs:
 
       - uses: axatol/actions/prune-ecr-repository@release
         with:
-          aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
-          repository-name: huisheng
+          image: public.ecr.aws/axatol/home-assistant-integrations
