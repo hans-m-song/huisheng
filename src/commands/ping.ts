@@ -11,10 +11,10 @@ export const ping: Command = {
   onMessage: async ({ client }, message) => {
     const voice = message.guild && getVoiceConnection(message.guild.id);
     const embed = new EmbedBuilder().setDescription('pong').addFields([
-      { name: 'API ping', value: `${client.ws.ping}ms` },
-      { name: 'API latency', value: `${Date.now() - message.createdTimestamp}ms` },
-      { name: 'Voice ping (ws)', value: `${voice ? `${voice.ping.ws}ms` : 'N/A'}` },
-      { name: 'Voice ping (udp)', value: `${voice ? `${voice.ping.udp}ms` : 'N/A'}` },
+      { name: 'API ping', value: `${client.ws.ping}ms`, inline: true },
+      { name: 'API latency', value: `${Date.now() - message.createdTimestamp}ms`, inline: true },
+      { name: 'Voice ping (ws)', value: `${voice ? `${voice.ping.ws}ms` : 'N/A'}`, inline: true },
+      { name: 'Voice ping (udp)', value: `${voice ? `${voice.ping.udp}ms` : 'N/A'}`, inline: true },
     ]);
 
     await message.channel.send({ embeds: [embed] });
