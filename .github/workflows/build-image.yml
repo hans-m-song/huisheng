@@ -16,11 +16,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - uses: github/actions-oidc-debugger@main
+        with:
+          audience: https://sts.amazonaws.com
+
+      - run: |
+          arn="${{ secrets.AWS_ECR_IMAGE_PUBLISHER_ROLE_ARN }}"
+          echo "length is ${#arn}"
+
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: ap-southeast-2
           role-to-assume: ${{ secrets.AWS_ECR_IMAGE_PUBLISHER_ROLE_ARN }}
-          role-session-name: hans-m-song_iac_cdk-aws_deploy
+          role-session-name: ${{ github.triggering_actor }}-huisheng-build_image-${{ github.job }}
           role-skip-session-tagging: true
           role-duration-seconds: 3600
 
