@@ -19,7 +19,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: ap-southeast-2
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ECR_IMAGE_PUBLISHER_ROLE_ARN }}
           role-session-name: hans-m-song_iac_cdk-aws_deploy
           role-skip-session-tagging: true
           role-duration-seconds: 3600
