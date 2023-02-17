@@ -18,11 +18,11 @@ const encodeTagList = (tags: TagInput): Minio.TagList =>
   Object.fromEntries(
     Object.entries(tags)
       .filter(isNotNullishEntry)
-      .map(([key, value]) => [key, encodeURIComponent(value)]),
+      .map(([key, value]) => [key, Buffer.from(`${value}`).toString('base64')]),
   );
 
 const flattenTagList = (tags: Minio.Tag[]): Minio.TagList =>
-  Object.fromEntries(tags.map(({ Key, Value }) => [Key, decodeURIComponent(Value)]));
+  Object.fromEntries(tags.map(({ Key, Value }) => [Key, Buffer.from(Value).toString('ascii')]));
 
 export class Bucket {
   static ping = async () => {
