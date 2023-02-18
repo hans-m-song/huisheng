@@ -40,6 +40,11 @@ const args = [
 
   // post-processing options
   '--extract-audio',
+  '--audio-format',
+  'opus',
+  '--audio-quality',
+  '0',
+  '--no-keep-video',
 ];
 
 const execute = async (target: string) => {

@@ -9,9 +9,10 @@ RUN apt-get update \
   python3 \
   && rm -rf /var/lib/apt/lists/* \
   && ln /usr/bin/python3 /usr/bin/python \
-  && curl -L https://github.com/ytdl-patched/yt-dlp/releases/download/2023.02.17.334/yt-dlp -o /usr/local/bin/yt-dlp \
-  && chmod a+rx /usr/local/bin/yt-dlp \
   && yarn global add node-gyp
+
+RUN curl -L https://github.com/ytdl-patched/yt-dlp/releases/download/2023.02.17.334/yt-dlp -o /usr/local/bin/yt-dlp \
+  && chmod a+rx /usr/local/bin/yt-dlp
 
 WORKDIR /app
 COPY ./tsconfig.json ./package.json ./yarn.lock ./
