@@ -36,7 +36,20 @@ const encodeTagList = (tags: TagInput): Minio.TagList =>
 
 const flattenTagList = (tags: Minio.Tag[]): Minio.TagList =>
   Object.fromEntries(
-    tags.map(({ Key, Value }) => [Key, Buffer.from(`${Value}`, 'base64').toString('ascii')]),
+    tags.map(({ Key, Value }) => {
+      const value = Buffer.from(`${Value}`, 'base64').toString('ascii');
+
+      const asNumber = parseInt(value);
+      if (!isNaN(asNumber)) {
+        return [Key, value];
+      }
+
+      if (['true', 'false'].includes(Value)) {
+        return [Key, Value === 'true'];
+      }
+
+      return [Key, Value];
+    }),
   );
 
 export class Bucket {

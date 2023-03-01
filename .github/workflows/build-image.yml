@@ -1,6 +1,8 @@
 name: Build
 
 on:
+  workflow_dispatch:
+
   push:
     branches:
       - master
@@ -36,3 +38,7 @@ jobs:
         with:
           image: public.ecr.aws/axatol/huisheng
           build-args: --build-arg GITHUB_SHA=${{ github.sha }}
+
+      - uses: axatol/prune-ecr-repository@release
+        with:
+          repository: ${{ env.image }}
