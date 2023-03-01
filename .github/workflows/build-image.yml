@@ -41,4 +41,4 @@ jobs:
 
       - uses: axatol/actions/prune-ecr-repository@release
         with:
-          repository: ${{ env.image }}
+          repository-name: axatol/huisheng
