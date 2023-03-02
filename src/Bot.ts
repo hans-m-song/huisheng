@@ -59,6 +59,5 @@ export const initializeClient = async () => {
 const exitPromise = (client: Client<true>) =>
   createCancellablePromise<string>((resolve) => {
     process.once('SIGINT', () => resolve('caught sigint'));
-    process.once('SIGTERM', () => resolve('caught sigterm'));
     client.once('invalidated', () => resolve('session invalidated'));
   });

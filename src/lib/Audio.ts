@@ -168,6 +168,18 @@ const initializeVoiceConnection = async (channel: VoiceBasedChannel): Promise<Vo
 
   voice.on('error', (error) => logError('voice', error));
 
+  [
+    VoiceConnectionStatus.Connecting,
+    VoiceConnectionStatus.Destroyed,
+    VoiceConnectionStatus.Disconnected,
+    VoiceConnectionStatus.Ready,
+    VoiceConnectionStatus.Signalling,
+  ].map((status) =>
+    voice.on(status, (oldState, newState) => {
+      logEvent('audio', `#${channel.name}`, 'state transitioned', { oldState, newState });
+    }),
+  );
+
   await new Promise<void>((resolve) => {
     voice.once(VoiceConnectionStatus.Ready, () => {
       logEvent('audio', `#${channel.name}`, 'connected');

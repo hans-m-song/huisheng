@@ -18,20 +18,7 @@ const encodeTagList = (tags: TagInput): Minio.TagList =>
   Object.fromEntries(
     Object.entries(tags)
       .filter(isNotNullishEntry)
-      .map(([key, value]) => [key, Buffer.from(`${value}`).toString('hex')])
-      // https://docs.aws.amazon.com/directoryservice/latest/devguide/API_Tag.html
-      .filter(([key, value]) => {
-        if (!/^([\p{L}\p{Z}\p{N}_.:/=+\-@]*)$/.test(key)) {
-          logEvent('encodeTagList', 'invalid key', { key, value });
-          return false;
-        }
-        if (!/^([\p{L}\p{Z}\p{N}_.:/=+\-@]*)$/.test(value)) {
-          logEvent('encodeTagList', 'invalid value', { key, value });
-          return false;
-        }
-
-        return true;
-      }),
+      .map(([key, value]) => [key, Buffer.from(`${value}`).toString('hex')]),
   );
 
 const flattenTagList = (tags: Minio.Tag[]): Minio.TagList =>

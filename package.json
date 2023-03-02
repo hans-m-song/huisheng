@@ -19,8 +19,8 @@
     "@discordjs/voice": "^0.11.0",
     "axios": "^0.26.1",
     "bufferutil": "^4.0.6",
-    "discord.js": "^14.3.0",
     "discord-api-types": "^0.37.5",
+    "discord.js": "^14.3.0",
     "dotenv": "^16.0.0",
     "erlpack": "discord/erlpack",
     "minio": "^7.0.28",
@@ -40,7 +40,8 @@
     "eslint-plugin-import": "^2.26.0",
     "nodemon": "^2.0.15",
     "prettier": "^2.7.1",
-    "ts-node": "^10.7.0"
+    "ts-node": "^10.7.0",
+    "tsx": "^3.12.3"
   },
   "engines": {
     "node": ">=16"
