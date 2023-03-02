@@ -93,12 +93,11 @@ export class AudioFile implements AudioFileMetadata {
       return null;
     }
 
-    const tags = await Bucket.getTags(objectName);
-    if (!tags) {
+    const metadata = await Bucket.getTags(objectName);
+    if (!metadata) {
       return null;
     }
 
-    const metadata = { ...tags, duration: parseInt(tags?.duration) };
     if (!isAudioFileMetadata(metadata)) {
       logEvent('AudioFile', 'bucket tags was not of type AudioFileMetadata', metadata);
       return null;

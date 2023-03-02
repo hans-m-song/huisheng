@@ -54,7 +54,7 @@ export class Bucket {
   static getTags = async (name: string): Promise<Minio.TagList | null> => {
     try {
       const result = await client.getObjectTagging(config.minioBucketName, name);
-      const tags = flattenTagList(result.flat());
+      const tags = flattenTagList(result);
       logEvent('Bucket.getTags', { name, tags });
       return tags;
     } catch (error) {
