@@ -1,4 +1,5 @@
 import { EmbedField, EmbedBuilder } from 'discord.js';
+import fs from 'fs/promises';
 import path from 'path';
 import { isMatching, P } from 'ts-pattern';
 
@@ -15,6 +16,7 @@ export const isAudioFileMetadata = isMatching({
   uploader: P.string,
   artist: P.string,
   duration: P.number,
+  acodec: P.string,
 });
 
 export class AudioFile implements AudioFileMetadata {
@@ -25,6 +27,7 @@ export class AudioFile implements AudioFileMetadata {
   uploader: string;
   artist: string;
   duration: number;
+  acodec: string;
 
   constructor(props: AudioFileMetadata) {
     this.videoId = props.videoId;
@@ -34,6 +37,7 @@ export class AudioFile implements AudioFileMetadata {
     this.uploader = props.uploader;
     this.artist = props.artist;
     this.duration = props.duration;
+    this.acodec = props.acodec;
   }
 
   static async fromUrl(target: string): Promise<AudioFile | null> {
@@ -46,8 +50,20 @@ export class AudioFile implements AudioFileMetadata {
   }
 
   static async fromInfoJson(data: any): Promise<AudioFile | null> {
-    const { id, webpage_url, title, duration, uploader, artist, acodec } = data ?? {};
-    const filepath = path.join(downloaderOutputDir, `${id}.${acodec}`);
+    const { id, webpage_url, title, duration, uploader, artist, acodec, ext, audio_ext, filename } =
+      data ?? {};
+
+    const possibleFilepaths = [
+      filename,
+      path.join(downloaderOutputDir, `${id}.${ext}`),
+      path.join(downloaderOutputDir, `${id}.${audio_ext}`),
+    ];
+
+    const filepath = await getByFilepath(possibleFilepaths);
+    if (!filepath) {
+      logError('AudioFile.fromInfoJson', 'could not find file', possibleFilepaths);
+      return null;
+    }
 
     const metadata: AudioFileMetadata = {
       videoId: id,
@@ -57,6 +73,7 @@ export class AudioFile implements AudioFileMetadata {
       uploader,
       artist: artist ?? 'Unknown',
       duration,
+      acodec,
     };
     logEvent('AudioFile.fromInfoJson', metadata);
 
@@ -151,3 +168,16 @@ export class AudioFile implements AudioFileMetadata {
     };
   }
 }
+
+const getByFilepath = async (filepaths: string[]) => {
+  for (const filepath of filepaths) {
+    try {
+      await fs.stat(filepath);
+      return filepath;
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+};
