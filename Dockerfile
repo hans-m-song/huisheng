@@ -15,11 +15,11 @@ RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o 
   && chmod a+rx /usr/local/bin/yt-dlp
 
 WORKDIR /app
-COPY ./tsconfig.json ./package.json ./yarn.lock ./
+COPY ./tsconfig.json ./package.json ./package-lock.json ./
 
-RUN yarn install
+RUN npm install
 COPY ./src ./src
-RUN yarn compile
+RUN npm run compile
 ARG GITHUB_SHA=unknown
 ENV GITHUB_SHA=${GITHUB_SHA}
 CMD node dist/index.js
