@@ -1,8 +1,8 @@
 import * as Minio from 'minio';
 import internal from 'stream';
 
-import { config } from '../config';
 import { isNotNullishEntry, logError, logEvent, readStream } from './utils';
+import { config } from '../config';
 
 const client = new Minio.Client({
   endPoint: config.minioEndpoint,

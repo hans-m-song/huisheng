@@ -1,8 +1,8 @@
 import { spawn } from 'child_process';
 import path from 'path';
 
-import { config } from '../config';
 import { logError, logEvent, trimToJsonObject, tryParseJSON } from './utils';
+import { config } from '../config';
 
 export const downloaderCacheDir = path.join(config.cacheDir, 'ytdl');
 export const downloaderOutputDir = path.join(config.cacheDir, 'out');

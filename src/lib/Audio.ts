@@ -166,21 +166,21 @@ const initializeVoiceConnection = async (channel: VoiceBasedChannel): Promise<Vo
     adapterCreator: channel.guild.voiceAdapterCreator,
   });
 
-  voice.on('error', (error) => logError('voice', error));
-
-  [
-    VoiceConnectionStatus.Connecting,
-    VoiceConnectionStatus.Destroyed,
-    VoiceConnectionStatus.Disconnected,
-    VoiceConnectionStatus.Ready,
-    VoiceConnectionStatus.Signalling,
-  ].map((status) =>
-    voice.on(status, (oldStatus, newStatus) => {
-      logEvent('audio', `#${channel.name}`, `${oldStatus.status} -> ${newStatus.status}`);
-    }),
-  );
+  voice.on('error', (error) => logError('voice.error', error));
+  voice.on('debug', (message) => logEvent('voice.debug', message));
+  voice.on('stateChange', (oldState, newState) => {
+    logEvent('audio', `#${channel.name}`, `${oldState.status} -> ${newState.status}`);
+  });
 
   await new Promise<void>((resolve) => voice.once(VoiceConnectionStatus.Ready, resolve));
 
   return voice;
+};
+
+export const destroyVoiceConnections = (): void => {
+  getVoiceConnections().forEach((connection, guildId) => {
+    logEvent('audio', 'disconnecting from', guildId);
+    connection.disconnect();
+    connection.destroy();
+  });
 };

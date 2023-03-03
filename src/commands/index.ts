@@ -1,9 +1,6 @@
 import { Routes } from 'discord-api-types/v10';
 import { EmbedBuilder, REST, SlashCommandBuilder } from 'discord.js';
 
-import { config } from '../config';
-import { Command } from '../lib/commands';
-import { logError, logEvent } from '../lib/utils';
 import { clear } from './clear';
 import { debug } from './debug';
 import { gtfo } from './gtfo';
@@ -18,6 +15,9 @@ import { shutdown } from './shutdown';
 import { skip } from './skip';
 import { stop } from './stop';
 import { summon } from './summon';
+import { config } from '../config';
+import { Command } from '../lib/commands';
+import { logError, logEvent } from '../lib/utils';
 
 export const commands: Record<string, Command> = {
   clear,

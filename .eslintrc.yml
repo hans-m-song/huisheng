@@ -1,17 +1,27 @@
 extends:
   - eslint:recommended
   - plugin:@typescript-eslint/recommended
+  - plugin:prettier/recommended
+
 env:
   node: true
   browser: true
+
 plugins:
   - import
   - '@typescript-eslint'
+  - prettier
+
 parser: '@typescript-eslint/parser'
+
 rules:
   import/order:
     - warn
-    - groups:
+    - pathGroups:
+        - pattern: ~/**
+          group: parent
+          position: before
+      groups:
         - - builtin
           - external
         - - parent

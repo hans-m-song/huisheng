@@ -42,7 +42,6 @@ export const initializeClient = async () => {
 
   const ready = new Promise<void>((resolve) => {
     client.once('ready', (client) => {
-      logEvent('ready', `@${client.user.tag}, invite: ${authorizeUrl}`);
       client.user.setPresence({
         status: 'online',
         activities: [{ type: ActivityType.Watching, name: 'Shrek 2' }],
@@ -52,6 +51,7 @@ export const initializeClient = async () => {
   });
 
   await Promise.all([client.login(config.botToken), ready]);
+  logEvent('ready', `@${client.user?.tag}, invite: ${authorizeUrl}`);
 
   return { client, reason };
 };
@@ -59,5 +59,6 @@ export const initializeClient = async () => {
 const exitPromise = (client: Client<true>) =>
   createCancellablePromise<string>((resolve) => {
     process.once('SIGINT', () => resolve('caught sigint'));
+    process.once('SIGTERM', () => resolve('caught sigterm'));
     client.once('invalidated', () => resolve('session invalidated'));
   });
