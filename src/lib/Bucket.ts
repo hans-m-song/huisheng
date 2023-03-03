@@ -1,8 +1,8 @@
 import * as Minio from 'minio';
 import internal from 'stream';
 
-import { isNotNullishEntry, logError, logEvent, readStream } from './utils';
 import { config } from '../config';
+import { isNotNullishEntry, logError, logEvent, readStream } from './utils';
 
 const client = new Minio.Client({
   endPoint: config.minioEndpoint,
@@ -54,7 +54,7 @@ export class Bucket {
   static getTags = async (name: string): Promise<Minio.TagList | null> => {
     try {
       const result = await client.getObjectTagging(config.minioBucketName, name);
-      const tags = flattenTagList(result);
+      const tags = flattenTagList(result.flat());
       logEvent('Bucket.getTags', { name, tags });
       return tags;
     } catch (error) {

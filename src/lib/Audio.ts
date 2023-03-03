@@ -3,6 +3,7 @@ import {
   getVoiceConnections,
   joinVoiceChannel,
   VoiceConnection,
+  VoiceConnectionState,
   VoiceConnectionStatus,
 } from '@discordjs/voice';
 import {
@@ -172,9 +173,27 @@ const initializeVoiceConnection = async (channel: VoiceBasedChannel): Promise<Vo
     logEvent('audio', `#${channel.name}`, `${oldState.status} -> ${newState.status}`);
   });
 
+  // https://github.com/discordjs/discord.js/issues/9185#issuecomment-1452514375
+  voice.on('stateChange', (oldState, newState) => {
+    Reflect.get(oldState, 'networking')?.off('stateChange', handleVoiceStateChange);
+    Reflect.get(newState, 'networking')?.on('stateChange', handleVoiceStateChange);
+
+    if (
+      oldState.status === VoiceConnectionStatus.Ready &&
+      newState.status === VoiceConnectionStatus.Connecting
+    ) {
+      voice.configureNetworking();
+    }
+  });
+
   await new Promise<void>((resolve) => voice.once(VoiceConnectionStatus.Ready, resolve));
 
   return voice;
+};
+
+const handleVoiceStateChange = (oldState: VoiceConnectionState, newState: VoiceConnectionState) => {
+  const udp = Reflect.get(newState, 'udp');
+  clearInterval(udp?.keepAliveInterval);
 };
 
 export const destroyVoiceConnections = (): void => {

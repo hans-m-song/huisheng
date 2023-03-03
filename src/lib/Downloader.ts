@@ -1,8 +1,8 @@
 import { spawn } from 'child_process';
 import path from 'path';
 
-import { logError, logEvent, trimToJsonObject, tryParseJSON } from './utils';
 import { config } from '../config';
+import { logError, logEvent, trimToJsonObject, tryParseJSON } from './utils';
 
 export const downloaderCacheDir = path.join(config.cacheDir, 'ytdl');
 export const downloaderOutputDir = path.join(config.cacheDir, 'out');
@@ -41,8 +41,9 @@ const args = [
   // post-processing options
   '--extract-audio',
   '--prefer-free-formats',
+  '--format-sort-force',
   '--format-sort',
-  'hasaud,+size',
+  'aext,+size',
 ];
 
 const execute = async (target: string) => {
@@ -51,6 +52,7 @@ const execute = async (target: string) => {
 
   try {
     const child = spawn(config.youtubeDLExecutable, [target, ...args]);
+    logEvent('downloader', 'executing', [config.youtubeDLExecutable, target, ...args]);
     await new Promise<void>((resolve, reject) => {
       child.on('close', (code, signal) => {
         if (code !== 0) {
@@ -78,7 +80,6 @@ const execute = async (target: string) => {
 };
 
 export const download = async (target: string): Promise<unknown | null> => {
-  logEvent('downloader', 'downloading', { target });
   const process = await execute(target);
   if (!process) {
     return null;

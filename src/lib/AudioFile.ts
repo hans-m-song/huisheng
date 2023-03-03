@@ -17,6 +17,8 @@ export const isAudioFileMetadata = isMatching({
   artist: P.string,
   duration: P.number,
   acodec: P.string,
+  format_id: P.string,
+  format: P.string,
 });
 
 export class AudioFile implements AudioFileMetadata {
@@ -28,6 +30,8 @@ export class AudioFile implements AudioFileMetadata {
   artist: string;
   duration: number;
   acodec: string;
+  format_id: string;
+  format: string;
 
   constructor(props: AudioFileMetadata) {
     this.videoId = props.videoId;
@@ -38,6 +42,8 @@ export class AudioFile implements AudioFileMetadata {
     this.artist = props.artist;
     this.duration = props.duration;
     this.acodec = props.acodec;
+    this.format_id = props.format_id;
+    this.format = props.format;
   }
 
   static async fromUrl(target: string): Promise<AudioFile | null> {
@@ -50,8 +56,20 @@ export class AudioFile implements AudioFileMetadata {
   }
 
   static async fromInfoJson(data: any): Promise<AudioFile | null> {
-    const { id, webpage_url, title, duration, uploader, artist, acodec, ext, audio_ext, filename } =
-      data ?? {};
+    const {
+      id,
+      webpage_url,
+      title,
+      duration,
+      uploader,
+      artist,
+      acodec,
+      ext,
+      audio_ext,
+      filename,
+      format_id,
+      format,
+    } = data ?? {};
 
     const possibleFilepaths = [
       filename,
@@ -74,6 +92,8 @@ export class AudioFile implements AudioFileMetadata {
       artist: artist ?? 'Unknown',
       duration,
       acodec,
+      format_id,
+      format,
     };
     logEvent('AudioFile.fromInfoJson', metadata);
 

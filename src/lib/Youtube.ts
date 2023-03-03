@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { isMatching, P } from 'ts-pattern';
 
-import { GuardType, logError, logEvent } from './utils';
 import { config } from '../config';
+import { GuardType, logError, logEvent } from './utils';
 
 export type YoutubeSearchResult = GuardType<typeof isYoutubeSearchResult>;
 export const isYoutubeSearchResult = isMatching({
