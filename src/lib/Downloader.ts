@@ -52,7 +52,7 @@ const execute = async (target: string) => {
 
   try {
     const child = spawn(config.youtubeDLExecutable, [target, ...args]);
-    logEvent('downloader', 'executing', [config.youtubeDLExecutable, target, ...args]);
+    logEvent('downloader', 'executing', [config.youtubeDLExecutable, target, ...args].join(' '));
     await new Promise<void>((resolve, reject) => {
       child.on('close', (code, signal) => {
         if (code !== 0) {

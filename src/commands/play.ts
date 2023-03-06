@@ -26,8 +26,10 @@ export const play: Command = {
 
   onMessage: async (_, message, args) => {
     await messageVoiceCommand(message, { allowConnect: true }, async (player) => {
-      if (args.length < 1 && player.instance.state.status === AudioPlayerStatus.Paused) {
-        player.instance.unpause();
+      if (args.length < 1 || args.join(' ').trim() === '') {
+        if (player.instance.state.status === AudioPlayerStatus.Paused) {
+          player.instance.unpause();
+        }
         return;
       }
 
