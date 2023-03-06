@@ -74,12 +74,17 @@ export class AudioFile implements AudioFileMetadata {
     const possibleFilepaths = [
       filename,
       path.join(downloaderOutputDir, `${id}.${ext}`),
+      path.join(downloaderOutputDir, `${id}.${acodec}`),
       path.join(downloaderOutputDir, `${id}.${audio_ext}`),
     ];
 
     const filepath = await getByFilepath(possibleFilepaths);
     if (!filepath) {
-      logError('AudioFile.fromInfoJson', 'could not find file', possibleFilepaths);
+      logError(
+        'AudioFile.fromInfoJson',
+        'could not find file',
+        `[${possibleFilepaths.join(', ')}]`,
+      );
       return null;
     }
 

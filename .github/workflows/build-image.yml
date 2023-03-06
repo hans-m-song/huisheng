@@ -2,6 +2,12 @@ name: Build
 
 on:
   workflow_dispatch:
+    inputs:
+      disable-cache:
+        description: Disable cache
+        required: false
+        default: false
+        type: boolean
 
   push:
     branches:
@@ -38,6 +44,7 @@ jobs:
         with:
           image: public.ecr.aws/axatol/huisheng
           build-args: --build-arg GITHUB_SHA=${{ github.sha }}
+          use-cache: ${{ inputs.disable-cache != 'true' }}
 
       - uses: axatol/actions/prune-ecr-repository@release
         with:
