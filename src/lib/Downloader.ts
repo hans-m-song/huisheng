@@ -47,8 +47,8 @@ const args = [
 ];
 
 const execute = async (target: string) => {
-  const stderr: any[] = [];
-  const stdout: any[] = [];
+  let stderr = '';
+  let stdout = '';
 
   try {
     const child = spawn(config.youtubeDLExecutable, [target, ...args]);
@@ -64,13 +64,11 @@ const execute = async (target: string) => {
       });
 
       child.on('error', (error) => logError('downloader', error));
-
-      child.stdout.on('data', (chunk) => chunk?.toString && stdout.push(chunk.toString()));
-
-      child.stderr.on('data', (chunk) => chunk?.toString && stdout.push(chunk.toString()));
+      child.stdout.on('data', (chunk) => chunk?.toString && (stdout += chunk.toString()));
+      child.stderr.on('data', (chunk) => chunk?.toString && (stderr += chunk.toString()));
     });
 
-    return { stderr: stderr.join(''), stdout: stdout.join('') };
+    return { stderr, stdout };
   } catch (error) {
     logError('downloader', error, 'spawn failed', { target });
     console.log({ stderr });
