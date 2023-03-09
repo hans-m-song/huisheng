@@ -15,6 +15,7 @@ import { queue } from './queue';
 import { remove } from './remove';
 import { search } from './search';
 import { shutdown } from './shutdown';
+import { size } from './size';
 import { skip } from './skip';
 import { stop } from './stop';
 import { summon } from './summon';
@@ -32,6 +33,7 @@ export const commands: Record<string, Command> = {
   search,
   shutdown,
   skip,
+  size,
   stop,
   summon,
 };
