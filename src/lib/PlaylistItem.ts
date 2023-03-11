@@ -46,6 +46,8 @@ export class PlaylistItem extends AudioFile {
   }
 
   toEmbed() {
+    const secondsPlayed = this.secondsPlayed();
+
     return new EmbedBuilder()
       .setURL(this.url)
       .setTitle(this.title ?? 'Unknown')
@@ -55,8 +57,8 @@ export class PlaylistItem extends AudioFile {
         {
           name: 'Duration',
           value:
-            this.playedAt > 0
-              ? `${secToTime(this.secondsPlayed())} / ${secToTime(this.duration)}`
+            secondsPlayed > 1
+              ? `${secToTime(secondsPlayed)} / ${secToTime(this.duration)}`
               : secToTime(this.duration),
           inline: true,
         },
@@ -70,17 +72,17 @@ export class PlaylistItem extends AudioFile {
     const durationStr = secToTime(this.duration);
     const timeStr = etaStr ? `${durationStr} (eta ${etaStr})` : durationStr;
     const linkStr = this.link();
-    console.log({ item: this, playlist, index, name, etaStr, durationStr, timeStr });
 
     const value = `${this.uploader} - ${timeStr} (${linkStr})`;
     return { name, value, inline: false };
   }
 
   toQueueString() {
-    const durationStr = secToTime(this.duration);
     const secondsPlayed = this.secondsPlayed();
     const timeStr =
-      secondsPlayed > 0 ? `${secToTime(secondsPlayed)} / ${durationStr}` : durationStr;
+      secondsPlayed > 1
+        ? `${secToTime(secondsPlayed)} / ${secToTime(this.duration)}`
+        : secToTime(this.duration);
     const linkStr = this.link();
 
     return `${this.title} - ${this.uploader} - ${timeStr} (${linkStr})`;
