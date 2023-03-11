@@ -18,14 +18,22 @@ spec:
             - name: CACHE_DIR
               value: /data
             - name: MINIO_ENDPOINT
-              value: deployment-service.minio.svc.cluster.local
+              value: minio-deployment-service.minio.svc.cluster.local
             - name: MINIO_ENDPOINT_PORT
               value: '9000'
             - name: MINIO_ENDPOINT_SSL
               value: 'false'
+            - name: NEW_RELIC_NO_CONFIG_FILE
+              value: 'true'
+            - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
+              value: 'true'
+            - name: NEW_RELIC_LOG
+              value: stdout
+            - name: NEW_RELIC_APP_NAME
+              value: huisheng
           envFrom:
             - secretRef:
-                name: credentials
+                name: huisheng-credentials
           image: public.ecr.aws/axatol/huisheng:latest
           name: huisheng
           securityContext:
@@ -36,7 +44,6 @@ spec:
             - mountPath: /data
               name: data
       volumes:
-        - hostPath:
-            path: /var/lib/k8s/huisheng
-            type: DirectoryOrCreate
-          name: data
+        - name: data
+          persistentVolumeClaim:
+            claimName: huisheng-huisheng-data-pvc

@@ -1,4 +1,6 @@
 import 'source-map-support/register';
+import 'dotenv/config';
+import 'newrelic';
 
 import { generateDependencyReport } from '@discordjs/voice';
 import { promises as fs } from 'fs';

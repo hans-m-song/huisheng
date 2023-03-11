@@ -3,7 +3,5 @@ kind: Service
 metadata:
   name: minio-service
 spec:
-  externalName: deployment-service.minio.svc.cluster.local
-  selector:
-    app: huisheng
+  externalName: minio-deployment-service.minio.svc.cluster.local
   type: ExternalName

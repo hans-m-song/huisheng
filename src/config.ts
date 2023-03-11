@@ -1,5 +1,3 @@
-import 'dotenv/config';
-
 import { assertEnv, boolEnv, numEnv } from './lib/utils';
 
 const githubSha = process.env.GITHUB_SHA ?? 'unknown';

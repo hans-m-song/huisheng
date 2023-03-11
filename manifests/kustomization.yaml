@@ -1,8 +1,10 @@
 namespace: huisheng
+namePrefix: huisheng-
 
 resources:
   - deployment.yaml
   - service.yaml
+  - storage.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
