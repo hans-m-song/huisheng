@@ -1,13 +1,16 @@
 import { Collection, Collector, CommandInteraction, Message } from 'discord.js';
 import { promises as fs } from 'fs';
 import internal from 'stream';
-import { isMatching } from 'ts-pattern';
+import { isMatching, P } from 'ts-pattern';
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type Alias<T> = T & {};
 export type GuardType<T> = T extends (arg: any) => arg is infer G ? G : T;
 export type Resolver<T> = (value: T | PromiseLike<T>) => void;
 export type Rejecter = (reason: any) => void;
+export type primitive = number | string | boolean | undefined | null;
+
+export const isPrimitive = isMatching(P.union(P.string, P.number, P.boolean, P.nullish));
 
 export const isNotNullish = <T>(value: T | null | undefined): value is T =>
   value !== null && value !== undefined;
@@ -47,7 +50,7 @@ export const assertEnv = (key: string): string => {
 };
 
 export const logEvent = (event: string, ...args: unknown[]) => {
-  console.log(`[${event}]`, ...args);
+  console.log(`[${event}]`, ...args.map((arg) => (isPrimitive(arg) ? arg : JSON.stringify(arg))));
 };
 
 export const logMessage = (message: Message) =>
@@ -123,7 +126,7 @@ export const slugify = (input: string) =>
     .replace(/\s{1,}/g, '-')
     .replace(/[^a-zA-Z0-9-_]/g, '');
 
-export const secToTime = (duration: number): string | undefined => {
+export const secToTime = (duration: number): string => {
   const hours = Math.floor(duration / 3600);
   const hourLeftover = duration % 3600;
   const mins = Math.floor(hourLeftover / 60);

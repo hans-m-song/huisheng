@@ -27,15 +27,15 @@ const flattenTagList = (tags: Minio.Tag[]): Minio.TagList =>
       const value = Buffer.from(`${Value}`, 'hex').toString();
 
       const asNumber = parseInt(value);
-      if (!isNaN(asNumber)) {
-        return [Key, value];
+      if (/^[0-9]+$/.test(value) && !isNaN(asNumber)) {
+        return [Key, asNumber];
       }
 
       if (['true', 'false'].includes(Value)) {
         return [Key, Value === 'true'];
       }
 
-      return [Key, Value];
+      return [Key, value];
     }),
   );
 

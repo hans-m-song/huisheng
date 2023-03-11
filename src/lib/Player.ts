@@ -9,12 +9,13 @@ import { EmbedBuilder } from 'discord.js';
 import { promises as fs } from 'fs';
 
 import { AudioFile } from './AudioFile';
+import { PlaylistItem } from './PlaylistItem';
 import { Queue } from './Queue';
-import { logError, logEvent, secToTime } from './utils';
+import { logError, logEvent } from './utils';
 import { QueryResult } from './Youtube';
 
 export class Player {
-  playlist = new Queue<AudioFile>();
+  playlist = new Queue<PlaylistItem>();
   instance = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause } })
     .on('error', (error) => {
       logError('Player', error, 'playing', this.playlist.current?.toShortJSON() ?? 'unknown');
@@ -34,6 +35,7 @@ export class Player {
     if (!next) {
       return;
     }
+    next.playedAt = Date.now();
 
     const bucketStream = await next.streamFromBucket();
     if (!bucketStream) {
@@ -60,7 +62,7 @@ export class Player {
 
   async enqueue(results: QueryResult[]): Promise<EnqueueResult> {
     const errors: QueryResult[] = [];
-    const successes: AudioFile[] = [];
+    const successes: PlaylistItem[] = [];
 
     await results.reduce(async (previous, result) => {
       await previous;
@@ -86,8 +88,9 @@ export class Player {
 
       await file.updateBucketMetadata();
       logEvent('Player.enqueue', { videoId, path: file.filepath });
-      this.playlist.enqueue(file);
-      successes.push(file);
+      const item = PlaylistItem.fromAudioFile(file, Date.now(), 0);
+      this.playlist.enqueue(item);
+      successes.push(item);
 
       if (!this.playlist.current) {
         this.next();
@@ -98,19 +101,22 @@ export class Player {
   }
 
   getQueueEmbed() {
-    return new EmbedBuilder().setTitle('Queue').addFields([
-      { name: 'Now playing', value: this.playlist.current?.toQueueString() ?? 'N/A' },
-      ...this.playlist.map((file, i) => ({
-        name: `\`${i}.\` - ${file.title}`,
-        value: [file.artist, file.uploader, secToTime(file.duration)].join(' - '),
-      })),
-    ]);
+    return new EmbedBuilder()
+      .setTitle('Queue')
+      .addFields([
+        {
+          name: 'Now playing',
+          value: this.playlist.current?.toQueueString() ?? 'N/A',
+          inline: false,
+        },
+      ])
+      .addFields(this.playlist.map((item) => item.toEmbedField(this.playlist)));
   }
 }
 
 export interface EnqueueResult {
   errors: QueryResult[];
-  successes: AudioFile[];
+  successes: PlaylistItem[];
 }
 
 const players = new Map<string, Player>();

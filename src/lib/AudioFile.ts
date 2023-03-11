@@ -1,11 +1,10 @@
-import { EmbedField, EmbedBuilder } from 'discord.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { isMatching, P } from 'ts-pattern';
 
 import { Bucket } from './Bucket';
 import { download, downloaderOutputDir } from './Downloader';
-import { GuardType, logError, logEvent, secToTime } from './utils';
+import { GuardType, logError, logEvent } from './utils';
 
 export type AudioFileMetadata = GuardType<typeof isAudioFileMetadata>;
 export const isAudioFileMetadata = isMatching({
@@ -17,8 +16,8 @@ export const isAudioFileMetadata = isMatching({
   artist: P.string,
   duration: P.number,
   acodec: P.string,
-  format_id: P.string,
-  format: P.string,
+  format_id: P.union(P.string, P.number),
+  format: P.union(P.string, P.number),
 });
 
 export class AudioFile implements AudioFileMetadata {
@@ -30,8 +29,8 @@ export class AudioFile implements AudioFileMetadata {
   artist: string;
   duration: number;
   acodec: string;
-  format_id: string;
-  format: string;
+  format_id: string | number;
+  format: string | number;
 
   constructor(props: AudioFileMetadata) {
     this.videoId = props.videoId;
@@ -146,32 +145,6 @@ export class AudioFile implements AudioFileMetadata {
     return Bucket.getStream(path.join('cache', this.videoId));
   }
 
-  toEmbed() {
-    return new EmbedBuilder()
-      .setURL(this.url)
-      .setTitle(this.title ?? 'Unknown')
-      .addFields([
-        { name: 'Artist', value: this.artist ?? 'Unknown', inline: true },
-        { name: 'Uploader', value: this.uploader, inline: true },
-        { name: 'Duration', value: secToTime(this.duration) ?? 'Unknown', inline: true },
-      ]);
-  }
-
-  toEmbedField(prefix?: string): EmbedField {
-    const name = [prefix, this.title].filter(Boolean).join(' ');
-    const value = [
-      this.artist,
-      this.uploader,
-      secToTime(this.duration),
-      `[:link:](${this.url})`,
-    ].join(' - ');
-    return { name, value, inline: false };
-  }
-
-  toQueueString() {
-    return [this.title, this.artist, secToTime(this.duration), `[:link:](${this.url})`].join(' - ');
-  }
-
   toShortJSON() {
     return { id: this.videoId, title: this.title };
   }
@@ -180,7 +153,7 @@ export class AudioFile implements AudioFileMetadata {
     return `[${this.title}](${this.url})`;
   }
 
-  toJSON() {
+  toJSON(): AudioFileMetadata {
     return {
       videoId: this.videoId,
       url: this.url,
@@ -189,6 +162,9 @@ export class AudioFile implements AudioFileMetadata {
       uploader: this.uploader,
       artist: this.artist,
       duration: this.duration,
+      acodec: this.acodec,
+      format_id: this.format_id,
+      format: this.format,
     };
   }
 }
