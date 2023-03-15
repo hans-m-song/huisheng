@@ -42,7 +42,8 @@ export const messageVoiceCommand = async (
 
   const existing = getVoiceConnection(message.guild.id);
   if (!existing && !allowConnect) {
-    logEvent('messageVoiceCommand', 'not executing', {
+    logEvent('messageVoiceCommand', {
+      message: 'not executing',
       reason: 'no existing connection and not allowed to connect',
     });
     return;
@@ -51,7 +52,8 @@ export const messageVoiceCommand = async (
   const connection = existing ?? (await initializeVoiceConnection(channel));
   logEvent('messageVoiceCommand', { connectionStatus: connection.state.status });
   if (!connection) {
-    logEvent('messageVoiceCommand', 'not executing', {
+    logEvent('messageVoiceCommand', {
+      message: 'not executing',
       reason: 'could not establish connection',
     });
     return;
@@ -63,7 +65,7 @@ export const messageVoiceCommand = async (
 
   if (connection.state.status === VoiceConnectionStatus.Signalling && allowRetry) {
     // if connection is stuck in signalling, attempt to create a new one and retry
-    logEvent('messageVoiceCommand', 'recreating connection', { channel: channel.name });
+    logEvent('messageVoiceCommand', { message: 'recreating connection', channel: channel.name });
     connection.destroy();
     await initializeVoiceConnection(channel);
     return messageVoiceCommand(message, { ...options, allowRetry: false }, callback);
@@ -116,7 +118,8 @@ export const interactionVoiceCommand = async (
 
   const existing = getVoiceConnection(interaction.guildId);
   if (!existing && !allowConnect) {
-    logEvent('interactionVoiceCommand', 'not executing', {
+    logEvent('interactionVoiceCommand', {
+      message: 'not executing',
       reason: 'no existing connection and not allowed to connect',
     });
     return;
@@ -125,7 +128,8 @@ export const interactionVoiceCommand = async (
   const connection = existing ?? (await initializeVoiceConnection(channel));
   logEvent('interactionVoiceCommand', { connectionStatus: connection.state.status });
   if (!connection) {
-    logEvent('interactionVoiceCommand', 'not executing', {
+    logEvent('interactionVoiceCommand', {
+      message: 'not executing',
       reason: 'could not establish connection',
     });
     return;
@@ -137,7 +141,10 @@ export const interactionVoiceCommand = async (
 
   if (connection.state.status === VoiceConnectionStatus.Signalling && allowRetry) {
     // if connection is stuck in signalling, attempt to create a new one and retry
-    logEvent('interactionVoiceCommand', 'recreating connection', { channel: channel.name });
+    logEvent('interactionVoiceCommand', {
+      message: 'recreating connection',
+      channel: channel.name,
+    });
     connection.destroy();
     await initializeVoiceConnection(channel);
     return interactionVoiceCommand(interaction, { ...options, allowRetry: false }, callback);
@@ -170,7 +177,11 @@ const initializeVoiceConnection = async (channel: VoiceBasedChannel): Promise<Vo
   voice.on('error', (error) => logError('voice.error', error));
   voice.on('debug', (message) => logEvent('voice.debug', message));
   voice.on('stateChange', (oldState, newState) => {
-    logEvent('audio', `#${channel.name}`, `${oldState.status} -> ${newState.status}`);
+    logEvent('audio', {
+      channel: channel.name,
+      oldStatus: oldState.status,
+      newStatus: newState.status,
+    });
   });
 
   // https://github.com/discordjs/discord.js/issues/9185#issuecomment-1452514375
@@ -198,7 +209,7 @@ const handleVoiceStateChange = (oldState: VoiceConnectionState, newState: VoiceC
 
 export const destroyVoiceConnections = (): void => {
   getVoiceConnections().forEach((connection, guildId) => {
-    logEvent('audio', 'disconnecting from', guildId);
+    logEvent('audio', { message: 'disconnecting voice', guildId });
     connection.disconnect();
     connection.destroy();
   });

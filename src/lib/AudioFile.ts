@@ -123,7 +123,7 @@ export class AudioFile implements AudioFileMetadata {
     }
 
     if (!isAudioFileMetadata(metadata)) {
-      logEvent('AudioFile', 'bucket tags was not of type AudioFileMetadata', metadata);
+      logEvent('AudioFile', { message: 'bucket tags was not of type AudioFileMetadata', metadata });
       return null;
     }
 
