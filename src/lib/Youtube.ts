@@ -122,7 +122,7 @@ const query = async (raw: string, fuzzySearchLimit = 1): Promise<QueryResult[] |
 
     const playlistId = searchParams.get('list');
     if (playlistId) {
-      logEvent('youtube', 'searching by playlist id', `"${playlistId}"`);
+      logEvent('youtube', { playlistId, message: 'searching by playlist id' });
       const response = await list(playlistId)
         .then((result) => result.data)
         .catch((error) => {
@@ -141,7 +141,7 @@ const query = async (raw: string, fuzzySearchLimit = 1): Promise<QueryResult[] |
 
     const videoId = searchParams.get('v');
     if (videoId) {
-      logEvent('youtube', 'searching by video id', `"${videoId}"`);
+      logEvent('youtube', { videoId, message: 'searching by video id' });
       const response = await get(videoId)
         .then((result) => result.data)
         .catch((error) => {
@@ -161,7 +161,7 @@ const query = async (raw: string, fuzzySearchLimit = 1): Promise<QueryResult[] |
     }
   }
 
-  logEvent('youtube', 'fuzzy text search', `"${raw}"`);
+  logEvent('youtube', { raw, message: 'fuzzy text search' });
   const response = await search(raw, fuzzySearchLimit).catch((error) => {
     logError('youtube', error, { raw });
     return null;

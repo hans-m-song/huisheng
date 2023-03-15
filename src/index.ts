@@ -9,18 +9,26 @@ import { initializeClient } from './Bot';
 import { config } from './config';
 import { destroyVoiceConnections } from './lib/Audio';
 import { Bucket } from './lib/Bucket';
-import { logEvent } from './lib/utils';
+import { createCancellablePromise, logEvent } from './lib/utils';
 
 (async () => {
-  logEvent('audio', '\n', generateDependencyReport());
+  console.log(generateDependencyReport());
 
   await fs.mkdir(config.cacheDir, { recursive: true });
   await Bucket.ping();
-  const { client, reason } = await initializeClient();
+  const { client } = await initializeClient();
 
-  logEvent('exit', { reason: await reason });
-  destroyVoiceConnections();
-  client.user?.setStatus('invisible');
-  client.destroy();
-  process.exit();
+  const { promise, cancel } = createCancellablePromise<string>((resolve) => {
+    client.once('invalidated', () => resolve('session invalidated'));
+  });
+
+  const reason = await promise;
+
+  process.on('beforeExit', async () => {
+    logEvent('exit', { reason });
+    cancel('cancelled');
+    destroyVoiceConnections();
+    client.user?.setStatus('invisible');
+    client.destroy();
+  });
 })();

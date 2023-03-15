@@ -1,7 +1,12 @@
+import axios from 'axios';
 import { Collection, Collector, CommandInteraction, Message } from 'discord.js';
 import { promises as fs } from 'fs';
+import * as newrelic from 'newrelic';
 import internal from 'stream';
 import { isMatching, P } from 'ts-pattern';
+import { inspect } from 'util';
+
+import { config } from '../config';
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type Alias<T> = T & {};
@@ -49,28 +54,52 @@ export const assertEnv = (key: string): string => {
   return value;
 };
 
-export const logEvent = (event: string, ...args: unknown[]) => {
-  console.log(`[${event}]`, ...args.map((arg) => (isPrimitive(arg) ? arg : JSON.stringify(arg))));
+export const logEvent = (event: string, metadata?: string | Record<string, unknown>) => {
+  if (config.debug) {
+    console.log(`[${event}]`, inspect(metadata, { depth: Infinity }));
+  } else {
+    const data = typeof metadata === 'string' ? { message: metadata } : metadata;
+    console.log(JSON.stringify({ ...data, event }));
+  }
 };
 
 export const logMessage = (message: Message) =>
-  logEvent(
-    'message',
-    `#${(message.channel as any)?.name ?? message.channel.type}`,
-    `@${message.author.tag}`,
-    `"${message.content}"`,
-  );
+  logEvent('message', {
+    channel: (message.channel as any)?.name ?? message.channel.type,
+    author: message.author.tag,
+    content: message.content,
+  });
 
 export const logCommandInteraction = (interaction: CommandInteraction) =>
-  logEvent(
-    'interaction',
-    `#${interaction.channel?.id ?? 'unknown'}`,
-    `@${interaction.user.tag}`,
-    interaction.commandName,
-  );
+  logEvent('interaction', {
+    channel: interaction.channel?.id ?? 'unknown',
+    author: interaction.user.tag,
+    content: interaction.commandName,
+  });
 
-export const logError = (event: string, error: any, ...args: unknown[]) =>
-  logEvent(event, '[ERROR]', ...args, '\n', error);
+const serialiseError = (error: any): any => {
+  if (isPrimitive(error)) {
+    return error;
+  }
+
+  if (axios.isAxiosError(error)) {
+    const raw = JSON.stringify(error.toJSON());
+    const sanitised = raw.replace(/("Authorization":\s?)".*?"/i, '$1"REDACTED"');
+    return JSON.parse(sanitised);
+  }
+
+  return JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error)));
+};
+
+export const logError = (
+  event: string,
+  error: any,
+  metadata?: string | Record<string, unknown>,
+) => {
+  newrelic.noticeError(error, { event });
+  const data = typeof metadata === 'string' ? { message: metadata } : metadata;
+  logEvent(event, { ...data, error: serialiseError(error) });
+};
 
 export const createCancellablePromise = <T>(
   executor: (resolve: Resolver<T>, reject: Rejecter) => void,
@@ -100,7 +129,7 @@ export const tryReadFile = async (filepath: string): Promise<string | null> => {
       return null;
     }
 
-    logError('tryReadFile', error, filepath);
+    logError('tryReadFile', error, { filepath });
     return null;
   }
 };
@@ -109,7 +138,7 @@ export const tryParseJSON = (raw: string) => {
   try {
     return JSON.parse(raw);
   } catch (error) {
-    logError('tryParseJSON', error, raw);
+    logError('tryParseJSON', error, { raw });
     return null;
   }
 };

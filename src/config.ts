@@ -1,5 +1,6 @@
 import { assertEnv, boolEnv, numEnv } from './lib/utils';
 
+const debug = process.env.DEBUG == 'true';
 const githubSha = process.env.GITHUB_SHA ?? 'unknown';
 const clientId = assertEnv('DISCORD_CLIENT_ID');
 const botToken = assertEnv('DISCORD_BOT_TOKEN');
@@ -29,6 +30,7 @@ const minioAccessKeyObscured =
   minioAccessKey.slice(0, 4) + minioAccessKey.slice(4).replace(/./g, '*');
 
 export const config = {
+  debug,
   githubSha,
 
   // Bot

@@ -18,7 +18,7 @@ export class Player {
   playlist = new Queue<PlaylistItem>();
   instance = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause } })
     .on('error', (error) => {
-      logError('Player', error, 'playing', this.playlist.current?.toShortJSON() ?? 'unknown');
+      logError('Player', error, { current: this.playlist.current?.toShortJSON() ?? 'none' });
 
       // Attempt a recovery
       this.next();
@@ -27,7 +27,7 @@ export class Player {
       this.next();
     })
     .on(AudioPlayerStatus.Playing, () => {
-      logEvent('Player', 'playing', this.playlist.current?.toShortJSON() ?? 'unknown');
+      logEvent('Player', { current: this.playlist.current?.toShortJSON() ?? 'none' });
     });
 
   async next() {
@@ -82,7 +82,10 @@ export class Player {
         }
 
         await fs.unlink(file.filepath).catch((error) => {
-          logError('Player.enqueue', error, 'failed to remove file', { path: file.filepath });
+          logError('Player.enqueue', error, {
+            path: file.filepath,
+            message: 'failed to remove file',
+          });
         });
       }
 

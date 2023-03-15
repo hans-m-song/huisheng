@@ -8,7 +8,7 @@ import {
   onInvalidated,
   onVoiceStateUpdate,
 } from './events';
-import { createCancellablePromise, logEvent } from './lib/utils';
+import { logEvent } from './lib/utils';
 
 const authorizeUrl =
   'https://discord.com/api/oauth2/authorize?' +
@@ -33,7 +33,6 @@ export const initializeClient = async () => {
     ],
   });
 
-  const { promise: reason } = exitPromise(client);
   client.on('error', onError);
   client.on('invalidated', onInvalidated);
   client.on('messageCreate', onMessageCreate(client));
@@ -51,14 +50,7 @@ export const initializeClient = async () => {
   });
 
   await Promise.all([client.login(config.botToken), ready]);
-  logEvent('ready', `@${client.user?.tag}, invite: ${authorizeUrl}`);
+  logEvent('ready', { client: client.user?.tag, invite: authorizeUrl });
 
-  return { client, reason };
+  return { client };
 };
-
-const exitPromise = (client: Client<true>) =>
-  createCancellablePromise<string>((resolve) => {
-    process.once('SIGINT', () => resolve('caught sigint'));
-    process.once('SIGTERM', () => resolve('caught sigterm'));
-    client.once('invalidated', () => resolve('session invalidated'));
-  });

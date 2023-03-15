@@ -52,7 +52,7 @@ const execute = async (target: string) => {
 
   try {
     const child = spawn(config.youtubeDLExecutable, [target, ...args]);
-    logEvent('downloader', 'executing', [config.youtubeDLExecutable, target, ...args].join(' '));
+    logEvent('downloader', { command: [config.youtubeDLExecutable, target, ...args].join(' ') });
     await new Promise<void>((resolve, reject) => {
       child.on('close', (code, signal) => {
         if (code !== 0) {
@@ -70,7 +70,7 @@ const execute = async (target: string) => {
 
     return { stderr, stdout };
   } catch (error) {
-    logError('downloader', error, 'spawn failed', { target });
+    logError('downloader', error, { target, message: 'spawn failed' });
     console.log({ stderr });
     console.log({ stdout });
     return null;

@@ -65,7 +65,7 @@ export class Bucket {
 
   static setTags = async (name: string, tags: TagInput): Promise<boolean> => {
     if (Object.keys(tags).length < 1) {
-      logEvent('Bucket.setTags', 'no tags to set', { name });
+      logEvent('Bucket.setTags', { name, message: 'no tags to set' });
       return true;
     }
 
