@@ -1,6 +1,13 @@
 name: Manage Deployment
 
 on:
+  workflow_call:
+    inputs:
+      action:
+        description: Action to execute
+        type: string
+        required: true
+
   workflow_dispatch:
     inputs:
       action:

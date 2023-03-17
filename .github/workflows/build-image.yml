@@ -1,7 +1,7 @@
 name: Build
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       disable-cache:
         description: Disable cache
@@ -9,9 +9,13 @@ on:
         default: false
         type: boolean
 
-  push:
-    branches:
-      - master
+  workflow_dispatch:
+    inputs:
+      disable-cache:
+        description: Disable cache
+        required: false
+        default: false
+        type: boolean
 
 env:
   image: public.ecr.aws/axatol/huisheng

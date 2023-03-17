@@ -113,7 +113,7 @@ export class Player {
           inline: false,
         },
       ])
-      .addFields(this.playlist.map((item) => item.toEmbedField(this.playlist)));
+      .addFields(this.playlist.items.map((item) => item.toEmbedField(this.playlist)));
   }
 }
 

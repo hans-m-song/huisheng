@@ -1,0 +1,15 @@
+name: Merge to master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-image.yml
+
+  deploy:
+    uses: ./.github/workflows/manage-deployment.yml
+    with:
+      action: restart
