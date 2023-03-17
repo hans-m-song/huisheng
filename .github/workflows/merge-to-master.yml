@@ -10,6 +10,7 @@ jobs:
     uses: ./.github/workflows/build-image.yml
 
   deploy:
+    needs: build
     uses: ./.github/workflows/manage-deployment.yml
     with:
       action: restart
