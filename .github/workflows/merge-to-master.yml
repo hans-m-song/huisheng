@@ -6,16 +6,13 @@ on:
       - master
 
   workflow_dispatch:
-    inputs:
-      disable-cache:
-        description: Disable cache
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   id-token: write
   contents: read
+
+env:
+  image: public.ecr.aws/axatol/huisheng
 
 jobs:
   build-image:
@@ -38,9 +35,9 @@ jobs:
 
       - uses: axatol/actions/docker-build-push@release
         with:
-          image: public.ecr.aws/axatol/huisheng
+          image: ${{ env.image }}
           build-args: --build-arg GITHUB_SHA=${{ github.sha }}
-          use-cache: ${{ inputs.disable-cache != 'true' }}
+          use-cache: false
 
       - uses: axatol/actions/prune-ecr-repository@release
         with:
