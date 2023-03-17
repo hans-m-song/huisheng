@@ -96,9 +96,9 @@ export const logError = (
   error: any,
   metadata?: string | Record<string, unknown>,
 ) => {
-  newrelic.noticeError(error, { event });
   const data = typeof metadata === 'string' ? { message: metadata } : metadata;
   logEvent(event, { ...data, error: serialiseError(error) });
+  newrelic.noticeError(error, { event });
 };
 
 export const createCancellablePromise = <T>(
