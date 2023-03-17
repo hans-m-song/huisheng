@@ -6,9 +6,9 @@ import { secToTime } from './utils';
 
 export class PlaylistItem extends AudioFile {
   queuedAt: number;
-  playedAt: number;
+  playedAt?: number;
 
-  constructor(file: AudioFileMetadata, queuedAt: number, playedAt: number) {
+  constructor(file: AudioFileMetadata, queuedAt: number, playedAt?: number) {
     super(file);
     this.queuedAt = queuedAt;
     this.playedAt = playedAt;
@@ -19,6 +19,10 @@ export class PlaylistItem extends AudioFile {
   }
 
   secondsPlayed() {
+    if (!this.playedAt) {
+      return 0;
+    }
+
     const diff = Date.now() - this.playedAt;
     return Math.floor(diff / 1000);
   }
@@ -54,10 +58,9 @@ export class PlaylistItem extends AudioFile {
         { name: 'Uploader', value: this.uploader, inline: true },
         {
           name: 'Duration',
-          value:
-            this.playedAt > 1
-              ? `${secToTime(this.secondsPlayed())} / ${secToTime(this.duration)}`
-              : secToTime(this.duration),
+          value: this.playedAt
+            ? `${secToTime(this.secondsPlayed())} / ${secToTime(this.duration)}`
+            : secToTime(this.duration),
           inline: true,
         },
       ]);
@@ -76,10 +79,9 @@ export class PlaylistItem extends AudioFile {
   }
 
   toQueueString() {
-    const timeStr =
-      this.playedAt > 1
-        ? `${secToTime(this.secondsPlayed())} / ${secToTime(this.duration)}`
-        : secToTime(this.duration);
+    const timeStr = this.playedAt
+      ? `${secToTime(this.secondsPlayed())} / ${secToTime(this.duration)}`
+      : secToTime(this.duration);
     const linkStr = this.link();
 
     return `${this.title} - ${this.uploader} - ${timeStr} (${linkStr})`;

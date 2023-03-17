@@ -33,6 +33,8 @@ export const play: Command = {
         return;
       }
 
+      await message.suppressEmbeds(true);
+
       const results = await youtube.query(args.join(' '));
       if (!results || results.length < 1) {
         await message.channel.send('No results found');
@@ -48,8 +50,6 @@ export const play: Command = {
       await message.channel.send({
         embeds: [reportEnqueueResult(enqueueResult)],
       });
-
-      await message.suppressEmbeds(true);
 
       if (!player.playlist.current) {
         player.next();
