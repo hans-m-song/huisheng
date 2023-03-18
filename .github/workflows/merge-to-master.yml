@@ -37,7 +37,6 @@ jobs:
         with:
           image: ${{ env.image }}
           build-args: --build-arg GITHUB_SHA=${{ github.sha }}
-          use-cache: false
 
       - uses: axatol/actions/prune-ecr-repository@release
         with:
@@ -45,7 +44,6 @@ jobs:
 
   restart-deployment:
     needs: build-image
-    if: inputs.action == 'restart'
     runs-on: self-hosted
     environment: deep-thought
     steps:
