@@ -38,10 +38,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: github/actions-oidc-debugger@main
-        with:
-          audience: sts.amazonaws.com
-
       - uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: us-east-1
@@ -69,3 +65,5 @@ jobs:
     environment: deep-thought
     steps:
       - run: kubectl rollout restart deployment/huisheng-deployment --namespace huisheng
+
+      - run: kubectl rollout status deployment/huisheng-deployment --namespace huisheng
