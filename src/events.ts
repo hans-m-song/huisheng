@@ -85,7 +85,7 @@ export const onVoiceStateUpdate =
     }
 
     try {
-      getPlayer(oldState.channel.guild.id).instance.pause();
+      getPlayer(oldState.channel.guild.id).stop();
       getVoiceConnection(oldState.channel.guild.id)?.disconnect();
     } catch (error) {
       logError('voiceStateUpdate', error, 'failed to disconnect from voice channel');

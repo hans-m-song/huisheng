@@ -94,7 +94,7 @@ export const search: Command = {
       }
 
       await message.channel.send({
-        embeds: [reportEnqueueResult(enqueueResult)],
+        embeds: [reportEnqueueResult(player.playlist, enqueueResult)],
       });
 
       if (!player.playlist.current) {
@@ -151,7 +151,7 @@ export const search: Command = {
         await selected.deferUpdate();
         const enqueueResult = await player.enqueue([results[index]]);
         await interaction.deleteReply();
-        await channel.send({ embeds: [reportEnqueueResult(enqueueResult)] });
+        await channel.send({ embeds: [reportEnqueueResult(player.playlist, enqueueResult)] });
 
         if (!player.playlist.current) {
           player.next();

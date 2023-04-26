@@ -190,8 +190,10 @@ const initializeVoiceConnection = async (channel: VoiceBasedChannel): Promise<Vo
     Reflect.get(newState, 'networking')?.on('stateChange', handleVoiceStateChange);
 
     if (
-      oldState.status === VoiceConnectionStatus.Ready &&
-      newState.status === VoiceConnectionStatus.Connecting
+      (oldState.status === VoiceConnectionStatus.Ready &&
+        newState.status === VoiceConnectionStatus.Connecting) ||
+      (oldState.status === VoiceConnectionStatus.Connecting &&
+        newState.status === VoiceConnectionStatus.Signalling)
     ) {
       voice.configureNetworking();
     }

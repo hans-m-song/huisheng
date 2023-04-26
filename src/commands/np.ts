@@ -15,7 +15,7 @@ export const np: Command = {
         return;
       }
 
-      const embed = player.playlist.current.toEmbed().setDescription('Now playing');
+      const embed = player.playlist.current.toEmbed(player.playlist).setDescription('Now playing');
       await message.channel.send({ embeds: [embed] });
     });
   },

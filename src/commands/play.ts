@@ -1,4 +1,3 @@
-import { AudioPlayerStatus } from '@discordjs/voice';
 import { SlashCommandBuilder, SlashCommandStringOption } from 'discord.js';
 
 import { emojis } from '../emotes';
@@ -27,9 +26,7 @@ export const play: Command = {
   onMessage: async (_, message, args) => {
     await messageVoiceCommand(message, { allowConnect: true }, async (player) => {
       if (args.length < 1 || args.join(' ').trim() === '') {
-        if (player.instance.state.status === AudioPlayerStatus.Paused) {
-          player.instance.unpause();
-        }
+        player.play();
         return;
       }
 
@@ -48,7 +45,7 @@ export const play: Command = {
       }
 
       await message.channel.send({
-        embeds: [reportEnqueueResult(enqueueResult)],
+        embeds: [reportEnqueueResult(player.playlist, enqueueResult)],
       });
 
       if (!player.playlist.current) {

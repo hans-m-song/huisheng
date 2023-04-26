@@ -7,16 +7,33 @@ on:
 
   workflow_dispatch:
 
-permissions:
-  id-token: write
-  contents: read
-
 env:
   image: public.ecr.aws/axatol/huisheng
 
 jobs:
-  build-image:
+  check:
     runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm install
+
+      - run: npm run lint
+
+      - run: npm run compile
+
+  build:
+    needs: check
+    runs-on: self-hosted
+
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - uses: actions/checkout@v3
@@ -25,7 +42,7 @@ jobs:
         with:
           aws-region: us-east-1
           role-to-assume: ${{ secrets.AWS_ECR_IMAGE_PUBLISHER_ROLE_ARN }}
-          role-session-name: ${{ github.triggering_actor }}-huisheng-${{ github.job }}-${{ github.run_id }}
+          role-session-name: ${{ github.triggering_actor }}-${{ github.event.repository.full_name }}-${{ github.job }}-${{ github.run_id }}
           role-skip-session-tagging: true
           role-duration-seconds: 3600
 
@@ -43,7 +60,7 @@ jobs:
           repository-name: ${{ env.image }}
 
   restart-deployment:
-    needs: build-image
+    needs: build
     runs-on: self-hosted
     environment: deep-thought
     steps:

@@ -11,7 +11,7 @@ export const gtfo: Command = {
 
   onMessage: async (context, message) => {
     await messageVoiceCommand(message, { allowConnect: false }, async (player, connection) => {
-      player.instance.pause();
+      player.stop();
       await message.react(context.emoji(customEmoji.FeelsCarlosMan));
       connection.disconnect();
     });

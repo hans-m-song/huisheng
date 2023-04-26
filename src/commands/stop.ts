@@ -8,7 +8,7 @@ export const stop: Command = {
 
   onMessage: async (_, message) => {
     await messageVoiceCommand(message, { allowConnect: false }, (player) => {
-      player.instance.stop();
+      player.stop();
     });
   },
 };

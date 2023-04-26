@@ -10,7 +10,7 @@
     "watch": "yarn compile -w",
     "start": "node dist/index.js",
     "debug": "nodemon",
-    "lint": "eslint \"src/**\"",
+    "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "prettier --write ./src && yarn lint --fix"
   },
   "dependencies": {

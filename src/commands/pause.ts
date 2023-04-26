@@ -10,7 +10,7 @@ export const pause: Command = {
 
   onMessage: async (_, message) => {
     await messageVoiceCommand(message, { allowConnect: false }, (player) => {
-      player.instance.pause();
+      player.pause();
     });
   },
 };

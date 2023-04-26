@@ -31,11 +31,12 @@ export class Player {
     });
 
   async next() {
+    this.stop();
+
     const next = this.playlist.next();
     if (!next) {
       return;
     }
-    next.playedAt = Date.now();
 
     const bucketStream = await next.streamFromBucket();
     if (!bucketStream) {
@@ -46,16 +47,41 @@ export class Player {
     const { stream, type } = await demuxProbe(bucketStream);
     const resource = createAudioResource(stream, { inputType: type, metadata: next });
     this.instance.play(resource);
+    next.timer.start();
+  }
+
+  stop() {
+    if (this.playlist.current) {
+      this.playlist.current.timer.stop();
+      this.instance.stop();
+    }
+  }
+
+  play() {
+    if (this.instance.state.status === AudioPlayerStatus.Paused) {
+      this.instance.unpause();
+      this.playlist.current?.timer.start();
+      return;
+    }
+
+    this.next();
+  }
+
+  pause() {
+    if (this.instance.state.status === AudioPlayerStatus.Playing) {
+      this.instance.pause(true);
+      this.playlist.current?.timer.stop();
+    }
   }
 
   playPause() {
     switch (this.instance.state.status) {
       case AudioPlayerStatus.Paused:
-        this.instance.unpause();
+        this.play();
         return;
 
       case AudioPlayerStatus.Playing:
-        this.instance.pause(true);
+        this.pause();
         return;
     }
   }
@@ -69,7 +95,7 @@ export class Player {
       const { videoId } = result;
 
       const url = `https://youtube.com/watch?v=${videoId}`;
-      const fromBucket = await AudioFile.fromBucketTags(result.videoId);
+      const fromBucket = await AudioFile.fromBucketTags(videoId);
       const file = fromBucket ?? (await AudioFile.fromUrl(url));
       if (!file) {
         errors.push(result);
@@ -77,7 +103,8 @@ export class Player {
       }
 
       if (!fromBucket) {
-        if (!(await file.saveToBucket())) {
+        const saved = await file.saveToBucket();
+        if (!saved) {
           errors.push(result);
         }
 
@@ -91,7 +118,7 @@ export class Player {
 
       await file.updateBucketMetadata();
       logEvent('Player.enqueue', { videoId, path: file.filepath });
-      const item = PlaylistItem.fromAudioFile(file, Date.now(), 0);
+      const item = new PlaylistItem(file);
       this.playlist.enqueue(item);
       successes.push(item);
 
@@ -135,7 +162,10 @@ export const getPlayer = (guildId: string): Player => {
   return player;
 };
 
-export const reportEnqueueResult = ({ successes, errors }: EnqueueResult): EmbedBuilder => {
+export const reportEnqueueResult = (
+  playlist: Queue<PlaylistItem>,
+  { successes, errors }: EnqueueResult,
+): EmbedBuilder => {
   const errorContent = errors.map((query) => {
     const url = `https://youtube.com/watch?v=${query.videoId}`;
     return `${query.title} - ${query.channelTitle} - [:link:](${url})`;
@@ -148,7 +178,7 @@ export const reportEnqueueResult = ({ successes, errors }: EnqueueResult): Embed
   }
 
   if (successes.length === 1) {
-    const embed = successes[0].toEmbed().setTitle(successes[0].title ?? 'Unknown');
+    const embed = successes[0].toEmbed(playlist).setTitle(successes[0].title ?? 'Unknown');
     if (errorText.length > 0) {
       embed.setDescription(errorText);
     }
