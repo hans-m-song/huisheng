@@ -61,9 +61,4 @@ jobs:
 
   restart-deployment:
     needs: build-image
-    runs-on: self-hosted
-    environment: deep-thought
-    steps:
-      - run: kubectl rollout restart deployment/huisheng-deployment --namespace huisheng
-
-      - run: kubectl rollout status deployment/huisheng-deployment --namespace huisheng
+    uses: ./.github/workflows/deploy.yml
