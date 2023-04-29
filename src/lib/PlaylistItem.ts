@@ -14,8 +14,11 @@ export class PlaylistItem extends AudioFile {
   }
 
   secondsUntil(playlist: Queue<PlaylistItem>) {
-    let queuedDuration = 0;
+    if (playlist.current?.videoId === this.videoId) {
+      return 0;
+    }
 
+    let queuedDuration = 0;
     for (const item of playlist.items) {
       if (item.videoId === this.videoId) {
         break;
@@ -40,9 +43,10 @@ export class PlaylistItem extends AudioFile {
         { name: 'Uploader', value: this.uploader, inline: true },
         {
           name: 'Duration',
-          value: this.timer.ticking
-            ? `${secToTime(this.timer.runtime)} / ${secToTime(this.duration)}`
-            : secToTime(this.duration),
+          value:
+            this.timer.ticking && this.timer.runtime > 0
+              ? `${secToTime(this.timer.runtime)} / ${secToTime(this.duration)}`
+              : secToTime(this.duration),
           inline: true,
         },
         {
@@ -67,9 +71,10 @@ export class PlaylistItem extends AudioFile {
 
   toQueueString() {
     const title = `[${this.title}](${this.url})`;
-    const timeStr = this.timer.ticking
-      ? `${secToTime(this.timer.runtime)} / ${secToTime(this.duration)}`
-      : secToTime(this.duration);
+    const timeStr =
+      this.timer.ticking && this.timer.runtime > 0
+        ? `${secToTime(this.timer.runtime)} / ${secToTime(this.duration)}`
+        : secToTime(this.duration);
 
     return `${title} - ${this.uploader} - ${timeStr}`;
   }

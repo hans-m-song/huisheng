@@ -177,6 +177,10 @@ const initializeVoiceConnection = async (channel: VoiceBasedChannel): Promise<Vo
   voice.on('error', (error) => logError('voice.error', error));
   voice.on('debug', (message) => logEvent('voice.debug', message));
   voice.on('stateChange', (oldState, newState) => {
+    if (oldState.status === newState.status) {
+      return;
+    }
+
     logEvent('audio', {
       channel: channel.name,
       oldStatus: oldState.status,
