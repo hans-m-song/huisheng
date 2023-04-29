@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Collection, Collector, CommandInteraction, Message } from 'discord.js';
 import { promises as fs } from 'fs';
-import * as newrelic from 'newrelic';
+import newrelic from 'newrelic';
 import internal from 'stream';
 import { isMatching, P } from 'ts-pattern';
 import { inspect } from 'util';
