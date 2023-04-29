@@ -13,10 +13,10 @@ export class PlaylistItem extends AudioFile {
     this.timer = new CountDown(file.duration);
   }
 
-  secondsUntil(items: PlaylistItem[], current?: PlaylistItem) {
+  secondsUntil(playlist: Queue<PlaylistItem>) {
     let queuedDuration = 0;
 
-    for (const item of items) {
+    for (const item of playlist.items) {
       if (item.videoId === this.videoId) {
         break;
       }
@@ -24,8 +24,8 @@ export class PlaylistItem extends AudioFile {
       queuedDuration += item.duration;
     }
 
-    if (current) {
-      queuedDuration += current.timer.remainder;
+    if (playlist.current) {
+      queuedDuration += playlist.current.timer.remainder;
     }
 
     return queuedDuration;
@@ -41,13 +41,13 @@ export class PlaylistItem extends AudioFile {
         {
           name: 'Duration',
           value: this.timer.ticking
-            ? `${secToTime(this.timer.remainder)} / ${secToTime(this.duration)}`
+            ? `${secToTime(this.timer.runtime)} / ${secToTime(this.duration)}`
             : secToTime(this.duration),
           inline: true,
         },
         {
           name: 'ETA',
-          value: secToTime(this.secondsUntil(playlist.items, playlist.current)),
+          value: secToTime(this.secondsUntil(playlist)),
           inline: true,
         },
       ]);
@@ -57,7 +57,7 @@ export class PlaylistItem extends AudioFile {
     const index = playlist.items.indexOf(this);
     const title = `[${this.title}](${this.url})`;
     const name = index > -1 ? `\`${index}.\` ${title}` : title;
-    const etaStr = secToTime(this.secondsUntil(playlist.items, playlist.current));
+    const etaStr = secToTime(this.secondsUntil(playlist));
     const durationStr = secToTime(this.duration);
     const timeStr = etaStr ? `${durationStr} (eta ${etaStr})` : durationStr;
 
