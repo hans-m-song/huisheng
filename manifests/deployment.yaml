@@ -12,28 +12,13 @@ spec:
         app: huisheng
     spec:
       containers:
-        - env:
-            - name: DISCORD_BOT_PREFIX
-              value: '>'
-            - name: CACHE_DIR
-              value: /data
-            - name: MINIO_ENDPOINT
-              value: minio-deployment-service.minio.svc.cluster.local
-            - name: MINIO_ENDPOINT_PORT
-              value: '9000'
-            - name: MINIO_ENDPOINT_SSL
-              value: 'false'
-            - name: NEW_RELIC_NO_CONFIG_FILE
-              value: 'true'
-            - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
-              value: 'true'
-            - name: NEW_RELIC_APP_NAME
-              value: huisheng
+        - image: public.ecr.aws/axatol/huisheng:latest
+          name: huisheng
           envFrom:
+            - configMapRef:
+                name: huisheng-config
             - secretRef:
                 name: huisheng-credentials
-          image: public.ecr.aws/axatol/huisheng:latest
-          name: huisheng
           securityContext:
             capabilities:
               add:
@@ -43,5 +28,4 @@ spec:
               name: data
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: huisheng-huisheng-data-pvc
+          emptyDir: {}

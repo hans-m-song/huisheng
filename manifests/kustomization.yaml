@@ -1,10 +1,22 @@
 namespace: huisheng
 namePrefix: huisheng-
 
-resources:
-  - deployment.yaml
-  - service.yaml
-  - storage.yaml
-
 generatorOptions:
   disableNameSuffixHash: true
+
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - service.yaml
+
+configMapGenerator:
+  - name: config
+    literals:
+      - DISCORD_BOT_PREFIX=">"
+      - CACHE_DIR=/data
+      - MINIO_ENDPOINT=minio-deployment-service.minio.svc.cluster.local
+      - MINIO_ENDPOINT_PORT=9000
+      - MINIO_ENDPOINT_SSL=false
+      - NEW_RELIC_NO_CONFIG_FILE=true
+      - NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true
+      - NEW_RELIC_APP_NAME=huisheng
