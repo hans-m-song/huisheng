@@ -5,6 +5,7 @@ on:
   workflow_call:
     secrets:
       DISCORD_GITHUB_ACTIONS_WEBHOOK_URL:
+        required: true
 
 env:
   NAMESPACE: --namespace huisheng

@@ -62,3 +62,5 @@ jobs:
   restart-deployment:
     needs: build-image
     uses: ./.github/workflows/deploy.yml
+    secrets:
+      DISCORD_GITHUB_ACTIONS_WEBHOOK_URL: ${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }}
