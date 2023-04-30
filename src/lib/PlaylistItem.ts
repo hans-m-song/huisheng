@@ -47,7 +47,11 @@ export class PlaylistItem extends AudioFile {
         { name: 'Uploader', value: this.uploader ?? 'Unknown', inline: true },
         {
           name: 'Duration',
-          value: this.timer.ticking ? `${runtime} / ${duration}` : `${duration} (eta ${eta})`,
+          value: this.timer.ticking
+            ? `${runtime} / ${duration}`
+            : !playlist.current || playlist.current?.videoId !== this.videoId
+            ? `${duration} (eta ${eta})`
+            : duration,
           inline: true,
         },
       ]);
