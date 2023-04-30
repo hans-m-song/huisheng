@@ -4,12 +4,20 @@ on:
   workflow_dispatch:
   workflow_call:
 
+env:
+  NAMESPACE: --namespace huisheng
+  DEPLOYMENT: deployment/huisheng-deployment
+
 jobs:
   rollout-deployment:
     runs-on: self-hosted
     environment: deep-thought
 
     steps:
-      - run: kubectl rollout restart deployment/huisheng-deployment --namespace huisheng
+      - run: echo "OLD_NAME=$( kubectl $NAMESPACE get pods -o=jsonpath='{.items[].metadata.name}' )" >> $GITHUB_ENV
 
-      - run: kubectl rollout status deployment/huisheng-deployment --namespace huisheng
+      - run: kubectl rollout restart $NAMESPACE $DEPLOYMENT
+
+      - run: kubectl rollout status $NAMESPACE $DEPLOYMENT
+
+      - run: kubectl wait $NAMESPACE --for=delete --timeout 5m pods/$OLD_NAME

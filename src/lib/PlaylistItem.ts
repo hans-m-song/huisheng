@@ -39,7 +39,7 @@ export class PlaylistItem extends AudioFile {
       .setURL(this.url)
       .setTitle(this.title ?? 'Unknown')
       .addFields([
-        { name: 'Artist', value: this.artist ?? 'Unknown', inline: true },
+        { name: 'Artist', value: this.artist, inline: true },
         { name: 'Uploader', value: this.uploader, inline: true },
         {
           name: 'Duration',
