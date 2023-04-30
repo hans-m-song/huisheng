@@ -27,8 +27,8 @@ jobs:
 
       - if: success() || failure()
         run: |
-          [[ "${{ job.status }}" == "success" ]] && echo "STATUS_COLOR=65280" >> $GITHUB_ENV
-          [[ "${{ job.status }}" == "failure" ]] && echo "STATUS_COLOR=16711680" >> $GITHUB_ENV
+          [[ "${{ job.status }}" == "success" ]] && echo "STATUS_COLOR=65280" >> $GITHUB_ENV || true
+          [[ "${{ job.status }}" == "failure" ]] && echo "STATUS_COLOR=16711680" >> $GITHUB_ENV || true
 
       - if: success() || failure()
         run: |
