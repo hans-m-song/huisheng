@@ -3,7 +3,7 @@ import { EmbedBuilder, EmbedField } from 'discord.js';
 import { AudioFile, AudioFileMetadata } from './AudioFile';
 import { CountDown } from './CountDown';
 import { Queue } from './Queue';
-import { secToTime } from './utils';
+import { secToTimeFragments, secToISOTime } from './utils';
 
 export class PlaylistItem extends AudioFile {
   timer: CountDown;
@@ -35,23 +35,19 @@ export class PlaylistItem extends AudioFile {
   }
 
   toEmbed(playlist: Queue<PlaylistItem>) {
+    const runtime = secToISOTime(this.timer.runtime);
+    const duration = secToISOTime(this.duration);
+    const eta = secToTimeFragments(this.secondsUntil(playlist));
+
     return new EmbedBuilder()
       .setURL(this.url)
       .setTitle(this.title ?? 'Unknown')
       .addFields([
-        { name: 'Artist', value: this.artist, inline: true },
-        { name: 'Uploader', value: this.uploader, inline: true },
+        { name: 'Artist', value: this.artist ?? 'Unknown', inline: true },
+        { name: 'Uploader', value: this.uploader ?? 'Unknown', inline: true },
         {
           name: 'Duration',
-          value:
-            this.timer.ticking && this.timer.runtime > 0
-              ? `${secToTime(this.timer.runtime)} / ${secToTime(this.duration)}`
-              : secToTime(this.duration),
-          inline: true,
-        },
-        {
-          name: 'ETA',
-          value: secToTime(this.secondsUntil(playlist)),
+          value: this.timer.ticking ? `${runtime} / ${duration}` : `${duration} (eta ${eta})`,
           inline: true,
         },
       ]);
@@ -59,23 +55,25 @@ export class PlaylistItem extends AudioFile {
 
   toEmbedField(playlist: Queue<PlaylistItem>): EmbedField {
     const index = playlist.items.indexOf(this);
-    const title = `[${this.title}](${this.url})`;
-    const name = index > -1 ? `\`${index}.\` ${title}` : title;
-    const etaStr = secToTime(this.secondsUntil(playlist));
-    const durationStr = secToTime(this.duration);
-    const timeStr = etaStr ? `${durationStr} (eta ${etaStr})` : durationStr;
+    const name = index > -1 ? `\`${index}.\` ${this.title}` : this.title;
 
-    const value = `${this.uploader} - ${timeStr}`;
+    const eta = this.secondsUntil(playlist);
+    const duration = secToISOTime(this.duration);
+    const time = eta > 0 ? `${duration} (eta ${secToISOTime(eta)})` : duration;
+    const value = `${this.link} ${this.uploader} - ${time}`;
+
     return { name, value, inline: false };
   }
 
-  toQueueString() {
-    const title = `[${this.title}](${this.url})`;
-    const timeStr =
-      this.timer.ticking && this.timer.runtime > 0
-        ? `${secToTime(this.timer.runtime)} / ${secToTime(this.duration)}`
-        : secToTime(this.duration);
+  get link() {
+    return `[:globe_with_meridians:](${this.url})`;
+  }
 
-    return `${title} - ${this.uploader} - ${timeStr}`;
+  toQueueString() {
+    const time = this.timer.ticking
+      ? `${secToISOTime(this.timer.runtime)} / ${secToISOTime(this.duration)}`
+      : secToISOTime(this.duration);
+
+    return `${this.link} ${this.title} - ${this.uploader} - ${time}`;
   }
 }

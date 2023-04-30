@@ -9,7 +9,7 @@ export class CountDown {
   }
 
   get ticking() {
-    return typeof this.ticker != undefined;
+    return typeof this.ticker != undefined && this.remainder < this.duration;
   }
 
   get runtime() {

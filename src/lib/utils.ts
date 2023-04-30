@@ -155,14 +155,44 @@ export const slugify = (input: string) =>
     .replace(/\s{1,}/g, '-')
     .replace(/[^a-zA-Z0-9-_]/g, '');
 
-export const secToTime = (duration: number): string => {
+export const timeParts = (duration: number) => {
   const hours = Math.floor(duration / 3600);
-  const hourLeftover = duration % 3600;
-  const mins = Math.floor(hourLeftover / 60);
-  const minsLeftover = hourLeftover % 60;
-  const secs = minsLeftover % 60;
+  const minutes = Math.floor((duration % 3600) / 60);
+  const seconds = duration % 60;
+  return { hours, minutes, seconds };
+};
 
-  return [hours && `${hours}h`, mins && `${mins}m`, secs && `${secs}s`].filter(Boolean).join(' ');
+export const secToISOTime = (duration: number): string => {
+  const { hours, minutes, seconds } = timeParts(duration);
+  const fragments = [seconds, minutes];
+
+  if (hours > 0) {
+    fragments.push(hours);
+  }
+
+  return fragments
+    .reverse()
+    .map((val) => `${val}`.padStart(2, '0'))
+    .join(':');
+};
+
+export const secToTimeFragments = (duration: number): string => {
+  const { hours, minutes, seconds } = timeParts(duration);
+  const fragments = [];
+
+  if (hours > 0) {
+    fragments.push(`${hours}h`);
+  }
+
+  if (minutes > 0) {
+    fragments.push(`${minutes}m`);
+  }
+
+  if (seconds > 0) {
+    fragments.push(`${seconds}s`);
+  }
+
+  return fragments.join(' ');
 };
 
 type FirstParameter<F extends (...args: any[]) => any> = F extends (
