@@ -3,10 +3,13 @@ name: Deploy
 on:
   workflow_dispatch:
   workflow_call:
+    secrets:
+      DISCORD_GITHUB_ACTIONS_WEBHOOK_URL:
 
 env:
   NAMESPACE: --namespace huisheng
   DEPLOYMENT: deployment/huisheng-deployment
+  STATUS_COLOR: 255
 
 jobs:
   rollout-deployment:
@@ -21,3 +24,24 @@ jobs:
       - run: kubectl rollout status $NAMESPACE $DEPLOYMENT
 
       - run: kubectl wait $NAMESPACE --for=delete --timeout 5m pods/$OLD_NAME
+
+      - if: success() || failure()
+        run: |
+          [[ "${{ job.status }}" == "success" ]] && echo "STATUS_COLOR=65280" >> $GITHUB_ENV
+          [[ "${{ job.status }}" == "failure" ]] && echo "STATUS_COLOR=16711680" >> $GITHUB_ENV
+
+      - if: success() || failure()
+        run: |
+          curl ${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }} \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "embeds": [
+                {
+                  "title": "Deployment complete",
+                  "type": "rich",
+                  "description": "Run conclusion: ${{ job.status }}\n- [Workflow run](${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }})\n- [Repository](${{ github.event.repository.html_url }})\n- [Deployment history](${{ github.event.repository.html_url }}/deployments/activity_log)",
+                  "color": "${{ env.STATUS_COLOR }}"
+                }
+              ]
+            }'
