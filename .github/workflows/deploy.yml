@@ -13,6 +13,25 @@ env:
   STATUS_COLOR: 255
 
 jobs:
+  notify-deployment:
+    runs-on: self-hosted
+
+    steps:
+      - run: |
+          curl ${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }} \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "embeds": [
+                {
+                  "title": "Deployment pending review",
+                  "type": "rich",
+                  "description": "- [Workflow run](${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }})\n- [Repository](${{ github.event.repository.html_url }})\n- [Deployment history](${{ github.event.repository.html_url }}/deployments/activity_log)",
+                  "color": 16170496
+                }
+              ]
+            }'
+
   rollout-deployment:
     runs-on: self-hosted
     environment: deep-thought

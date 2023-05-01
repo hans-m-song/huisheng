@@ -49,7 +49,7 @@ export class PlaylistItem extends AudioFile {
           name: 'Duration',
           value: this.timer.ticking
             ? `${runtime} / ${duration}`
-            : !playlist.current || playlist.current?.videoId !== this.videoId
+            : playlist.current?.videoId !== this.videoId
             ? `${duration} (eta ${eta})`
             : duration,
           inline: true,
