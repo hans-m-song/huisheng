@@ -33,6 +33,7 @@ jobs:
             }'
 
   rollout-deployment:
+    needs: notify-deployment
     runs-on: self-hosted
     environment: deep-thought
 

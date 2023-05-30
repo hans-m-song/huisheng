@@ -1,0 +1,27 @@
+image: public.ecr.aws/axatol/huisheng:latest
+imagePullPolicy: Always
+
+env:
+  {}
+  # DEBUG:
+  # GITHUB_SHA:
+  # DISCORD_BOT_PREFIX:
+  # YOUTUBE_BASE_URL:
+  # YOUTUBE_DL_EXECUTABLE:
+  # YOUTUBE_DL_MAX_CONCURRENCY:
+  # YOUTUBE_DL_RETRIES:
+  # MINIO_ENDPOINT:
+  # MINIO_ENDPOINT_PORT:
+  # MINIO_ENDPOINT_SSL:
+  # MINIO_BUCKET_NAME:
+  # NEW_RELIC_ENABLED:
+
+credentials:
+  create: true
+  secretName: huisheng-credentials
+  discordBotToken: ''
+  discordClientId: ''
+  minioAccessKey: ''
+  minioSecretKey: ''
+  newRelicLicenseKey: ''
+  youtubeApiKey: ''

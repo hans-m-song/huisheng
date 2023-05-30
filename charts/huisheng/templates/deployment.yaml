@@ -1,0 +1,32 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "huisheng.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "huisheng.labels" . | nindent 4}}
+spec:
+  selector:
+    matchLabels: {{ include "huisheng.selectorLabels" . | nindent 6 }}
+  replicas: 1
+  template:
+    metadata:
+      labels: {{ include "huisheng.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: huisheng
+          image: {{ .Values.image }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.credentials.secretName }}
+          env:
+            - name: CACHE_DIR
+              value: /data
+            {{- range $name, $value := .Values.env }}
+            - name: {{ $name }}
+              value: {{ $value | toString | quote }}
+            {{- end }}
+          securityContext:
+            capabilities:
+              add: [SYS_NICE]
