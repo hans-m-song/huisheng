@@ -31,9 +31,9 @@ RUN set -x  \
 
 
 WORKDIR /app
-COPY --chown=huisheng ./tsconfig.json ./package.json ./package-lock.json ./
+COPY ./tsconfig.json ./package.json ./package-lock.json ./
 RUN npm install
-COPY --chown=huisheng ./src ./src
+COPY ./src ./src
 RUN npm run compile
 ARG GITHUB_SHA=unknown
 ENV GITHUB_SHA=${GITHUB_SHA}
