@@ -30,7 +30,7 @@ RUN set -x  \
   && touch ${OPENSSL_CONF}
 
 ENV HOME=/home/huisheng
-RUN adduser --disabled-password --gecos "" --uid $RUNNER_USER_UID huisheng
+RUN adduser --disabled-password --gecos "" huisheng
 USER huisheng
 
 WORKDIR ${HOME}
