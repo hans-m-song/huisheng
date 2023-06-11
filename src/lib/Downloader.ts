@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import path from 'path';
 
 import { config } from '../config';
@@ -46,50 +46,59 @@ const args = [
   'aext,+size',
 ];
 
-const execute = async (target: string) => {
+const execute = async (...args: string[]) => {
   let stderr = '';
   let stdout = '';
+  let child: ChildProcessWithoutNullStreams;
+  logEvent('downloader', { command: config.youtubeDLExecutable, args: args.join(' ') });
 
   try {
-    const child = spawn(config.youtubeDLExecutable, [target, ...args]);
-    logEvent('downloader', { command: [config.youtubeDLExecutable, target, ...args].join(' ') });
-    await new Promise<void>((resolve, reject) => {
-      child.on('close', (code, signal) => {
-        if (code !== 0) {
-          reject(new Error(`exit status was ${code}, signal was ${signal}`));
-          return;
-        }
-
-        resolve();
-      });
-
-      child.on('error', (error) => logError('downloader', error));
-      child.stdout.on('data', (chunk) => chunk?.toString && (stdout += chunk.toString()));
-      child.stderr.on('data', (chunk) => chunk?.toString && (stderr += chunk.toString()));
+    child = spawn(config.youtubeDLExecutable, args);
+  } catch (error) {
+    logError('downloader', error, {
+      command: config.youtubeDLExecutable,
+      args: args.join(' '),
+      message: 'spawn failed',
     });
 
-    return { stderr, stdout };
-  } catch (error) {
-    logError('downloader', error, { target, message: 'spawn failed' });
     console.log({ stderr });
     console.log({ stdout });
+
     return null;
   }
+
+  await new Promise<void>((resolve, reject) => {
+    child.on('close', (code, signal) => {
+      if (code !== 0) {
+        reject(new Error(`exit status was ${code}, signal was ${signal}`));
+        return;
+      }
+
+      resolve();
+    });
+
+    child.on('error', (error) => logError('downloader', error));
+    child.stdout.on('data', (chunk) => chunk?.toString && (stdout += chunk.toString()));
+    child.stderr.on('data', (chunk) => chunk?.toString && (stderr += chunk.toString()));
+  });
+
+  if (stderr.length > 0) {
+    logError('downloader', stderr, 'unexpected stderr output');
+    // continue anyway
+    // return null;
+  }
+
+  if (stdout.length < 1) {
+    logError('downloader', stdout, 'no stdout output');
+    return null;
+  }
+
+  return { stderr, stdout };
 };
 
 export const download = async (target: string): Promise<unknown | null> => {
-  const process = await execute(target);
+  const process = await execute(target, ...args);
   if (!process) {
-    return null;
-  }
-
-  if (process.stderr.length > 0) {
-    logError('downloader', process.stderr, 'unexpected stderr output');
-    return null;
-  }
-
-  if (process.stdout.length < 1) {
-    logError('downloader', process.stdout, 'no stdout output');
     return null;
   }
 
@@ -99,4 +108,13 @@ export const download = async (target: string): Promise<unknown | null> => {
   }
 
   return result;
+};
+
+export const version = async (): Promise<string | null> => {
+  const process = await execute('--version');
+  if (!process) {
+    return null;
+  }
+
+  return process.stdout.trim();
 };

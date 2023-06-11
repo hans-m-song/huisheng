@@ -3,14 +3,17 @@ import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
 import { config } from '../config';
 import { Command } from '../lib/commands';
+import { version } from '../lib/Downloader';
 import { getPlayer } from '../lib/Player';
 
-const debugEmbed = () => {
+const debugEmbed = async () => {
   const connections = Array.from(getVoiceConnections().entries());
   const connectionsStatus =
     connections.length < 1
       ? 'none'
       : connections.map(([id, conn]) => `${id}: \`${conn.state.status}\``).join(', ');
+
+  const ytdlVersion = await version();
 
   return new EmbedBuilder().setTitle('Debugging information').addFields(
     [
@@ -21,6 +24,7 @@ const debugEmbed = () => {
       { name: 'Youtube DL Executable', value: `\`${config.youtubeDLExecutable}\`` },
       { name: 'Youtube DL Max Concurrency', value: `\`${config.youtubeDLMaxConcurrency}\`` },
       { name: 'Youtube DL Retries', value: `\`${config.youtubeDLRetries}\`` },
+      { name: 'Youtube DL Version', value: `\`${ytdlVersion ?? 'unknown'}\`` },
       { name: 'Bucket Name', value: `\`${config.minioBucketName}\`` },
       { name: 'Bucket Access Key', value: `\`${config.minioAccessKeyObscured}\`` },
       { name: 'Connections', value: connectionsStatus },
@@ -33,16 +37,13 @@ export const debug: Command = {
 
   onMessage: async (_, message) => {
     const playerStatus = getPlayer(message.guild?.id ?? '').instance.state.status;
-
-    await message.channel.send({
-      embeds: [
-        debugEmbed().addFields({
-          name: 'Player Status',
-          value: `\`${playerStatus}\``,
-          inline: true,
-        }),
-      ],
+    const embed = (await debugEmbed()).addFields({
+      name: 'Player Status',
+      value: `\`${playerStatus}\``,
+      inline: true,
     });
+
+    await message.channel.send({ embeds: [embed] });
   },
 
   onInteraction: async (_, interaction) => {
@@ -50,15 +51,17 @@ export const debug: Command = {
       return;
     }
 
+    if (!interaction.isRepliable()) {
+      return;
+    }
+
     const playerStatus = getPlayer(interaction.guild?.id ?? '').instance.state.status;
-    const embed = debugEmbed().addFields({
+    const embed = (await debugEmbed()).addFields({
       name: 'Player Status',
       value: `\`${playerStatus}\``,
       inline: true,
     });
 
-    if (interaction.isRepliable()) {
-      await interaction.reply({ embeds: [embed] });
-    }
+    await interaction.reply({ embeds: [embed] });
   },
 };

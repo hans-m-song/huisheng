@@ -67,7 +67,7 @@ export const logMessage = (message: Message) =>
   logEvent('message', {
     channel: (message.channel as any)?.name ?? message.channel.type,
     author: message.author.tag,
-    content: message.content,
+    content: message.content.slice(config.botPrefix.length),
   });
 
 export const logCommandInteraction = (interaction: CommandInteraction) =>
