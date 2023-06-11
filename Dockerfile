@@ -1,6 +1,7 @@
 FROM --platform=linux/amd64 node:18-bullseye-slim
 
-RUN apt-get update \
+RUN set -x \
+  && apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   build-essential \
   bzip2 \
@@ -15,7 +16,8 @@ RUN apt-get update \
   && yarn global add node-gyp
 
 # yt-dlp
-RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
+RUN set -x  \
+  && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
   && chmod a+rx /usr/local/bin/yt-dlp
 
 # phantomjs
@@ -28,7 +30,7 @@ RUN set -x  \
   && touch ${OPENSSL_CONF}
 
 ENV HOME=/home/huisheng
-RUN useradd --system --home-dir ${HOME} --shell /usr/sbin/nologin huisheng
+RUN adduser --disabled-password --gecos "" --uid $RUNNER_USER_UID huisheng
 USER huisheng
 
 WORKDIR ${HOME}
