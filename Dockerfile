@@ -29,11 +29,8 @@ RUN set -x  \
   && mv /tmp/phantomjs/bin/phantomjs /usr/local/bin \
   && touch ${OPENSSL_CONF}
 
-ENV HOME=/home/huisheng
-RUN adduser --disabled-password --gecos "" huisheng
-USER huisheng
 
-WORKDIR ${HOME}
+WORKDIR /app
 COPY --chown=huisheng ./tsconfig.json ./package.json ./package-lock.json ./
 RUN npm install
 COPY --chown=huisheng ./src ./src
