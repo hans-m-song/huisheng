@@ -243,3 +243,10 @@ export const collect = <K, V, F extends unknown[] = []>(collector: Collector<K, 
   new Promise<Collection<K, V>>((resolve) => {
     collector.once('end', resolve);
   });
+
+export const obscure = (input: string) => input.slice(0, 4) + input.slice(4).replace(/./g, '*');
+
+export const encodeQueryParams = (params: Record<string, any>) =>
+  Object.entries(params)
+    .map((pair) => pair.map(encodeURIComponent).join('='))
+    .join('&');

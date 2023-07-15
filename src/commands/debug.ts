@@ -5,6 +5,7 @@ import { config } from '../config';
 import { Command } from '../lib/commands';
 import { version } from '../lib/Downloader';
 import { getPlayer } from '../lib/Player';
+import { obscure } from '../lib/utils';
 
 const debugEmbed = async () => {
   const connections = Array.from(getVoiceConnections().entries());
@@ -26,7 +27,9 @@ const debugEmbed = async () => {
       { name: 'Youtube DL Retries', value: `\`${config.youtubeDLRetries}\`` },
       { name: 'Youtube DL Version', value: `\`${ytdlVersion ?? 'unknown'}\`` },
       { name: 'Bucket Name', value: `\`${config.minioBucketName}\`` },
-      { name: 'Bucket Access Key', value: `\`${config.minioAccessKeyObscured}\`` },
+      { name: 'Bucket Access Key', value: `\`${obscure(config.minioAccessKey)}\`` },
+      { name: 'Spotify base URL', value: `\`${config.spotifyBaseUrl}\`` },
+      { name: 'Spotify client ID', value: `\`${obscure(config.spotifyClientId ?? '')}\`` },
       { name: 'Connections', value: connectionsStatus },
     ].map((field) => ({ ...field, inline: true })),
   );

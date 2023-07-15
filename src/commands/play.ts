@@ -32,7 +32,7 @@ export const play: Command = {
 
       await message.suppressEmbeds(true);
 
-      const results = await youtube.query(args.join(' '));
+      const results = await youtube.query(args.join(' ').trim());
       if (!results || results.length < 1) {
         await message.channel.send('No results found');
         return;

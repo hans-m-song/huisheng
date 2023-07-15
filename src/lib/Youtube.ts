@@ -2,6 +2,7 @@ import axios from 'axios';
 import { isMatching, P } from 'ts-pattern';
 
 import { config } from '../config';
+import { Spotify } from './Spotify';
 import { GuardType, logError, logEvent } from './utils';
 
 export type YoutubeSearchResult = GuardType<typeof isYoutubeSearchResult>;
@@ -106,8 +107,6 @@ const normaliseYoutubeUrl = (url: string) =>
     .replace('/playlist', '/watch')
     .replace('youtube.com/shorts/', 'youtube.com/watch?v=');
 
-const MATCH_VIDEO_HREF = /^https:\/\/.*?\.youtube.com\//;
-
 export interface QueryResult {
   videoId: string;
   title: string;
@@ -115,18 +114,35 @@ export interface QueryResult {
 }
 
 const query = async (raw: string, fuzzySearchLimit = 1): Promise<QueryResult[] | null> => {
-  const queryStr = normaliseYoutubeUrl(raw);
+  if (raw.includes('spotify.com') && raw.includes('/playlist/')) {
+    const url = new URL(raw);
+    const playlistId = url.pathname.replace('/playlist/', '');
+    logEvent('youtube', { playlistId, message: 'searching by spotify playlist' });
+    const playlist = await new Spotify().getPlaylist(playlistId);
+    if (!playlist) {
+      return null;
+    }
 
-  if (MATCH_VIDEO_HREF.test(queryStr)) {
-    const { searchParams } = new URL(queryStr);
+    const results = await Promise.all(playlist.map(async (track) => search(track.name, 1)));
 
-    const playlistId = searchParams.get('list');
+    return results.flatMap((item) =>
+      item.data.items.map((item) => ({
+        videoId: item.id.videoId,
+        title: item.snippet.title,
+        channelTitle: item.snippet.channelTitle,
+      })),
+    );
+  }
+
+  if (raw.includes('youtube.com')) {
+    const url = new URL(normaliseYoutubeUrl(raw));
+    const playlistId = url.searchParams.get('list');
     if (playlistId) {
       logEvent('youtube', { playlistId, message: 'searching by playlist id' });
       const response = await list(playlistId)
         .then((result) => result.data)
         .catch((error) => {
-          logError('youtube', error, { queryStr, playlistId });
+          logError('youtube', error, { url: url.toString(), playlistId });
           return null;
         });
 
@@ -139,13 +155,13 @@ const query = async (raw: string, fuzzySearchLimit = 1): Promise<QueryResult[] |
       }
     }
 
-    const videoId = searchParams.get('v');
+    const videoId = url.searchParams.get('v');
     if (videoId) {
       logEvent('youtube', { videoId, message: 'searching by video id' });
       const response = await get(videoId)
         .then((result) => result.data)
         .catch((error) => {
-          logError('youtube', error, { queryStr, id: videoId });
+          logError('youtube', error, { url: url.toString(), id: videoId });
           return null;
         });
 

@@ -1,11 +1,14 @@
-import { assertEnv, boolEnv, numEnv } from './lib/utils';
+import { assertEnv, boolEnv, numEnv, obscure } from './lib/utils';
 
 const debug = process.env.DEBUG == 'true';
 const githubSha = process.env.GITHUB_SHA ?? 'unknown';
+
 const clientId = assertEnv('DISCORD_CLIENT_ID');
 const botToken = assertEnv('DISCORD_BOT_TOKEN');
 const botPrefix = process.env.DISCORD_BOT_PREFIX ?? '!';
+
 const cacheDir = process.env.CACHE_DIR ?? '/var/lib/huisheng/cache';
+
 const youtubeBaseUrl = process.env.YOUTUBE_BASE_URL ?? 'https://www.googleapis.com/youtube/v3';
 const youtubeApiKey = assertEnv('YOUTUBE_API_KEY');
 const youtubeDLExecutable = process.env.YOUTUBE_DL_EXECUTABLE ?? 'yt-dlp';
@@ -19,6 +22,7 @@ const youtubeDLRetries = numEnv(process.env.YOUTUBE_DL_RETRIES, {
   min: 1,
   max: 5,
 });
+
 const minioEndpoint = process.env.MINIO_ENDPOINT ?? 'api.minio.k8s.axatol.xyz';
 const minioEndpointPort = numEnv(process.env.MINIO_ENDPOINT_PORT, { default: 443 });
 const minioEndpointSSL = boolEnv(process.env.MINIO_ENDPOINT_SSL, true);
@@ -26,8 +30,9 @@ const minioBucketName = process.env.MINIO_BUCKET_NAME ?? 'huisheng';
 const minioAccessKey = assertEnv('MINIO_ACCESS_KEY');
 const minioSecretKey = assertEnv('MINIO_SECRET_KEY');
 
-const minioAccessKeyObscured =
-  minioAccessKey.slice(0, 4) + minioAccessKey.slice(4).replace(/./g, '*');
+const spotifyBaseUrl = process.env.SPOTIFY_BASE_URL ?? 'https://api.spotify.com/';
+const spotifyClientId = process.env.SPOTIFY_CLIENT_ID;
+const spotifyClientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
 export const config = {
   debug,
@@ -52,8 +57,12 @@ export const config = {
   minioEndpointSSL,
   minioBucketName,
   minioAccessKey,
-  minioAccessKeyObscured,
   minioSecretKey,
+
+  // Spotify
+  spotifyBaseUrl,
+  spotifyClientId,
+  spotifyClientSecret,
 };
 
 console.log('config', {
@@ -68,5 +77,7 @@ console.log('config', {
   minioEndpointPort,
   minioEndpointSSL,
   minioBucketName,
-  minioAccessKey: minioAccessKeyObscured,
+  spotifyBaseUrl,
+  minioAccessKey: obscure(minioAccessKey),
+  spotifyClientId: obscure(spotifyClientId ?? ''),
 });
