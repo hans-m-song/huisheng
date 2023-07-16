@@ -7,7 +7,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "compile": "tsc",
-    "watch": "yarn compile -w",
+    "watch": "npm run compile -- -w",
     "start": "node dist/index.js",
     "debug": "nodemon",
     "lint": "eslint \"src/**/*.ts\"",

@@ -10,13 +10,12 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/* \
   && ln /usr/bin/python3 /usr/bin/python \
   && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
-  && chmod a+rx /usr/local/bin/yt-dlp \
-  && yarn global add node-gyp
+  && chmod a+rx /usr/local/bin/yt-dlp
 
 WORKDIR /app
-COPY ./tsconfig.json ./package.json ./yarn.lock ./
+COPY ./tsconfig.json ./package.json ./package-lock.json ./
 
-RUN yarn install
+RUN npm install
 ARG GITHUB_SHA=unknown
 ENV GITHUB_SHA=${GITHUB_SHA}
-CMD yarn debug
+CMD npm run debug

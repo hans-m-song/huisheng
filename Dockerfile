@@ -12,8 +12,7 @@ RUN set -x \
   python3 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* \
-  && ln /usr/bin/python3 /usr/bin/python \
-  && yarn global add node-gyp
+  && ln /usr/bin/python3 /usr/bin/python
 
 # yt-dlp
 RUN set -x  \
