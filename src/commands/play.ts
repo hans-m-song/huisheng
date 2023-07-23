@@ -4,7 +4,7 @@ import { emojis } from '../emotes';
 import { messageVoiceCommand } from '../lib/Audio';
 import { Command } from '../lib/commands';
 import { reportEnqueueResult } from '../lib/Player';
-import { youtube } from '../lib/Youtube';
+import { Youtube } from '../lib/Youtube';
 
 export const play: Command = {
   spec: new SlashCommandBuilder()
@@ -32,7 +32,7 @@ export const play: Command = {
 
       await message.suppressEmbeds(true);
 
-      const results = await youtube.query(args.join(' ').trim());
+      const results = await Youtube.query(args.join(' ').trim());
       if (!results || results.length < 1) {
         await message.channel.send('No results found');
         return;

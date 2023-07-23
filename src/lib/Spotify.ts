@@ -90,36 +90,23 @@ export class Spotify {
     return session;
   };
 
-  static async query(path: string): Promise<SpotifyTrack[] | null> {
-    const [type, id] = path.replace(/^\//, '').split('/');
-    if (!type || !id) {
-      return null;
-    }
-
-    const spotify = new Spotify();
-
-    logEvent('Spotify.query', { path, type, id });
-
-    switch (type) {
-      case 'playlist':
-        return spotify.getPlaylist(id);
-      case 'album':
-        return spotify.getAlbum(id);
-      default:
-        return null;
-    }
-  }
-
   /**
    * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
    */
   createInstance = async (): Promise<AxiosInstance> => {
     const session = await Spotify.assertSession();
 
-    return axios.create({
+    const instance = axios.create({
       baseURL: config.spotifyBaseUrl,
       headers: { Authorization: `Bearer ${session.accessToken}` },
     });
+
+    instance.interceptors.request.use((config) => {
+      logEvent('Spotify.api', { method: config.method, url: config.url, params: config.params });
+      return config;
+    });
+
+    return instance;
   };
 
   private async paginate<T>(instance: AxiosInstance, endpoint: string): Promise<T[]> {
@@ -138,6 +125,25 @@ export class Spotify {
     }
 
     return response.data.items;
+  }
+
+  static async query(path: string): Promise<SpotifyTrack[] | null> {
+    const [type, id] = path.replace(/^\//, '').split('/');
+    logEvent('Spotify.query', { path, type, id });
+    if (!type || !id) {
+      return null;
+    }
+
+    const spotify = new Spotify();
+
+    switch (type) {
+      case 'playlist':
+        return spotify.getPlaylist(id);
+      case 'album':
+        return spotify.getAlbum(id);
+      default:
+        return null;
+    }
   }
 
   /**
@@ -165,6 +171,9 @@ export class Spotify {
     }));
   }
 
+  /**
+   * https://developer.spotify.com/documentation/web-api/reference/get-an-albums-tracks
+   */
   async getAlbum(id: string): Promise<SpotifyTrack[] | null> {
     const spotify = await this.createInstance();
 
