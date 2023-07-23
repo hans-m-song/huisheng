@@ -114,16 +114,15 @@ export interface QueryResult {
 }
 
 const query = async (raw: string, fuzzySearchLimit = 1): Promise<QueryResult[] | null> => {
-  if (raw.includes('spotify.com') && raw.includes('/playlist/')) {
+  if (raw.includes('spotify.com')) {
     const url = new URL(raw);
-    const playlistId = url.pathname.replace('/playlist/', '');
-    logEvent('youtube', { playlistId, message: 'searching by spotify playlist' });
-    const playlist = await new Spotify().getPlaylist(playlistId);
-    if (!playlist) {
+    logEvent('youtube', { path: url.pathname, message: 'searching by spotify playlist' });
+    const tracks = await Spotify.query(url.pathname);
+    if (!tracks) {
       return null;
     }
 
-    const results = await Promise.all(playlist.map(async (track) => search(track.name, 1)));
+    const results = await Promise.all(tracks.map(async (track) => search(track.name, 1)));
 
     return results.flatMap((item) =>
       item.data.items.map((item) => ({

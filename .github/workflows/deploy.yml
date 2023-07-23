@@ -6,6 +6,10 @@ on:
     secrets:
       DISCORD_GITHUB_ACTIONS_WEBHOOK_URL:
         required: true
+      NEW_RELIC_API_KEY:
+        required: true
+      NEW_RELIC_DEPLOYMENT_ENTITY_GUID:
+        required: true
 
 env:
   NAMESPACE: --namespace huisheng
@@ -46,10 +50,24 @@ jobs:
 
       - run: kubectl wait $NAMESPACE --for=delete --timeout 5m pods/$OLD_NAME
 
-      - if: success() || failure()
-        run: |
-          [[ "${{ job.status }}" == "success" ]] && echo "STATUS_COLOR=65280" >> $GITHUB_ENV || true
-          [[ "${{ job.status }}" == "failure" ]] && echo "STATUS_COLOR=16711680" >> $GITHUB_ENV || true
+      - id: date
+        run: echo "date=$(date +"%Y-%m-%d-%H-%M-%S")" >> $GITHUB_OUTPUT
+
+      - if: success()
+        uses: newrelic/deployment-marker-action@v2.4.0
+        with:
+          apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
+          guid: ${{ secrets.NEW_RELIC_DEPLOYMENT_ENTITY_GUID }}
+          version: ${{ steps.date.outputs.date }}
+          user: ${{ github.actor }}
+          commit: ${{ github.sha }}
+          deeplink: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - if: success()
+        run: echo "STATUS_COLOR=65280" >> $GITHUB_ENV || true
+
+      - if: failure()
+        run: echo "STATUS_COLOR=16711680" >> $GITHUB_ENV || true
 
       - if: success() || failure()
         run: |

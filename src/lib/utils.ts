@@ -82,13 +82,21 @@ const serialiseError = (error: any): any => {
     return error;
   }
 
-  if (axios.isAxiosError(error)) {
-    const raw = JSON.stringify(error.toJSON());
-    const sanitised = raw.replace(/("Authorization":\s?)".*?"/i, '$1"REDACTED"');
-    return JSON.parse(sanitised);
-  }
+  const raw = axios.isAxiosError(error)
+    ? JSON.stringify(error.toJSON())
+    : JSON.stringify(error, Object.getOwnPropertyNames(error));
 
-  return JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  return JSON.parse(raw, (key, value) => {
+    if (['Authorization', 'Api-Key'].includes(key) && typeof value === 'string') {
+      return 'REDACTED';
+    }
+
+    if (key === 'stack' && typeof value === 'string') {
+      return value.split(/\n\s*/g);
+    }
+
+    return value;
+  });
 };
 
 export const logError = (

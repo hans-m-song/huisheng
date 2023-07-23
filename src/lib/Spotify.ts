@@ -3,7 +3,7 @@ import 'dotenv/config';
 import axios, { AxiosInstance } from 'axios';
 
 import { config } from '../config';
-import { encodeQueryParams, logError } from './utils';
+import { encodeQueryParams, logError, logEvent } from './utils';
 
 interface AccessTokenResponse {
   access_token: string;
@@ -40,10 +40,19 @@ type PlaylistTracksResponse = Pagination<{
   };
 }>;
 
+type AlbumTracksResponse = Pagination<{
+  id: string;
+  name: string;
+  artists: {
+    id: string;
+    name: string;
+  }[];
+}>;
+
 export interface SpotifyTrack {
   id: string;
   name: string;
-  album: { id: string; name: string };
+  album?: { id: string; name: string };
   artists: { id: string; name: string }[];
 }
 
@@ -81,6 +90,29 @@ export class Spotify {
     return session;
   };
 
+  static async query(path: string): Promise<SpotifyTrack[] | null> {
+    const [type, id] = path.replace(/^\//, '').split('/');
+    if (!type || !id) {
+      return null;
+    }
+
+    const spotify = new Spotify();
+
+    logEvent('Spotify.query', { path, type, id });
+
+    switch (type) {
+      case 'playlist':
+        return spotify.getPlaylist(id);
+      case 'album':
+        return spotify.getAlbum(id);
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
+   */
   createInstance = async (): Promise<AxiosInstance> => {
     const session = await Spotify.assertSession();
 
@@ -108,6 +140,9 @@ export class Spotify {
     return response.data.items;
   }
 
+  /**
+   * https://developer.spotify.com/documentation/web-api/reference/get-an-albums-tracks
+   */
   async getPlaylist(id: string): Promise<SpotifyTrack[] | null> {
     const spotify = await this.createInstance();
 
@@ -124,6 +159,24 @@ export class Spotify {
         name: item.track.album.name,
       },
       artists: item.track.artists.map((artist) => ({
+        id: artist.id,
+        name: artist.name,
+      })),
+    }));
+  }
+
+  async getAlbum(id: string): Promise<SpotifyTrack[] | null> {
+    const spotify = await this.createInstance();
+
+    const items = await this.paginate<AlbumTracksResponse['items'][number]>(
+      spotify,
+      `albums/${id}/tracks`,
+    );
+
+    return items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      artists: item.artists.map((artist) => ({
         id: artist.id,
         name: artist.name,
       })),

@@ -31,6 +31,7 @@ export const commands: Record<string, Command> = {
   play,
   queue,
   remove,
+  restart: shutdown,
   rm: remove,
   search,
   shutdown,
