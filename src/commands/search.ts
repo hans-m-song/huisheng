@@ -12,7 +12,7 @@ import { interactionVoiceCommand, messageVoiceCommand } from '../lib/Audio';
 import { Command } from '../lib/commands';
 import { reportEnqueueResult } from '../lib/Player';
 import { collect } from '../lib/utils';
-import { QueryResult, youtube } from '../lib/Youtube';
+import { QueryResult, Youtube } from '../lib/Youtube';
 
 const searchResultEmbed = (results: QueryResult[]) =>
   new EmbedBuilder()
@@ -46,7 +46,7 @@ export const search: Command = {
     await messageVoiceCommand(message, { allowConnect: true }, async (player) => {
       await message.react(emojis.thinking);
 
-      const results = await youtube.query(args.join(' '), 5);
+      const results = await Youtube.query(args.join(' '), 5);
       if (!results || results.length < 1) {
         await message.channel.send('No results found');
         return;
@@ -114,7 +114,7 @@ export const search: Command = {
           return;
         }
 
-        const results = await youtube.query(query, 5);
+        const results = await Youtube.query(query, 5);
         if (!results || results.length < 1) {
           await interaction.reply('No results found');
           return;
