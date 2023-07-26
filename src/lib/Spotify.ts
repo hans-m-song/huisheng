@@ -154,7 +154,7 @@ export class Spotify {
 
     const items = await this.paginate<PlaylistTracksResponse['items'][number]>(
       spotify,
-      `playlists/${id}/tracks`,
+      `/playlists/${id}/tracks`,
     );
 
     return items.map((item) => ({
@@ -179,7 +179,7 @@ export class Spotify {
 
     const items = await this.paginate<AlbumTracksResponse['items'][number]>(
       spotify,
-      `albums/${id}/tracks`,
+      `/albums/${id}/tracks`,
     );
 
     return items.map((item) => ({

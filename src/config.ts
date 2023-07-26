@@ -30,7 +30,7 @@ const minioBucketName = process.env.MINIO_BUCKET_NAME ?? 'huisheng';
 const minioAccessKey = assertEnv('MINIO_ACCESS_KEY');
 const minioSecretKey = assertEnv('MINIO_SECRET_KEY');
 
-const spotifyBaseUrl = process.env.SPOTIFY_BASE_URL ?? 'https://api.spotify.com/';
+const spotifyBaseUrl = process.env.SPOTIFY_BASE_URL ?? 'https://api.spotify.com/v1';
 const spotifyClientId = process.env.SPOTIFY_CLIENT_ID;
 const spotifyClientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
