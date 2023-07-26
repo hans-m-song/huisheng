@@ -143,7 +143,13 @@ export class Youtube {
         return null;
       }
 
-      const results = await Promise.all(tracks.map(async (track) => Youtube.search(track.name, 1)));
+      const results = await Promise.all(
+        tracks.map(async (track) => {
+          const artists = track.artists.map((artist) => artist.name);
+          const terms = [...artists, track.album?.name, track.name].filter(Boolean);
+          return Youtube.search(terms.join(' '), 1);
+        }),
+      );
 
       return results.flatMap((item) =>
         item.data.items.map((item) => ({
