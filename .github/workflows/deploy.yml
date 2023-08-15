@@ -12,56 +12,48 @@ on:
         required: true
 
 env:
-  NAMESPACE: --namespace huisheng
-  DEPLOYMENT: deployment/huisheng-deployment
   STATUS_COLOR: 255
 
 jobs:
-  notify-deployment:
-    runs-on: self-hosted
-
-    steps:
-      - run: |
-          curl ${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }} \
-            --request POST \
-            --header 'Content-Type: application/json' \
-            --data '{
-              "embeds": [
-                {
-                  "title": "Deployment pending review",
-                  "type": "rich",
-                  "description": "- [Workflow run](${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }})\n- [Repository](${{ github.event.repository.html_url }})\n- [Deployment history](${{ github.event.repository.html_url }}/deployments/activity_log)",
-                  "color": 16170496
-                }
-              ]
-            }'
-
-  rollout-deployment:
-    needs: notify-deployment
+  deploy:
     runs-on: self-hosted
     environment: deep-thought
 
     steps:
-      - run: echo "OLD_NAME=$( kubectl $NAMESPACE get pods -o=jsonpath='{.items[].metadata.name}' )" >> $GITHUB_ENV
+      - name: Notify deployment begins
+        shell: python
+        run: |
+          import requests
 
-      - run: kubectl rollout restart $NAMESPACE $DEPLOYMENT
+          requests.post("${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }}", json={
+            "embeds": [{
+              "title": "Deployment pending review",
+              "type": "rich",
+              "color": 16170496,
+              "description": "\n".join([
+                "Run conclusion: ${{ job.status }}
+                "- [Workflow run](${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }})",
+                "- [Repository](${{ github.event.repository.html_url }})",
+                "- [Deployment history](${{ github.event.repository.html_url }}/deployments/activity_log)",
+              ]),
+            }]
+          })
 
-      - run: kubectl rollout status $NAMESPACE $DEPLOYMENT
-
-      - run: kubectl wait $NAMESPACE --for=delete --timeout 5m pods/$OLD_NAME
-
-      - id: date
-        run: echo "date=$(date +"%Y-%m-%d-%H-%M-%S")" >> $GITHUB_OUTPUT
-
-      - if: success()
-        uses: newrelic/deployment-marker-action@v2.4.0
+      - name: Rollout deployment
+        uses: axatol/actions/rollout-kubernetes-deployment@release
+        id: deploy
         with:
-          apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
-          guid: ${{ secrets.NEW_RELIC_DEPLOYMENT_ENTITY_GUID }}
-          version: ${{ steps.date.outputs.date }}
-          user: ${{ github.actor }}
-          commit: ${{ github.sha }}
-          deeplink: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          deployment-name: huisheng
+          namespace: huisheng
+          wait: true
+
+      - name: Create deployment marker
+        if: success()
+        uses: axatol/actions/create-new-relic-deployment@release
+        with:
+          name: huisheng
+          api-key: ${{ secrets.NEW_RELIC_API_KEY }}
+          deployment-type: ROLLING
 
       - if: success()
         run: echo "STATUS_COLOR=65280" >> $GITHUB_ENV || true
@@ -69,18 +61,22 @@ jobs:
       - if: failure()
         run: echo "STATUS_COLOR=16711680" >> $GITHUB_ENV || true
 
-      - if: success() || failure()
+      - name: Notify deployment complete
+        if: success() || failure()
+        shell: python
         run: |
-          curl ${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }} \
-            --request POST \
-            --header 'Content-Type: application/json' \
-            --data '{
-              "embeds": [
-                {
-                  "title": "Deployment complete",
-                  "type": "rich",
-                  "description": "Run conclusion: ${{ job.status }}\n- [Workflow run](${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }})\n- [Repository](${{ github.event.repository.html_url }})\n- [Deployment history](${{ github.event.repository.html_url }}/deployments/activity_log)",
-                  "color": "${{ env.STATUS_COLOR }}"
-                }
-              ]
-            }'
+          import requests
+
+          requests.post("${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }}", json={
+            "embeds": [{
+              "title": "Deployment complete",
+              "type": "rich",
+              "color": ${{ env.STATUS_COLOR }},
+              "description": "\n".join([
+                "Run conclusion: ${{ job.status }}
+                "- [Workflow run](${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }})",
+                "- [Repository](${{ github.event.repository.html_url }})",
+                "- [Deployment history](${{ github.event.repository.html_url }}/deployments/activity_log)",
+              ]),
+            }]
+          })
