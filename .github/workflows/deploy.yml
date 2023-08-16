@@ -25,6 +25,7 @@ jobs:
           status: pending
 
   deploy:
+    needs: notify
     runs-on: self-hosted
     environment: wheatley
 
