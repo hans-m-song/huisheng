@@ -1,13 +1,8 @@
 import { ActivityType, Client, GatewayIntentBits, Partials } from 'discord.js';
 
 import { config } from './config';
-import {
-  onMessageCreate,
-  onInteractionCreate,
-  onError,
-  onInvalidated,
-  onVoiceStateUpdate,
-} from './events';
+import { onMessageCreate, onInteractionCreate, onError, onVoiceStateUpdate } from './events';
+import { destroyVoiceConnections } from './lib/Audio';
 import { logEvent } from './lib/utils';
 
 const authorizeUrl =
@@ -18,39 +13,54 @@ const authorizeUrl =
     `scope=${encodeURIComponent(['applications.commands', 'bot'].join('&'))}`,
   ].join('&');
 
-export const initializeClient = async () => {
-  const client = new Client({
-    // Required for direct messages
-    partials: [Partials.Channel],
-    intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildVoiceStates,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.GuildMessageReactions,
-      GatewayIntentBits.DirectMessages,
-      GatewayIntentBits.DirectMessageReactions,
-      GatewayIntentBits.MessageContent,
-    ],
-  });
+export class Bot {
+  client: Client;
 
-  client.on('error', onError);
-  client.on('invalidated', onInvalidated);
-  client.on('messageCreate', onMessageCreate(client));
-  client.on('interactionCreate', onInteractionCreate(client));
-  client.on('voiceStateUpdate', onVoiceStateUpdate(client));
-
-  const ready = new Promise<void>((resolve) => {
-    client.once('ready', (client) => {
-      client.user.setPresence({
-        status: 'online',
-        activities: [{ type: ActivityType.Watching, name: 'Shrek 2' }],
-      });
-      resolve();
+  constructor() {
+    this.client = new Client({
+      // Required for direct messages
+      partials: [Partials.Channel],
+      intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.DirectMessages,
+        GatewayIntentBits.DirectMessageReactions,
+        GatewayIntentBits.MessageContent,
+      ],
     });
-  });
 
-  await Promise.all([client.login(config.botToken), ready]);
-  logEvent('ready', { client: client.user?.tag, invite: authorizeUrl });
+    this.client.on('error', onError);
+    this.client.on('messageCreate', onMessageCreate(this.client));
+    this.client.on('interactionCreate', onInteractionCreate(this.client));
+    this.client.on('voiceStateUpdate', onVoiceStateUpdate(this.client));
+    this.client.once('invalidated', this.shutdown.bind(this));
+    process.on('beforeExit', this.shutdown.bind(this));
+    process.on('SIGINT', this.shutdown.bind(this));
+    process.on('SIGTERM', this.shutdown.bind(this));
+  }
 
-  return { client };
-};
+  async login() {
+    const ready = new Promise<void>((resolve) => {
+      this.client.once('ready', (client) => {
+        client.user.setPresence({
+          status: 'online',
+          activities: [{ type: ActivityType.Watching, name: 'Shrek 2' }],
+        });
+        resolve();
+      });
+    });
+
+    await Promise.all([this.client.login(config.botToken), ready]);
+    logEvent('ready', { client: this.client.user?.tag, invite: authorizeUrl });
+  }
+
+  async shutdown(exitCode?: number | string) {
+    logEvent('beforeExit', { message: 'client shutting down', exitCode });
+    destroyVoiceConnections();
+    this.client.user?.setStatus('invisible');
+    this.client.destroy();
+    process.exit(typeof exitCode === 'number' ? exitCode : 1);
+  }
+}

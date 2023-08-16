@@ -14,10 +14,6 @@ interface ClientEventHandler<K extends keyof ClientEvents> {
 
 export const onError: ClientEventHandler<'error'> = (error) => logError('client', error);
 
-export const onInvalidated = () => {
-  logEvent('invalidated', 'client received "invalidated" event');
-};
-
 export const onMessageCreate =
   (client: Client): ClientEventHandler<'messageCreate'> =>
   async (message) => {
