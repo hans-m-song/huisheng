@@ -1,4 +1,5 @@
 import {
+  generateDependencyReport,
   getVoiceConnection,
   getVoiceConnections,
   joinVoiceChannel,
@@ -219,4 +220,21 @@ export const destroyVoiceConnections = (): void => {
     connection.disconnect();
     connection.destroy();
   });
+};
+
+export const dependencyReport = () => {
+  const rawReport = generateDependencyReport();
+  const sections = rawReport.replace(/-{2,}/g, '').trim().split('\n\n');
+
+  const report: Record<string, Record<string, string>> = {};
+  sections.map((section) => {
+    const [header, ...lines] = section.split('\n');
+    report[header] = {};
+    lines.forEach((line) => {
+      const [key, value] = line.replace(/^- /, '').split(': ');
+      report[header][key] = value;
+    });
+  });
+
+  return report;
 };

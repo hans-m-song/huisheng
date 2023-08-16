@@ -53,11 +53,11 @@ export class Bot {
     });
 
     await Promise.all([this.client.login(config.botToken), ready]);
-    logEvent('ready', { client: this.client.user?.tag, invite: authorizeUrl });
+    logEvent('Bot.login.ready', { client: this.client.user?.tag, invite: authorizeUrl });
   }
 
   async shutdown(exitCode?: number | string) {
-    logEvent('beforeExit', { message: 'client shutting down', exitCode });
+    logEvent('Bot.shutdown', { message: 'client shutting down', exitCode });
     destroyVoiceConnections();
     this.client.user?.setStatus('invisible');
     this.client.destroy();

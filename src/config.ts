@@ -1,4 +1,4 @@
-import { assertEnv, boolEnv, numEnv, obscure } from './lib/utils';
+import { assertEnv, boolEnv, logEvent, numEnv, obscure } from './lib/utils';
 
 const debug = process.env.DEBUG == 'true';
 const githubSha = process.env.GITHUB_SHA ?? 'unknown';
@@ -65,7 +65,7 @@ export const config = {
   spotifyClientSecret,
 };
 
-console.log('config', {
+logEvent('config', {
   githubSha,
   botPrefix,
   cacheDir,
