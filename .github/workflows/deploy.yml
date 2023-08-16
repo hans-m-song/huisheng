@@ -15,30 +15,20 @@ env:
   STATUS_COLOR: 255
 
 jobs:
-  deploy:
+  notify:
     runs-on: self-hosted
-    environment: deep-thought
 
     steps:
-      - name: Notify deployment begins
-        shell: python
-        run: |
-          import requests
+      - uses: axatol/actions/send-discord-deployment-notification@release
+        with:
+          webhook-url: ${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }}
+          status: pending
 
-          requests.post("${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }}", json={
-            "embeds": [{
-              "title": "Deployment pending review",
-              "type": "rich",
-              "color": 16170496,
-              "description": "\n".join([
-                "Run conclusion: ${{ job.status }}
-                "- [Workflow run](${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }})",
-                "- [Repository](${{ github.event.repository.html_url }})",
-                "- [Deployment history](${{ github.event.repository.html_url }}/deployments/activity_log)",
-              ]),
-            }]
-          })
+  deploy:
+    runs-on: self-hosted
+    environment: wheatley
 
+    steps:
       - name: Rollout deployment
         uses: axatol/actions/rollout-kubernetes-deployment@release
         id: deploy
@@ -55,28 +45,9 @@ jobs:
           api-key: ${{ secrets.NEW_RELIC_API_KEY }}
           deployment-type: ROLLING
 
-      - if: success()
-        run: echo "STATUS_COLOR=65280" >> $GITHUB_ENV || true
-
-      - if: failure()
-        run: echo "STATUS_COLOR=16711680" >> $GITHUB_ENV || true
-
       - name: Notify deployment complete
         if: success() || failure()
-        shell: python
-        run: |
-          import requests
-
-          requests.post("${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }}", json={
-            "embeds": [{
-              "title": "Deployment complete",
-              "type": "rich",
-              "color": ${{ env.STATUS_COLOR }},
-              "description": "\n".join([
-                "Run conclusion: ${{ job.status }}
-                "- [Workflow run](${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }})",
-                "- [Repository](${{ github.event.repository.html_url }})",
-                "- [Deployment history](${{ github.event.repository.html_url }}/deployments/activity_log)",
-              ]),
-            }]
-          })
+        uses: axatol/actions/send-discord-deployment-notification@release
+        with:
+          webhook-url: ${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }}
+          status: ${{ steps.deploy.outcome }}
