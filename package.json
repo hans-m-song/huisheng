@@ -23,7 +23,7 @@
     "dotenv": "^16.0.0",
     "erlpack": "github:discord/erlpack",
     "minio": "^7.0.28",
-    "newrelic": "^10.5.0",
+    "newrelic": "^10.6.2",
     "sodium-native": "^4.0.1",
     "source-map-support": "^0.5.21",
     "ts-pattern": "^4.0.1",
@@ -45,8 +45,5 @@
     "prettier": "^2.7.1",
     "ts-node": "^10.7.0",
     "tsx": "^3.12.3"
-  },
-  "engines": {
-    "node": ">=16"
   }
 }

@@ -1,5 +1,6 @@
 import { getVoiceConnection } from '@discordjs/voice';
 import { Awaitable, Client, ClientEvents, VoiceState } from 'discord.js';
+import newrelic from 'newrelic';
 
 import { commands } from './commands';
 import { config } from './config';
@@ -33,7 +34,10 @@ export const onMessageCreate =
     }
 
     const emoji = emojiGetter(client.emojis.cache);
-    await commands[command].onMessage({ client, emoji }, message, args);
+    await newrelic.startWebTransaction(
+      `/command/${command}`,
+      commands[command].onMessage({ client, emoji }, message, args),
+    );
   };
 
 export const onInteractionCreate =
@@ -50,7 +54,10 @@ export const onInteractionCreate =
     }
 
     const emoji = emojiGetter(client.emojis.cache);
-    await command.onInteraction({ client, emoji }, interaction);
+    await newrelic.startWebTransaction(
+      `/interaction/${interaction.commandName}`,
+      command.onInteraction({ client, emoji }, interaction),
+    );
   };
 
 export const onVoiceStateUpdate =
