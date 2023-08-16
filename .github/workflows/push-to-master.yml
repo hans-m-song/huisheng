@@ -49,6 +49,7 @@ jobs:
       - uses: aws-actions/amazon-ecr-login@v1
         with:
           registry-type: public
+          mask-password: true
 
       - uses: axatol/actions/docker-build-push@release
         with:
