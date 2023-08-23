@@ -5,8 +5,8 @@ on:
     branches:
       - master
     paths-ignore:
-      - './charts/**'
-      - ./.github/workflows/push-to-charts.yml
+      - 'charts/**'
+      - '.github/workflows/push-to-charts.yml'
 
   workflow_dispatch:
 
