@@ -18,8 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - run: git config user.name "$GITHUB_ACTOR"
+      - run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - run: git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      - id: release
+        uses: helm/chart-releaser-action@v1
+        env:
+          CR_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
 
-      - uses: helm/chart-releaser-action@v1
+      - run: |
+          echo "chart version: ${{ steps.release.outputs.chart_version }}"
