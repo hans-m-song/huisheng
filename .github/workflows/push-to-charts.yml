@@ -1,6 +1,8 @@
 name: Push to charts
 
 on:
+  workflow_dispatch:
+
   push:
     branches:
       - master
