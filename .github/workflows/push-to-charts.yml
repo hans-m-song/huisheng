@@ -28,9 +28,10 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - id: release
-        uses: helm/chart-releaser-action@v1
+        uses: helm/chart-releaser-action@v1.5.0
         env:
           CR_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
 
       - run: |
           echo "chart version: ${{ steps.release.outputs.chart_version }}"
+          echo "changed charts: ${{ steps.release.outputs.changed_charts }}"
