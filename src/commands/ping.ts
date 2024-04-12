@@ -1,7 +1,7 @@
 import { getVoiceConnection } from '@discordjs/voice';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
-import { Command } from '../lib/commands';
+import { Command } from '../lib/Command';
 
 export const ping: Command = {
   spec: new SlashCommandBuilder()

@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-import { messageVoiceCommand } from '../lib/Audio';
-import { Command } from '../lib/commands';
+import { messageVoiceCommand } from '../lib/audio';
+import { Command } from '../lib/Command';
 
 export const stop: Command = {
   spec: new SlashCommandBuilder().setName('stop').setDescription('Stop playing the current track'),

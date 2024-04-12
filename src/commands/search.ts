@@ -8,8 +8,8 @@ import {
 } from 'discord.js';
 
 import { emojis, numberEmojis } from '../emotes';
-import { interactionVoiceCommand, messageVoiceCommand } from '../lib/Audio';
-import { Command } from '../lib/commands';
+import { interactionVoiceCommand, messageVoiceCommand } from '../lib/audio';
+import { Command } from '../lib/Command';
 import { reportEnqueueResult } from '../lib/Player';
 import { collect } from '../lib/utils';
 import { QueryResult, Youtube } from '../lib/Youtube';

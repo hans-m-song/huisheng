@@ -1,8 +1,8 @@
 import { SlashCommandBuilder, SlashCommandStringOption } from 'discord.js';
 
 import { emojis } from '../emotes';
-import { messageVoiceCommand } from '../lib/Audio';
-import { Command } from '../lib/commands';
+import { messageVoiceCommand } from '../lib/audio';
+import { Command } from '../lib/Command';
 import { reportEnqueueResult } from '../lib/Player';
 import { Youtube } from '../lib/Youtube';
 

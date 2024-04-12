@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 
 import { customEmoji } from '../emotes';
-import { Command } from '../lib/commands';
+import { Command } from '../lib/Command';
 
 export const size: Command = {
   spec: new SlashCommandBuilder().setName('size').setDescription('Measure up'),

@@ -2,7 +2,7 @@ import { getVoiceConnections } from '@discordjs/voice';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
 import { config } from '../config';
-import { Command } from '../lib/commands';
+import { Command } from '../lib/Command';
 import { version } from '../lib/Downloader';
 import { getPlayer } from '../lib/Player';
 import { obscure } from '../lib/utils';

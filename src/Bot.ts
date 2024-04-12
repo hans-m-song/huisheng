@@ -2,7 +2,7 @@ import { ActivityType, Client, GatewayIntentBits, Partials } from 'discord.js';
 
 import { config } from './config';
 import { onMessageCreate, onInteractionCreate, onError, onVoiceStateUpdate } from './events';
-import { destroyVoiceConnections } from './lib/Audio';
+import { destroyVoiceConnections } from './lib/audio';
 import { logEvent } from './lib/utils';
 
 const authorizeUrl =

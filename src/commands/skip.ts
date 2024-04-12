@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-import { messageVoiceCommand } from '../lib/Audio';
-import { Command } from '../lib/commands';
+import { messageVoiceCommand } from '../lib/audio';
+import { Command } from '../lib/Command';
 
 export const skip: Command = {
   spec: new SlashCommandBuilder()

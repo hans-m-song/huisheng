@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 
 import { customEmoji } from '../emotes';
-import { Command } from '../lib/commands';
+import { Command } from '../lib/Command';
 
 export const shutdown: Command = {
   spec: new SlashCommandBuilder().setName('shutdown').setDescription('Shut down the bot'),

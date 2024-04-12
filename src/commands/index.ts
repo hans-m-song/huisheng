@@ -2,7 +2,7 @@ import { Routes } from 'discord-api-types/v10';
 import { EmbedBuilder, REST, SlashCommandBuilder } from 'discord.js';
 
 import { config } from '../config';
-import { Command } from '../lib/commands';
+import { Command } from '../lib/Command';
 import { logError, logEvent } from '../lib/utils';
 import { clear } from './clear';
 import { debug } from './debug';

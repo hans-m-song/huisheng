@@ -7,7 +7,7 @@ import { setTimeout } from 'timers/promises';
 
 import { Bot } from './Bot';
 import { config } from './config';
-import { dependencyReport } from './lib/Audio';
+import { dependencyReport } from './lib/audio';
 import { Bucket } from './lib/Bucket';
 import { logEvent } from './lib/utils';
 
