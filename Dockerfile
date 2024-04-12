@@ -28,7 +28,6 @@ RUN set -x  \
   && mv /tmp/phantomjs/bin/phantomjs /usr/local/bin \
   && touch ${OPENSSL_CONF}
 
-
 WORKDIR /app
 COPY ./tsconfig.json ./package.json ./package-lock.json ./
 RUN npm install
