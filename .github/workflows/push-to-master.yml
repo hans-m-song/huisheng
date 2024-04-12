@@ -14,24 +14,7 @@ env:
   image: public.ecr.aws/axatol/huisheng
 
 jobs:
-  check-code:
-    runs-on: self-hosted
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .nvmrc
-
-      - run: npm install
-
-      - run: npm run lint
-
-      - run: npm run compile
-
   build-image:
-    needs: check-code
     runs-on: self-hosted
 
     permissions:
@@ -39,14 +22,27 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: false
+
+      - run: npm install
+
+      - run: npm run lint
+
+      - run: npm run compile
 
       - uses: axatol/actions/assume-aws-role@release
         with:
           aws-region: us-east-1
           role-to-assume: ${{ secrets.AWS_ECR_IMAGE_PUBLISHER_ROLE_ARN }}
 
-      - uses: aws-actions/amazon-ecr-login@v1
+      - uses: aws-actions/amazon-ecr-login@v2
         with:
           registry-type: public
           mask-password: true

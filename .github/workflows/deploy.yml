@@ -27,7 +27,7 @@ jobs:
   deploy:
     needs: notify
     runs-on: self-hosted
-    environment: wheatley
+    environment: production
 
     steps:
       - name: Rollout deployment
