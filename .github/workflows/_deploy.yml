@@ -4,9 +4,7 @@ on:
   workflow_dispatch:
   workflow_call:
     secrets:
-      DISCORD_GITHUB_ACTIONS_WEBHOOK_URL:
-        required: true
-      NEW_RELIC_API_KEY:
+      DISCORD_WEBHOOK_URL:
         required: true
       NEW_RELIC_DEPLOYMENT_ENTITY_GUID:
         required: true
@@ -18,7 +16,7 @@ jobs:
     steps:
       - uses: axatol/actions/send-deployment-notification@release
         with:
-          webhook-url: ${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }}
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           job-status: pending
 
   deploy:
@@ -50,5 +48,5 @@ jobs:
         if: success() || failure()
         uses: axatol/actions/send-discord-deployment-notification@release
         with:
-          webhook-url: ${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }}
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: ${{ steps.deploy.outcome }}

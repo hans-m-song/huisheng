@@ -5,6 +5,9 @@ on:
         type: boolean
         description: whether or not to publish
         default: false
+    secrets:
+      AWS_ECR_IMAGE_PUBLISHER_ROLE_ARN:
+        required: true
 
 env:
   image: public.ecr.aws/axatol/huisheng
@@ -21,16 +24,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           show-progress: false
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-
-      - run: npm install
-
-      - run: npm run lint
-
-      - run: npm run compile
 
       - uses: axatol/actions/assume-aws-role@release
         if: inputs.publish

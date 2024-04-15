@@ -15,11 +15,12 @@ jobs:
     uses: ./.github/workflows/_build.yml
     with:
       publish: true
+    secrets:
+      AWS_ECR_IMAGE_PUBLISHER_ROLE_ARN: ${{ secrets.AWS_ECR_IMAGE_PUBLISHER_ROLE_ARN }}
 
   deploy:
     needs: build
     uses: ./.github/workflows/_deploy.yml
     secrets:
-      DISCORD_GITHUB_ACTIONS_WEBHOOK_URL: ${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }}
-      NEW_RELIC_API_KEY: ${{ secrets.NEW_RELIC_API_KEY }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
       NEW_RELIC_DEPLOYMENT_ENTITY_GUID: ${{ secrets.NEW_RELIC_DEPLOYMENT_ENTITY_GUID }}
