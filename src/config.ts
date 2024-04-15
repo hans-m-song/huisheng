@@ -111,8 +111,6 @@ log.debug('config', {
   logLevel,
   logFormat,
   cacheDir,
-  cacheDatabaseUrl,
-  cacheDatabaseAuthToken: obscure(cacheDatabaseAuthToken ?? ''),
   youtubeBaseUrl,
   youtubeDLExecutable,
   youtubeDLMaxConcurrency,

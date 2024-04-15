@@ -1,6 +1,5 @@
 import 'newrelic';
 
-import axios from 'axios';
 import { Collection, Collector } from 'discord.js';
 import { promises as fs } from 'fs';
 import internal from 'stream';
