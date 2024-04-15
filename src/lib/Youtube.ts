@@ -1,9 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
 import { isMatching, P } from 'ts-pattern';
 
-import { config } from '../config';
+import { config, log } from '../config';
 import { Spotify } from './Spotify';
-import { GuardType, logError, logEvent } from './utils';
+import { GuardType } from './utils';
 
 export type YoutubeSearchResult = GuardType<typeof isYoutubeSearchResult>;
 export const isYoutubeSearchResult = isMatching({
@@ -93,7 +93,12 @@ export class Youtube {
     });
 
     instance.interceptors.request.use((config) => {
-      logEvent('Youtube.api', { method: config.method, url: config.url, params: config.params });
+      log.info({
+        event: 'Youtube.api',
+        method: config.method,
+        url: config.url,
+        params: config.params,
+      });
       return config;
     });
 
@@ -137,7 +142,7 @@ export class Youtube {
   static query = async (raw: string, fuzzySearchLimit = 1): Promise<QueryResult[] | null> => {
     if (raw.includes('spotify.com')) {
       const url = new URL(raw);
-      logEvent('youtube', { path: url.pathname, message: 'searching with spotify' });
+      log.info({ event: 'youtube', path: url.pathname, message: 'searching with spotify' });
       const tracks = await Spotify.query(url.pathname);
       if (!tracks) {
         return null;
@@ -164,11 +169,11 @@ export class Youtube {
       const url = new URL(normaliseYoutubeUrl(raw));
       const playlistId = url.searchParams.get('list');
       if (playlistId) {
-        logEvent('youtube', { playlistId, message: 'searching by playlist id' });
+        log.info({ event: 'youtube', playlistId, message: 'searching by playlist id' });
         const response = await Youtube.list(playlistId)
           .then((result) => result.data)
           .catch((error) => {
-            logError('youtube', error, { url: url.toString(), playlistId });
+            log.error({ event: 'youtube', error, url: url.toString(), playlistId });
             return null;
           });
 
@@ -183,11 +188,11 @@ export class Youtube {
 
       const videoId = url.searchParams.get('v');
       if (videoId) {
-        logEvent('youtube', { videoId, message: 'searching by video id' });
+        log.info({ event: 'youtube', videoId, message: 'searching by video id' });
         const response = await Youtube.get(videoId)
           .then((result) => result.data)
           .catch((error) => {
-            logError('youtube', error, { url: url.toString(), id: videoId });
+            log.error({ event: 'youtube', error, url: url.toString(), id: videoId });
             return null;
           });
 
@@ -203,9 +208,9 @@ export class Youtube {
       }
     }
 
-    logEvent('youtube', { raw, message: 'fuzzy text search' });
+    log.info({ event: 'youtube', raw, message: 'fuzzy text search' });
     const response = await Youtube.search(raw, fuzzySearchLimit).catch((error) => {
-      logError('youtube', error, { raw });
+      log.error({ event: 'youtube', error, raw });
       return null;
     });
 

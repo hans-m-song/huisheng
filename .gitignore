@@ -6,6 +6,8 @@ dist
 .cache
 .env*
 *.diff
+*.db
+helmfile.yaml
 
 # misc
 .dccache

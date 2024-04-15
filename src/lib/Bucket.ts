@@ -1,8 +1,8 @@
 import * as Minio from 'minio';
 import internal from 'stream';
 
-import { config } from '../config';
-import { isNotNullishEntry, logError, logEvent, readStream } from './utils';
+import { config, log } from '../config';
+import { isNotNullishEntry, readStream } from './utils';
 
 const client = new Minio.Client({
   endPoint: config.minioEndpoint,
@@ -43,10 +43,10 @@ export class Bucket {
   static ping = async () => {
     try {
       await client.bucketExists(config.minioBucketName);
-      logEvent('Bucket.ping', 'success');
+      log.info({ event: 'Bucket.ping', status: 'success' });
       return true;
     } catch (error) {
-      logError('Bucket.ping', error, { bucket: config.minioBucketName });
+      log.error({ event: 'Bucket.ping', error, bucket: config.minioBucketName });
       return false;
     }
   };
@@ -55,17 +55,17 @@ export class Bucket {
     try {
       const result = await client.getObjectTagging(config.minioBucketName, name);
       const tags = flattenTagList(result.flat());
-      logEvent('Bucket.getTags', { name, tags });
+      log.info({ event: 'Bucket.getTags', name, tags });
       return tags;
     } catch (error) {
-      logError('Bucket.getTags', error, { name });
+      log.error({ event: 'Bucket.getTags', error, name });
       return null;
     }
   };
 
   static setTags = async (name: string, tags: TagInput): Promise<boolean> => {
     if (Object.keys(tags).length < 1) {
-      logEvent('Bucket.setTags', { name, message: 'no tags to set' });
+      log.info({ event: 'Bucket.setTags', name, message: 'no tags to set' });
       return true;
     }
 
@@ -74,7 +74,7 @@ export class Bucket {
       await client.setObjectTagging(config.minioBucketName, name, normalised);
       return true;
     } catch (error) {
-      logError('Bucket.setTags', error, { name, tags });
+      log.error({ event: 'Bucket.setTags', error, name, tags });
       return false;
     }
   };
@@ -83,10 +83,10 @@ export class Bucket {
     try {
       const stream = client.listObjectsV2(config.minioBucketName, prefix, recursive);
       const results = await readStream<Minio.BucketItem>(stream);
-      logEvent('Bucket.list', { prefix, count: results.length });
+      log.info({ event: 'Bucket.list', prefix, count: results.length });
       return results;
     } catch (error) {
-      logError('Bucket.list', error, { prefix });
+      log.error({ event: 'Bucket.list', error, prefix });
       return null;
     }
   };
@@ -94,10 +94,10 @@ export class Bucket {
   static put = async (src: string, dest: string): Promise<boolean> => {
     try {
       const result = await client.fPutObject(config.minioBucketName, dest, src);
-      logEvent('Bucket.put', { src, dest, result });
+      log.info({ event: 'Bucket.put', src, dest, result });
       return true;
     } catch (error) {
-      logError('Bucket.put', error, { src, dest });
+      log.error({ event: 'Bucket.put', error, src, dest });
       return false;
     }
   };
@@ -105,11 +105,11 @@ export class Bucket {
   static stat = async (name: string): Promise<Minio.BucketItemStat | null> => {
     try {
       const stats = await client.statObject(config.minioBucketName, name);
-      logEvent('Bucket.stat', { name, stats });
+      log.info({ event: 'Bucket.stat', name, stats });
       return stats;
     } catch (error) {
       if (!(error as any).message.includes('Not Found')) {
-        logError('Bucket.stat', error, { name });
+        log.error({ event: 'Bucket.stat', error, name });
       }
 
       return null;
@@ -131,10 +131,10 @@ export class Bucket {
       }
 
       const stream = await client.getObject(config.minioBucketName, name);
-      logEvent('Bucket.getStream', { name, contentType });
+      log.info({ event: 'Bucket.getStream', name, contentType });
       return stream;
     } catch (error) {
-      logError('Bucket.getStream', error, { name });
+      log.error({ event: 'Bucket.getStream', error, name });
       return null;
     }
   };
@@ -144,10 +144,10 @@ export class Bucket {
       const stream = await client.getObject(config.minioBucketName, name);
       const chunks = await readStream(stream);
       const data = chunks.reduce((result, current) => Buffer.concat([result, current]));
-      logEvent('Bucket.get', { name, size: data.length });
+      log.info({ event: 'Bucket.get', name, size: data.length });
       return data;
     } catch (error) {
-      logError('Bucket.get', error, { name });
+      log.error({ event: 'Bucket.get', error, name });
       return null;
     }
   };

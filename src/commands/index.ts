@@ -1,9 +1,8 @@
 import { Routes } from 'discord-api-types/v10';
 import { EmbedBuilder, REST, SlashCommandBuilder } from 'discord.js';
 
-import { config } from '../config';
+import { config, log } from '../config';
 import { Command } from '../lib/Command';
-import { logError, logEvent } from '../lib/utils';
 import { clear } from './clear';
 import { debug } from './debug';
 import { gtfo } from './gtfo';
@@ -79,26 +78,20 @@ export const registerSlashCommands = async (guildId: string) => {
   const names = body.map((cmd) => cmd.name);
 
   if (body.length < 1) {
-    logEvent('registerSlashCommands', {
-      guildId,
-      commands: names,
-      status: 'skipped',
-    });
+    log.info({ event: 'registerSlashCommands', status: 'skipped', guildId, commands: names });
     return;
   }
 
   try {
     await rest.put(Routes.applicationGuildCommands(config.clientId, guildId), { body });
-    logEvent('registerSlashCommands', {
-      guildId,
-      commands: names,
-      status: 'success',
-    });
+    log.info({ event: 'registerSlashCommands', status: 'success', guildId, commands: names });
   } catch (error) {
-    logError('registerSlashCommands', error, {
+    log.error({
+      event: 'registerSlashCommands',
+      status: 'failed',
+      error,
       guildId,
       commands: names,
-      status: 'failed',
       json: (error as any).requestBody.json,
       rawError: (error as any).rawError?.errors,
     });

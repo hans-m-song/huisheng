@@ -1,8 +1,8 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import path from 'path';
 
-import { config } from '../config';
-import { logError, logEvent, trimToJsonObject, tryParseJSON } from './utils';
+import { config, log } from '../config';
+import { trimToJsonObject, tryParseJSON } from './utils';
 
 export const downloaderCacheDir = path.join(config.cacheDir, 'ytdl');
 export const downloaderOutputDir = path.join(config.cacheDir, 'out');
@@ -50,12 +50,14 @@ const execute = async (...args: string[]) => {
   let stderr = '';
   let stdout = '';
   let child: ChildProcessWithoutNullStreams;
-  logEvent('downloader', { command: config.youtubeDLExecutable, args: args.join(' ') });
+  log.info({ event: 'downloader', command: config.youtubeDLExecutable, args: args.join(' ') });
 
   try {
     child = spawn(config.youtubeDLExecutable, args);
   } catch (error) {
-    logError('downloader', error, {
+    log.error({
+      event: 'downloader',
+      error,
       command: config.youtubeDLExecutable,
       args: args.join(' '),
       message: 'spawn failed',
@@ -77,19 +79,19 @@ const execute = async (...args: string[]) => {
       resolve();
     });
 
-    child.on('error', (error) => logError('downloader', error));
+    child.on('error', (error) => log.error({ event: 'downloader', error }));
     child.stdout.on('data', (chunk) => chunk?.toString && (stdout += chunk.toString()));
     child.stderr.on('data', (chunk) => chunk?.toString && (stderr += chunk.toString()));
   });
 
   if (stderr.length > 0) {
-    logError('downloader', stderr, 'unexpected stderr output');
+    log.error({ event: 'downloader', stderr, message: 'unexpected stderr output' });
     // continue anyway
     // return null;
   }
 
   if (stdout.length < 1) {
-    logError('downloader', stdout, 'no stdout output');
+    log.error({ event: 'downloader', message: 'stdout was empty' });
     return null;
   }
 

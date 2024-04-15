@@ -3,16 +3,15 @@ import { Awaitable, Client, ClientEvents, VoiceState } from 'discord.js';
 import newrelic from 'newrelic';
 
 import { commands } from './commands';
-import { config } from './config';
+import { config, log } from './config';
 import { emojiGetter } from './emotes';
 import { getPlayer } from './lib/Player';
-import { logCommandInteraction, logError, logEvent, logMessage } from './lib/utils';
 
 interface ClientEventHandler<K extends keyof ClientEvents> {
   (...args: ClientEvents[K]): Awaitable<void>;
 }
 
-export const onError: ClientEventHandler<'error'> = (error) => logError('client', error);
+export const onError: ClientEventHandler<'error'> = (error) => log.error('discord.error', error);
 
 export const onMessageCreate =
   (client: Client): ClientEventHandler<'messageCreate'> =>
@@ -23,7 +22,12 @@ export const onMessageCreate =
 
     const content = message.content.slice(config.botPrefix.length);
 
-    logMessage(message);
+    log.info({
+      event: 'discord.message',
+      channel: (message.channel as any)?.name ?? message.channel.type,
+      author: message.author.tag,
+      content: message.content.slice(config.botPrefix.length),
+    });
     const [command, ...args] = content.split(/\s{1,}/g);
     if (!commands[command]) {
       return;
@@ -43,7 +47,12 @@ export const onInteractionCreate =
       return;
     }
 
-    logCommandInteraction(interaction);
+    log.info({
+      event: 'discord.interaction',
+      channel: interaction.channel?.id ?? 'unknown',
+      author: interaction.user.tag,
+      content: interaction.commandName,
+    });
     const command = commands[interaction.commandName];
     if (!command.onInteraction) {
       return;
@@ -71,7 +80,8 @@ export const onVoiceStateUpdate =
 
     const voiceMembers = oldState.channel.members.mapValues((member) => member.user.tag);
     const shouldLeave = voiceMembers.size === 1 && voiceMembers.has(client.user.id);
-    logEvent('voiceState', {
+    log.info({
+      event: 'discord.voiceState',
       user: oldState.member?.user.tag ?? '?',
       action: 'left',
       voiceMembers: voiceMembers.size,
@@ -93,6 +103,10 @@ export const onVoiceStateUpdate =
       player.playlist.clear();
       getVoiceConnection(oldState.channel.guild.id)?.disconnect();
     } catch (error) {
-      logError('voiceStateUpdate', error, 'failed to disconnect from voice channel');
+      log.error({
+        event: 'discord.voiceStateUpdate',
+        error,
+        message: 'failed to disconnect from voice channel',
+      });
     }
   };

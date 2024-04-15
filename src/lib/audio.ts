@@ -14,8 +14,8 @@ import {
   VoiceBasedChannel,
 } from 'discord.js';
 
+import { log } from '../config';
 import { getPlayer, Player } from './Player';
-import { logError, logEvent } from './utils';
 
 type VoiceCommandOptions = { allowConnect?: boolean; allowRetry?: boolean };
 
@@ -43,7 +43,8 @@ export const messageVoiceCommand = async (
 
   const existing = getVoiceConnection(message.guild.id);
   if (!existing && !allowConnect) {
-    logEvent('messageVoiceCommand', {
+    log.info({
+      event: 'audio.messageVoiceCommand',
       message: 'not executing',
       reason: 'no existing connection and not allowed to connect',
     });
@@ -51,9 +52,10 @@ export const messageVoiceCommand = async (
   }
 
   const connection = existing ?? (await initializeVoiceConnection(channel));
-  logEvent('messageVoiceCommand', { connectionStatus: connection.state.status });
+  log.info({ event: 'audio.messageVoiceCommand', connectionStatus: connection.state.status });
   if (!connection) {
-    logEvent('messageVoiceCommand', {
+    log.info({
+      event: 'audio.messageVoiceCommand',
       message: 'not executing',
       reason: 'could not establish connection',
     });
@@ -66,7 +68,11 @@ export const messageVoiceCommand = async (
 
   if (connection.state.status === VoiceConnectionStatus.Signalling && allowRetry) {
     // if connection is stuck in signalling, attempt to create a new one and retry
-    logEvent('messageVoiceCommand', { message: 'recreating connection', channel: channel.name });
+    log.info({
+      event: 'audio.messageVoiceCommand',
+      message: 'recreating connection',
+      channel: channel.name,
+    });
     connection.destroy();
     await initializeVoiceConnection(channel);
     return messageVoiceCommand(message, { ...options, allowRetry: false }, callback);
@@ -77,7 +83,7 @@ export const messageVoiceCommand = async (
     connection.state.status !== VoiceConnectionStatus.Destroyed &&
     !connection.state.subscription
   ) {
-    logEvent('messageVoiceCommand', 'subscribing to player');
+    log.info({ event: 'audio.messageVoiceCommand', message: 'subscribing to player' });
     connection.subscribe(player.instance);
   }
 
@@ -119,7 +125,8 @@ export const interactionVoiceCommand = async (
 
   const existing = getVoiceConnection(interaction.guildId);
   if (!existing && !allowConnect) {
-    logEvent('interactionVoiceCommand', {
+    log.info({
+      event: 'audio.interactionVoiceCommand',
       message: 'not executing',
       reason: 'no existing connection and not allowed to connect',
     });
@@ -127,9 +134,10 @@ export const interactionVoiceCommand = async (
   }
 
   const connection = existing ?? (await initializeVoiceConnection(channel));
-  logEvent('interactionVoiceCommand', { connectionStatus: connection.state.status });
+  log.info({ event: 'audio.interactionVoiceCommand', connectionStatus: connection.state.status });
   if (!connection) {
-    logEvent('interactionVoiceCommand', {
+    log.info({
+      event: 'audio.interactionVoiceCommand',
       message: 'not executing',
       reason: 'could not establish connection',
     });
@@ -142,7 +150,8 @@ export const interactionVoiceCommand = async (
 
   if (connection.state.status === VoiceConnectionStatus.Signalling && allowRetry) {
     // if connection is stuck in signalling, attempt to create a new one and retry
-    logEvent('interactionVoiceCommand', {
+    log.info({
+      event: 'audio.interactionVoiceCommand',
       message: 'recreating connection',
       channel: channel.name,
     });
@@ -156,7 +165,7 @@ export const interactionVoiceCommand = async (
     connection.state.status !== VoiceConnectionStatus.Destroyed &&
     !connection.state.subscription
   ) {
-    logEvent('interactionVoiceCommand', 'subscribing to player');
+    log.info({ event: 'audio.interactionVoiceCommand', message: 'subscribing to player' });
     connection.subscribe(player.instance);
   }
 
@@ -175,14 +184,15 @@ const initializeVoiceConnection = async (channel: VoiceBasedChannel): Promise<Vo
     adapterCreator: channel.guild.voiceAdapterCreator,
   });
 
-  voice.on('error', (error) => logError('voice.error', error));
-  voice.on('debug', (message) => logEvent('voice.debug', message));
+  voice.on('error', (error) => log.error({ event: 'audio.voice.error', error }));
+  voice.on('debug', (message) => log.debug({ event: 'audio.voice.debug', message }));
   voice.on('stateChange', (oldState, newState) => {
     if (oldState.status === newState.status) {
       return;
     }
 
-    logEvent('audio', {
+    log.info({
+      event: 'audio.voice.stateChange',
       channel: channel.name,
       oldStatus: oldState.status,
       newStatus: newState.status,
@@ -216,7 +226,7 @@ const handleVoiceStateChange = (oldState: VoiceConnectionState, newState: VoiceC
 
 export const destroyVoiceConnections = (): void => {
   getVoiceConnections().forEach((connection, guildId) => {
-    logEvent('audio', { message: 'disconnecting voice', guildId });
+    log.info({ event: 'audio.destroyVoiceConnections', message: 'disconnecting voice', guildId });
     connection.disconnect();
     connection.destroy();
   });

@@ -2,9 +2,10 @@ import fs from 'fs/promises';
 import path from 'path';
 import { isMatching, P } from 'ts-pattern';
 
+import { log } from '../config';
 import { Bucket } from './Bucket';
 import { download, downloaderOutputDir } from './Downloader';
-import { GuardType, logError, logEvent } from './utils';
+import { GuardType } from './utils';
 
 export type AudioFileMetadata = GuardType<typeof isAudioFileMetadata>;
 export const isAudioFileMetadata = isMatching({
@@ -79,11 +80,11 @@ export class AudioFile implements AudioFileMetadata {
 
     const filepath = await getByFilepath(possibleFilepaths);
     if (!filepath) {
-      logError(
-        'AudioFile.fromInfoJson',
-        'could not find file',
-        `[${possibleFilepaths.join(', ')}]`,
-      );
+      log.error({
+        event: 'AudioFile.fromInfoJson',
+        message: 'could not find file',
+        possibleFilepaths,
+      });
       return null;
     }
 
@@ -99,14 +100,18 @@ export class AudioFile implements AudioFileMetadata {
       format_id,
       format,
     };
-    logEvent('AudioFile.fromInfoJson', metadata);
+    log.info({ event: 'AudioFile.fromInfoJson', metadata });
 
     if (!isAudioFileMetadata(metadata)) {
-      logError('AudioFile.fromInfoJson', 'data was not of type AudioFileMetadata', metadata);
+      log.error({
+        event: 'AudioFile.fromInfoJson',
+        message: 'data was not of type AudioFileMetadata',
+        metadata,
+      });
       return null;
     }
 
-    logEvent('AudioFile', 'loaded file metadata from info json');
+    log.info({ event: 'AudioFile.fromInfoJson', message: 'loaded file metadata from info json' });
     return new AudioFile(metadata);
   }
 
@@ -123,14 +128,15 @@ export class AudioFile implements AudioFileMetadata {
     }
 
     if (!isAudioFileMetadata(metadata)) {
-      logEvent('AudioFile.fromBucketTags', {
+      log.info({
+        event: 'AudioFile.fromBucketTags',
         message: 'bucket tags was not of type AudioFileMetadata',
         metadata,
       });
       return null;
     }
 
-    logEvent('AudioFile.fromBucketTags', 'loaded from bucket');
+    log.info({ event: 'AudioFile.fromBucketTags', message: 'loaded from bucket' });
     return new AudioFile(metadata);
   }
 

@@ -1,9 +1,8 @@
 import { ActivityType, Client, GatewayIntentBits, Partials } from 'discord.js';
 
-import { config } from './config';
+import { config, log } from './config';
 import { onMessageCreate, onInteractionCreate, onError, onVoiceStateUpdate } from './events';
 import { destroyVoiceConnections } from './lib/audio';
-import { logEvent } from './lib/utils';
 
 const authorizeUrl =
   'https://discord.com/api/oauth2/authorize?' +
@@ -53,11 +52,11 @@ export class Bot {
     });
 
     await Promise.all([this.client.login(config.botToken), ready]);
-    logEvent('Bot.login.ready', { client: this.client.user?.tag, invite: authorizeUrl });
+    log.info({ event: 'Bot.login.ready', client: this.client.user?.tag, invite: authorizeUrl });
   }
 
   async shutdown(exitCode?: number | string) {
-    logEvent('Bot.shutdown', { message: 'client shutting down', exitCode });
+    log.info({ event: 'Bot.shutdown', message: 'client shutting down', exitCode });
     destroyVoiceConnections();
     this.client.user?.setStatus('invisible');
     this.client.destroy();

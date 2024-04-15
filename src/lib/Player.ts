@@ -8,17 +8,21 @@ import {
 import { EmbedBuilder } from 'discord.js';
 import { promises as fs } from 'fs';
 
+import { log } from '../config';
 import { AudioFile } from './AudioFile';
 import { PlaylistItem } from './PlaylistItem';
 import { Queue } from './Queue';
-import { logError, logEvent } from './utils';
 import { QueryResult } from './Youtube';
 
 export class Player {
   playlist = new Queue<PlaylistItem>();
   instance = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause } })
     .on('error', (error) => {
-      logError('Player', error, { current: this.playlist.current?.toShortJSON() ?? 'none' });
+      log.error({
+        event: 'Player.error',
+        error,
+        current: this.playlist.current?.toShortJSON() ?? 'none',
+      });
 
       // Attempt a recovery
       this.next();
@@ -27,7 +31,10 @@ export class Player {
       this.next();
     })
     .on(AudioPlayerStatus.Playing, () => {
-      logEvent('Player', { current: this.playlist.current?.toShortJSON() ?? 'none' });
+      log.info({
+        event: 'Player.playing',
+        current: this.playlist.current?.toShortJSON() ?? 'none',
+      });
     });
 
   async next() {
@@ -40,7 +47,10 @@ export class Player {
 
     const bucketStream = await next.streamFromBucket();
     if (!bucketStream) {
-      logError('Player.next', new Error(`failed to create stream for file: "${next.videoId}"`));
+      log.error({
+        event: 'Player.next',
+        error: new Error(`failed to create stream for file: "${next.videoId}"`),
+      });
       return;
     }
 
@@ -109,15 +119,17 @@ export class Player {
         }
 
         await fs.unlink(file.filepath).catch((error) => {
-          logError('Player.enqueue', error, {
-            path: file.filepath,
+          log.error({
+            event: 'Player.enqueue',
             message: 'failed to remove file',
+            error,
+            path: file.filepath,
           });
         });
       }
 
       await file.updateBucketMetadata();
-      logEvent('Player.enqueue', { videoId, path: file.filepath });
+      log.info({ event: 'Player.enqueue', videoId, path: file.filepath });
       const item = new PlaylistItem(file);
       this.playlist.enqueue(item);
       successes.push(item);

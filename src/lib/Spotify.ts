@@ -2,8 +2,8 @@ import 'dotenv/config';
 
 import axios, { AxiosInstance } from 'axios';
 
-import { config } from '../config';
-import { encodeQueryParams, logError, logEvent } from './utils';
+import { config, log } from '../config';
+import { encodeQueryParams } from './utils';
 
 interface AccessTokenResponse {
   access_token: string;
@@ -102,7 +102,12 @@ export class Spotify {
     });
 
     instance.interceptors.request.use((config) => {
-      logEvent('Spotify.api', { method: config.method, url: config.url, params: config.params });
+      log.info({
+        event: 'Spotify.api',
+        method: config.method,
+        url: config.url,
+        params: config.params,
+      });
       return config;
     });
 
@@ -111,7 +116,7 @@ export class Spotify {
 
   private async paginate<T>(instance: AxiosInstance, endpoint: string): Promise<T[]> {
     const response = await instance.get<Pagination<T>>(endpoint).catch((error) => {
-      logError('Spotify.paginate', error, { endpoint });
+      log.error({ event: 'Spotify.paginate', error, endpoint });
       return null;
     });
 
@@ -129,7 +134,7 @@ export class Spotify {
 
   static async query(path: string): Promise<SpotifyTrack[] | null> {
     const [type, id] = path.replace(/^\//, '').split('/');
-    logEvent('Spotify.query', { path, type, id });
+    log.info({ event: 'Spotify.query', path, type, id });
     if (!type || !id) {
       return null;
     }

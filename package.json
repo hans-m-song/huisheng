@@ -24,6 +24,7 @@
     "erlpack": "github:discord/erlpack",
     "minio": "^7.0.28",
     "newrelic": "^10.6.2",
+    "pino": "^8.20.0",
     "sodium-native": "^4.0.1",
     "source-map-support": "^0.5.21",
     "ts-pattern": "^4.0.1",
@@ -42,8 +43,9 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-prettier": "^4.2.1",
     "nodemon": "^2.0.15",
+    "pino-pretty": "^11.0.0",
     "prettier": "^2.7.1",
     "ts-node": "^10.7.0",
-    "tsx": "^3.12.3"
+    "tsx": "^3.14.0"
   }
 }
