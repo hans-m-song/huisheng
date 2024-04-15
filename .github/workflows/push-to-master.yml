@@ -11,11 +11,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-image:
+  build:
     uses: ./.github/workflows/_build.yml
+    with:
+      publish: true
 
-  restart-deployment:
-    needs: build-image
+  deploy:
+    needs: build
     uses: ./.github/workflows/_deploy.yml
     secrets:
       DISCORD_GITHUB_ACTIONS_WEBHOOK_URL: ${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }}

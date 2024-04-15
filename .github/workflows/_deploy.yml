@@ -11,9 +11,6 @@ on:
       NEW_RELIC_DEPLOYMENT_ENTITY_GUID:
         required: true
 
-env:
-  STATUS_COLOR: 255
-
 jobs:
   notify:
     runs-on: self-hosted
@@ -30,13 +27,17 @@ jobs:
     environment: production
 
     steps:
-      - name: Rollout deployment
-        uses: axatol/actions/rollout-kubernetes-deployment@release
+      - name: Upgrade helm chart
         id: deploy
-        with:
-          deployment-name: huisheng
-          namespace: huisheng
-          wait: true
+        run: |
+          helm repo add huisheng https://huisheng.charts.axatol.xyz
+          helm repo update
+          helm upgrade huisheng huisheng/huisheng \
+            --install \
+            --create-namespace \
+            --namespace huisheng \
+            --atomic \
+            --reuse-values
 
       - name: Create deployment marker
         if: success()
