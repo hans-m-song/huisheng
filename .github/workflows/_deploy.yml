@@ -19,10 +19,10 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - uses: axatol/actions/send-discord-deployment-notification@release
+      - uses: axatol/actions/send-deployment-notification@release
         with:
           webhook-url: ${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }}
-          status: pending
+          job-status: pending
 
   deploy:
     needs: notify
@@ -42,8 +42,7 @@ jobs:
         if: success()
         uses: axatol/actions/create-new-relic-deployment@release
         with:
-          name: huisheng
-          api-key: ${{ secrets.NEW_RELIC_API_KEY }}
+          guid: ${{ secrets.NEW_RELIC_DEPLOYMENT_ENTITY_GUID }}
           deployment-type: ROLLING
 
       - name: Notify deployment complete

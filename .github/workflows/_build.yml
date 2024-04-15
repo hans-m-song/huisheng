@@ -1,0 +1,57 @@
+on:
+  workflow_call:
+    inputs:
+      publish:
+        type: boolean
+        description: whether or not to publish
+        default: false
+
+env:
+  image: public.ecr.aws/axatol/huisheng
+
+jobs:
+  build-image:
+    runs-on: self-hosted
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm install
+
+      - run: npm run lint
+
+      - run: npm run compile
+
+      - uses: axatol/actions/assume-aws-role@release
+        if: inputs.publish
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ECR_IMAGE_PUBLISHER_ROLE_ARN }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+        if: inputs.publish
+        with:
+          registry-type: public
+          mask-password: true
+
+      - uses: axatol/actions/docker-build-push@release
+        if: inputs.publish
+        with:
+          image: ${{ env.image }}
+          tag-previous: true
+          build-args: --build-arg GITHUB_SHA=${{ github.sha }}
+
+      - uses: axatol/actions/prune-ecr-repository@release
+        if: inputs.publish
+        with:
+          repository-name: ${{ env.image }}

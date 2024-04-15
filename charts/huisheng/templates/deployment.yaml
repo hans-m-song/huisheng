@@ -9,6 +9,8 @@ spec:
   selector:
     matchLabels: {{ include "huisheng.selectorLabels" . | nindent 6 }}
   replicas: 1
+  strategy: 
+    type: Recreate
   template:
     metadata:
       labels: {{ include "huisheng.selectorLabels" . | nindent 8 }}

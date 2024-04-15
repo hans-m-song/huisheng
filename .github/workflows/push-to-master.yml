@@ -10,54 +10,13 @@ on:
 
   workflow_dispatch:
 
-env:
-  image: public.ecr.aws/axatol/huisheng
-
 jobs:
   build-image:
-    runs-on: self-hosted
-
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          show-progress: false
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-
-      - run: npm install
-
-      - run: npm run lint
-
-      - run: npm run compile
-
-      - uses: axatol/actions/assume-aws-role@release
-        with:
-          aws-region: us-east-1
-          role-to-assume: ${{ secrets.AWS_ECR_IMAGE_PUBLISHER_ROLE_ARN }}
-
-      - uses: aws-actions/amazon-ecr-login@v2
-        with:
-          registry-type: public
-          mask-password: true
-
-      - uses: axatol/actions/docker-build-push@release
-        with:
-          image: ${{ env.image }}
-          build-args: --build-arg GITHUB_SHA=${{ github.sha }}
-
-      - uses: axatol/actions/prune-ecr-repository@release
-        with:
-          repository-name: ${{ env.image }}
+    uses: ./.github/workflows/_build.yml
 
   restart-deployment:
     needs: build-image
-    uses: ./.github/workflows/deploy.yml
+    uses: ./.github/workflows/_deploy.yml
     secrets:
       DISCORD_GITHUB_ACTIONS_WEBHOOK_URL: ${{ secrets.DISCORD_GITHUB_ACTIONS_WEBHOOK_URL }}
       NEW_RELIC_API_KEY: ${{ secrets.NEW_RELIC_API_KEY }}
