@@ -8,6 +8,8 @@ on:
         required: true
       NEW_RELIC_DEPLOYMENT_ENTITY_GUID:
         required: true
+      NEW_RELIC_API_KEY:
+        required: true
 
 jobs:
   notify:
@@ -50,4 +52,4 @@ jobs:
         uses: axatol/actions/send-deployment-notification@release
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          status: ${{ steps.deploy.outcome }}
+          status: ${{ job.status }}
