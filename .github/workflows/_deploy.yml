@@ -17,7 +17,7 @@ jobs:
       - uses: axatol/actions/send-deployment-notification@release
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          job-status: pending
+          status: pending
 
   deploy:
     needs: notify
@@ -39,14 +39,15 @@ jobs:
 
       - name: Create deployment marker
         if: success()
-        uses: axatol/actions/create-new-relic-deployment@release
+        uses: axatol/actions/create-newrelic-deployment@release
         with:
+          api-key: ${{ secrets.NEW_RELIC_API_KEY }}
           guid: ${{ secrets.NEW_RELIC_DEPLOYMENT_ENTITY_GUID }}
           deployment-type: ROLLING
 
       - name: Notify deployment complete
         if: success() || failure()
-        uses: axatol/actions/send-discord-deployment-notification@release
+        uses: axatol/actions/send-deployment-notification@release
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: ${{ steps.deploy.outcome }}
