@@ -7,8 +7,10 @@ dist
 .env*
 *.diff
 *.db
+values.yaml
 helmfile.yaml
 
 # misc
+.DS_Store
 .dccache
 newrelic_agent.log

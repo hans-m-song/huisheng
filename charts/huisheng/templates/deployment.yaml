@@ -34,3 +34,9 @@ spec:
           securityContext:
             capabilities:
               add: [SYS_NICE]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
