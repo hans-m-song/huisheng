@@ -8,18 +8,26 @@ import { Bot } from './Bot';
 import { config, log } from './config';
 import { dependencyReport } from './lib/audio';
 import { Bucket } from './lib/Bucket';
+import { Cache } from './lib/Cache';
 
 (async () => {
   log.info({ event: 'init', report: dependencyReport() });
-  await fs.mkdir(config.cacheDir, { recursive: true });
-  await Bucket.ping();
+
   const bot = new Bot();
-  await bot.login();
+  await Promise.all([
+    fs.mkdir(config.cacheDir, { recursive: true }),
+    Cache.migrate(),
+    Bucket.ping(),
+    bot.login(),
+  ]);
 
   await new Promise<void>((resolve) => {
-    process.on('beforeExit', async (exitCode) => {
-      await bot.shutdown(exitCode);
-      resolve();
+    ['SIGINT', 'SIGTERM'].forEach((code) => {
+      process.on(code, async (exitCode) => {
+        log.info({ event: 'Bot.shutdown', message: 'client shutting down', exitCode });
+        await bot.shutdown();
+        resolve();
+      });
     });
   });
 })();

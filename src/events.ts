@@ -26,7 +26,7 @@ export const onMessageCreate =
       event: 'discord.message',
       channel: (message.channel as any)?.name ?? message.channel.type,
       author: message.author.tag,
-      content: message.content.slice(config.botPrefix.length),
+      content,
     });
     const [command, ...args] = content.split(/\s{1,}/g);
     if (!commands[command]) {
