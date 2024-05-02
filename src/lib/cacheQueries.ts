@@ -31,6 +31,11 @@ FROM song
 WHERE videoId = $videoId
 `.trim();
 
+export const listSongs = `
+SELECT *
+FROM song
+`.trim();
+
 export const setSong = `
 INSERT OR REPLACE INTO song (videoId, videoTitle, channelId, channelTitle, duration, cachedAt)
 VALUES ($videoId, $videoTitle, $channelId, $channelTitle, $duration, $cachedAt)

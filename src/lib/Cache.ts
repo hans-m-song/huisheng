@@ -66,6 +66,13 @@ export class Cache {
     return song;
   }
 
+  static async listSongs(): Promise<Song[]> {
+    const result = await client.execute(queries.listSongs);
+    const songs = expandResultSet(result);
+    log.info({ event: 'Cache.listSong', songs });
+    return songs;
+  }
+
   static async enqueueSong(videoId: string) {
     const result = await client.execute({
       sql: queries.enqueueSong,

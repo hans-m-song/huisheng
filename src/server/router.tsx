@@ -8,10 +8,12 @@ import { ErrorSurface } from './components/ErrorSurface';
 import { QueryTable } from './components/QueryTable';
 import { QueueTable } from './components/QueueTable';
 import { SongForm } from './components/SongForm';
+import { SongTable } from './components/SongTable';
 import { Status } from './consts';
 import { Index } from './views/Index';
 import { Queue } from './views/Queue';
 import { Search } from './views/Search';
+import { Songs } from './views/Songs';
 import { Cache } from '../lib/Cache';
 import { version } from '../lib/Downloader';
 
@@ -42,7 +44,6 @@ export const router = async (app: FastifyInstance) => {
 
   app.get('/queue/items', async (_, reply) => {
     const result = await attempt(Cache.listQueue());
-
     if (!result.ok) {
       reply.statusCode = Status.Error;
       return <ErrorSurface error={result.error} />;
@@ -61,7 +62,17 @@ export const router = async (app: FastifyInstance) => {
 
   app.post('/search', async () => <>start a search</>);
 
-  app.get('/songs/items', async () => <>list cache</>);
+  app.get('/songs', async () => <Songs />);
+
+  app.get('/songs/items', async (_, reply) => {
+    const result = await attempt(Cache.listSongs());
+    if (!result.ok) {
+      reply.statusCode = Status.Error;
+      return <ErrorSurface error={result.error} />;
+    }
+
+    return <SongTable items={result.data} />;
+  });
 
   app.post('/songs/items', async (request) => {
     app.log.info({ body: request.body });
@@ -81,7 +92,6 @@ export const router = async (app: FastifyInstance) => {
 
   app.get('/queries', async (_, reply) => {
     const result = await attempt(Cache.listQueries());
-
     if (!result.ok) {
       reply.statusCode = Status.Error;
       return <ErrorSurface error={result.error} />;
@@ -90,5 +100,5 @@ export const router = async (app: FastifyInstance) => {
     return <QueryTable items={result.data} />;
   });
 
-  app.delete('/queries/:query', async () => <>delete search</>);
+  app.delete('/queries/:queryId', async () => <>delete search</>);
 };

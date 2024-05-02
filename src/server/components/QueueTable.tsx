@@ -1,5 +1,6 @@
 import React from 'preact/compat';
 
+import { Button } from './Button';
 import { QueuedSong } from '../../lib/Cache';
 
 export interface QueueTableProps {
@@ -25,9 +26,9 @@ export const QueueTable = (props: QueueTableProps) => (
           <td>{item.channelTitle}</td>
           <td>{item.duration}</td>
           <td>
-            <button class="btn">
-              <i class="bi bi-trash"></i> delete
-            </button>
+            <Button class="btn-sm">
+              <i class="bi bi-trash"></i>
+            </Button>
           </td>
         </tr>
       ))}

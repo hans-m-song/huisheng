@@ -63,6 +63,11 @@ export const Layout = (props: PropsWithChildren<LayoutProps>) => (
                     Queue
                   </a>
                 </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="/songs">
+                    Songs
+                  </a>
+                </li>
               </ul>
               <form class="d-flex" role="search">
                 <input
@@ -70,8 +75,9 @@ export const Layout = (props: PropsWithChildren<LayoutProps>) => (
                   type="search"
                   placeholder="Search"
                   aria-label="Search"
+                  disabled
                 />
-                <button class="btn btn-outline-success" type="submit">
+                <button class="btn btn-outline-success" type="submit" disabled>
                   Search
                 </button>
               </form>

@@ -1,28 +1,30 @@
 import React from 'preact/compat';
 
 import { Button } from './Button';
-import { QueriedSong } from '../../lib/Cache';
+import { Song } from '../../lib/Cache';
 
-export interface QueryTableProps {
-  items: QueriedSong[];
+export interface SongTableProps {
+  items: Song[];
 }
 
-export const QueryTable = (props: QueryTableProps) => (
-  <table id="QueryTable">
+export const SongTable = (props: SongTableProps) => (
+  <table id="SongTable">
     <thead>
+      <th>Sort Order</th>
+      <th>Played</th>
       <th>Video Title</th>
       <th>Channel Title</th>
-      <th>Hits</th>
-      <th>Query</th>
+      <th>Duration</th>
+      <th>Cached At</th>
       <th>{/* actions */}</th>
     </thead>
     <tbody>
       {props.items.map((item) => (
-        <tr id={`QueryItem-${item.query}`}>
+        <tr id={`QueueItem-${item.videoId}`}>
           <td>{item.videoTitle}</td>
           <td>{item.channelTitle}</td>
-          <td>{item.hits}</td>
-          <td>{item.query}</td>
+          <td>{item.duration}</td>
+          <td>{new Date(item.cachedAt).toLocaleString()}</td>
           <td>
             <Button class="btn-sm">
               <i class="bi bi-trash"></i>

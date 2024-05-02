@@ -10,7 +10,7 @@ import path from 'path';
 import { hooks } from './hooks';
 import { router } from './router';
 import { log } from '../config';
-import { Cache } from '../lib/Cache';
+import { Cache, Song } from '../lib/Cache';
 
 export const server = fastify({
   logger: log,
@@ -38,6 +38,17 @@ server.register(fastifyStatic, {
   root: path.join(__dirname, 'static'),
 });
 
-Cache.migrate();
+// (async () => {
+//   await Cache.migrate();
+//   const song: Song = {
+//     videoId: 'video id 1',
+//     videoTitle: 'video title 1',
+//     channelId: 'channel id 1',
+//     channelTitle: 'channel title 1',
+//     duration: 1,
+//     cachedAt: Date.now(),
+//   };
+//   await Cache.setSongs([song]);
+//   await Cache.setQuery('query 1', song);
+// })();
 server.listen({ port: 8000 });
-console.log(process.env.NODE_ENV);
