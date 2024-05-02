@@ -12,13 +12,21 @@ export interface Song {
   cachedAt: number;
 }
 
-export interface QueueItem extends Song {
+export interface QueueItem {
   videoId: string;
   sortOrder: number;
   played: boolean;
 }
 
 export type QueuedSong = QueueItem & Song;
+
+export interface Query {
+  query: string;
+  videoId: string;
+  hits: number;
+}
+
+export type QueriedSong = Query & Song;
 
 const expandResultSet = (results: ResultSet): any[] => {
   if (results.rows.length < 1) {
@@ -38,7 +46,10 @@ const client = createClient({
 
 export class Cache {
   static async migrate() {
-    const result = await client.batch([queries.createSongTable, queries.createQueueTable], 'write');
+    const result = await client.batch(
+      [queries.createSongTable, queries.createQueueTable, queries.createQueryTable],
+      'write',
+    );
     log.info({ event: 'Cache.migrate', result: result.map(expandResultSet) });
   }
 
@@ -56,7 +67,10 @@ export class Cache {
   }
 
   static async enqueueSong(videoId: string) {
-    const result = await client.execute({ sql: queries.enqueueSong, args: { videoId } });
+    const result = await client.execute({
+      sql: queries.enqueueSong,
+      args: { videoId },
+    });
     log.info({ event: 'Cache.enqueueSong', videoId, result: expandResultSet(result) });
   }
 
@@ -68,7 +82,7 @@ export class Cache {
   }
 
   static async listQueue(): Promise<QueuedSong[]> {
-    const result = await client.execute({ sql: queries.listQueue, args: {} });
+    const result = await client.execute(queries.listQueue);
     const queue = expandResultSet(result);
     log.info({ event: 'Cache.listQueue', queue });
     return queue;
@@ -85,5 +99,42 @@ export class Cache {
   static async clearQueue() {
     const result = await client.execute(queries.clearQueue);
     log.info({ event: 'Cache.clearQueue', result: expandResultSet(result) });
+  }
+
+  static async setQuery(query: string, song: Song) {
+    const result = await client.batch([
+      { sql: queries.setQuery, args: { query, videoId: song.videoId } },
+      { sql: queries.setSong, args: song as any },
+    ]);
+    const results = result.map(expandResultSet);
+    log.info({ event: 'Cache.setQuery', query: results?.[0]?.[0], song: results?.[1]?.[0] });
+  }
+
+  static async incrementQueryHits(query: string) {
+    const result = await client.execute({
+      sql: queries.incrementQueryHits,
+      args: { query },
+    });
+    log.info({ event: 'Cache.incrementQueryHits', result: expandResultSet(result) });
+  }
+
+  static async searchQuery(query: string): Promise<Song | null> {
+    const result = await client.execute({
+      sql: queries.searchQuery,
+      args: { query },
+    });
+    const song = expandResultSet(result)[0] ?? null;
+    if (song) {
+      await Cache.incrementQueryHits(query);
+    }
+    log.info({ event: 'Cache.searchQuery', query, song });
+    return song;
+  }
+
+  static async listQueries(): Promise<QueriedSong[]> {
+    const result = await client.execute(queries.listQueries);
+    const query = expandResultSet(result);
+    log.info({ event: 'Cache.listQuery', query });
+    return query;
   }
 }

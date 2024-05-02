@@ -1,7 +1,8 @@
 {
   "restartable": "r",
   "delay": 1000,
-  "ext": "ts",
-  "watch": ["src/**"],
-  "exec": "ts-node src/index.ts"
+  "ext": "ts,tsx,css",
+  "watch": [
+    "src/**"
+  ]
 }

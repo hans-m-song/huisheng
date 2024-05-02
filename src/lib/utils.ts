@@ -1,9 +1,8 @@
+import axios from 'axios';
 import { Collection, Collector } from 'discord.js';
 import { promises as fs } from 'fs';
 import internal from 'stream';
 import { isMatching, P } from 'ts-pattern';
-
-import { log } from '../config';
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type Alias<T> = T & {};
@@ -84,7 +83,6 @@ export const tryReadFile = async (filepath: string): Promise<string | null> => {
       return null;
     }
 
-    log.error({ event: 'tryReadFile', error, filepath });
     return null;
   }
 };
@@ -93,7 +91,6 @@ export const tryParseJSON = (raw: string) => {
   try {
     return JSON.parse(raw);
   } catch (error) {
-    log.error({ event: 'tryParseJSON', error, raw });
     return null;
   }
 };
@@ -205,3 +202,31 @@ export const encodeQueryParams = (params: Record<string, any>) =>
   Object.entries(params)
     .map((pair) => pair.map(encodeURIComponent).join('='))
     .join('&');
+
+export const serialiseError = (error: any): any => {
+  if (
+    typeof error === 'string' ||
+    typeof error === 'number' ||
+    typeof error === 'undefined' ||
+    error === null
+  ) {
+    return error;
+  }
+
+  const raw = axios.isAxiosError(error)
+    ? JSON.stringify(error.toJSON())
+    : JSON.stringify(error, Object.getOwnPropertyNames(error));
+
+  return JSON.parse(raw, (key, value) => {
+    const redactions = ['Authorization', 'Api-Key'];
+    if (redactions.includes(key) && typeof value === 'string') {
+      return 'REDACTED';
+    }
+
+    if (key === 'stack' && typeof value === 'string') {
+      return value.split(/\n\s*/g);
+    }
+
+    return value;
+  });
+};

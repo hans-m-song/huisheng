@@ -17,6 +17,14 @@ CREATE TABLE IF NOT EXISTS queue (
 )
 `.trim();
 
+export const createQueryTable = `
+CREATE TABLE IF NOT EXISTS query (
+  query TEXT NOT NULL ON CONFLICT REPLACE,
+  videoId TEXT NOT NULL,
+  hits INTEGER NOT NULL
+)
+`.trim();
+
 export const getSong = `
 SELECT *
 FROM song
@@ -56,11 +64,40 @@ RETURNING *
 export const listQueue = `
 SELECT *
 FROM queue
-LEFT JOIN song ON song.videoId = queue.videoId
+INNER JOIN song ON song.videoId = queue.videoId
 WHERE played = FALSE
 `.trim();
 
-// truncate
 export const clearQueue = `
 DELETE FROM queue
+`.trim();
+
+export const setQuery = `
+INSERT OR REPLACE INTO query (query, videoId, hits)
+VALUES ($query, $videoId, 1)
+`.trim();
+
+export const incrementQueryHits = `
+UPDATE query
+SET hits = hits + 1
+WHERE query = $query
+RETURNING *
+`.trim();
+
+export const searchQuery = `
+SELECT *
+FROM song
+WHERE videoId = (
+  SELECT videoId
+  FROM query
+  WHERE query LIKE '%$query%'
+  LIMIT 1
+)
+`.trim();
+
+export const listQueries = `
+SELECT *
+FROM song
+INNER JOIN query ON song.videoId = query.videoId
+ORDER BY hits DESC
 `.trim();

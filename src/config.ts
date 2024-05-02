@@ -1,7 +1,6 @@
-import axios from 'axios';
 import pino from 'pino';
 
-import { assertEnv, boolEnv, enumEnv, numEnv, obscure } from './lib/utils';
+import { assertEnv, boolEnv, enumEnv, numEnv, obscure, serialiseError } from './lib/utils';
 
 export const config = {
   githubSha: process.env.GITHUB_SHA ?? 'unknown',
@@ -50,34 +49,12 @@ export const log = pino({
   transport:
     config.logFormat == 'text' ? { target: 'pino-pretty', options: { colorize: true } } : undefined,
   level: config.logLevel,
+  formatters: {
+    level: (label) => ({ level: label }),
+  },
   serializers: {
-    error: (error: any): any => {
-      if (
-        typeof error === 'string' ||
-        typeof error === 'number' ||
-        typeof error === 'undefined' ||
-        error === null
-      ) {
-        return error;
-      }
-
-      const raw = axios.isAxiosError(error)
-        ? JSON.stringify(error.toJSON())
-        : JSON.stringify(error, Object.getOwnPropertyNames(error));
-
-      return JSON.parse(raw, (key, value) => {
-        const redactions = ['Authorization', 'Api-Key'];
-        if (redactions.includes(key) && typeof value === 'string') {
-          return 'REDACTED';
-        }
-
-        if (key === 'stack' && typeof value === 'string') {
-          return value.split(/\n\s*/g);
-        }
-
-        return value;
-      });
-    },
+    error: serialiseError,
+    err: serialiseError,
   },
   redact: {
     paths: [
@@ -90,7 +67,7 @@ export const log = pino({
       'spotifyClientId',
       'spotifyClientSecret',
     ],
-    censor: (value: any) => obscure(value),
+    censor: (value) => obscure(value),
   },
 });
 
