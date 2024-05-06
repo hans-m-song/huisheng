@@ -23,9 +23,10 @@ export const clamp = (value: number, lower: number, upper: number) =>
   Math.max(lower, Math.min(upper, value));
 
 export const numEnv = (
-  value: string | undefined,
+  key: string,
   options: { default: number; min?: number; max?: number },
 ): number => {
+  const value = process.env[key];
   if (!value) {
     return options.default;
   }
@@ -43,8 +44,10 @@ export const enumEnv = (allowed: string[]) => (key: string, defaultValue: string
   return allowed.includes(value) ? value : defaultValue;
 };
 
-export const boolEnv = (value: string | undefined, defaultValue: boolean) =>
-  typeof value === 'string' ? value === 'true' : defaultValue;
+export const boolEnv = (key: string, defaultValue: boolean) => {
+  const value = process.env[key];
+  return typeof value === 'string' ? value === 'true' : defaultValue;
+};
 
 export const assertEnv = (key: string): string => {
   const value = process.env[key];
@@ -129,8 +132,12 @@ export const secToISOTime = (duration: number): string => {
 };
 
 export const secToTimeFragments = (duration: number): string => {
+  if (duration < 1) {
+    return '0s';
+  }
+
   const { hours, minutes, seconds } = timeParts(duration);
-  const fragments = [];
+  const fragments: string[] = [];
 
   if (hours > 0) {
     fragments.push(`${hours}h`);
@@ -224,9 +231,14 @@ export const serialiseError = (error: any): any => {
     }
 
     if (key === 'stack' && typeof value === 'string') {
-      return value.split(/\n\s*/g);
+      return value.split(/\n\s*/g).filter((frame) => !/.js:\d+:\d+\)?$/.test(frame));
     }
 
     return value;
   });
 };
+
+export const attempt = <T>(promise: Promise<T>) =>
+  promise
+    .then((data) => ({ ok: true, data }) as const)
+    .catch((error) => ({ ok: false, error }) as const);

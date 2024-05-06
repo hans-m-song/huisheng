@@ -1,3 +1,4 @@
+import { FastifyReply, FastifyRequest } from 'fastify';
 import pino from 'pino';
 
 import { assertEnv, boolEnv, enumEnv, numEnv, obscure, serialiseError } from './lib/utils';
@@ -20,24 +21,19 @@ export const config = {
   youtubeBaseUrl: process.env.YOUTUBE_BASE_URL ?? 'https://www.googleapis.com/youtube/v3',
   youtubeApiKey: assertEnv('YOUTUBE_API_KEY'),
   youtubeDLExecutable: process.env.YOUTUBE_DL_EXECUTABLE ?? 'yt-dlp',
-  youtubeDLMaxConcurrency: numEnv(process.env.YOUTUBE_DL_MAX_CONCURRENCY, {
-    default: 1,
-    min: 1,
-    max: 5,
-  }),
-  youtubeDLRetries: numEnv(process.env.YOUTUBE_DL_RETRIES, {
-    default: 3,
-    min: 1,
-    max: 5,
-  }),
+  youtubeDLMaxConcurrency: numEnv('YOUTUBE_DL_MAX_CONCURRENCY', { default: 1, min: 1, max: 5 }),
+  youtubeDLRetries: numEnv('YOUTUBE_DL_RETRIES', { default: 1, min: 1, max: 5 }),
 
-  // minio
+  // Minio
   minioEndpoint: process.env.MINIO_ENDPOINT ?? 'api.minio.axatol.xyz',
-  minioEndpointPort: numEnv(process.env.MINIO_ENDPOINT_PORT, { default: 443 }),
-  minioEndpointSSL: boolEnv(process.env.MINIO_ENDPOINT_SSL, true),
+  minioEndpointPort: numEnv('MINIO_ENDPOINT_PORT', { default: 443 }),
+  minioEndpointSSL: boolEnv('MINIO_ENDPOINT_SSL', true),
   minioBucketName: process.env.MINIO_BUCKET_NAME ?? 'huisheng',
   minioAccessKey: assertEnv('MINIO_ACCESS_KEY'),
   minioSecretKey: assertEnv('MINIO_SECRET_KEY'),
+
+  // Web
+  webPort: numEnv('WEB_PORT', { default: 8000 }),
 
   // Spotify
   spotifyBaseUrl: process.env.SPOTIFY_BASE_URL ?? 'https://api.spotify.com/v1',
@@ -55,6 +51,13 @@ export const log = pino({
   serializers: {
     error: serialiseError,
     err: serialiseError,
+    req: (req: FastifyRequest) => ({
+      method: req.method,
+      url: req.url,
+      hostname: req.hostname,
+      htmx: req.headers['hx-request'] === 'true',
+      body: req.body,
+    }),
   },
   redact: {
     paths: [

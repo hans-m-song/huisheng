@@ -35,10 +35,6 @@ td {
   margin-right: 4px;
 }
 
-button:disabled .spinner-border {
-  display: inline-block;
-}
-
 button:not(:disabled) .spinner-border {
   display: none;
 }
