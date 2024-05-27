@@ -5,7 +5,7 @@ import { serialiseError } from '../../lib/utils';
 export interface ErrorSurfaceProps {
   title?: string;
   error: any;
-  refresh?: string;
+  refresh?: { target: string; path: string };
 }
 
 export const ErrorSurface = (props: ErrorSurfaceProps) => {
@@ -23,7 +23,7 @@ export const ErrorSurface = (props: ErrorSurfaceProps) => {
       </p>
       {props.refresh && (
         <div>
-          <a href={props.refresh} class="btn btn-primary">
+          <a hx-get={props.refresh.path} hx-target={props.refresh.target} class="btn btn-primary">
             Refresh
           </a>
         </div>

@@ -1,73 +1,24 @@
-import axios, { AxiosInstance } from 'axios';
-import { isMatching, P } from 'ts-pattern';
+import { youtube, youtube_v3 } from '@googleapis/youtube';
+import { z } from 'zod';
 
-import { config, log } from '../config';
 import { Spotify } from './Spotify';
-import { GuardType } from './utils';
+import { config, log } from '../config';
 
-export type YoutubeSearchResult = GuardType<typeof isYoutubeSearchResult>;
-export const isYoutubeSearchResult = isMatching({
-  kind: 'youtube#searchResult',
-  id: {
-    kind: 'youtube#video',
-    videoId: P.string,
-  },
-  snippet: {
-    title: P.string,
-    channelTitle: P.string,
-  },
+export type YoutubeSearchResult = youtube_v3.Schema$SearchListResponse;
+
+export type YoutubeVideoListResponseItem = youtube_v3.Schema$VideoListResponse;
+
+export type YoutubePlaylistItemListResponse = youtube_v3.Schema$PlaylistItemListResponse;
+
+export const QueryResultSchema = z.object({
+  videoId: z.string(),
+  title: z.string(),
+  channelId: z.string(),
+  channelTitle: z.string(),
+  thumbnail: z.string().optional(),
 });
 
-export type YoutubeSearchListResult = GuardType<typeof isYoutubeSearchListResult>;
-const isYoutubeSearchListResult = isMatching({
-  kind: 'youtube#searchListResponse',
-  items: P.array(P.when(isYoutubeSearchResult)),
-});
-
-export type YoutubeVideoListResponseItem = GuardType<typeof isYoutubeVideoListResponseItem>;
-export const isYoutubeVideoListResponseItem = isMatching({
-  kind: 'youtube#video',
-  id: P.string,
-  snippet: {
-    title: P.string,
-    channelTitle: P.string,
-  },
-});
-
-export type YoutubeVideoListResponse = GuardType<typeof isYoutubeVideoListResponse>;
-export const isYoutubeVideoListResponse = isMatching({
-  kind: 'youtube#videoListResponse',
-  items: P.array(P.when(isYoutubeVideoListResponseItem)),
-});
-
-export type YoutubePlaylistItemListResponseItem = GuardType<
-  typeof isYoutubePlaylistItemListResponseItem
->;
-export const isYoutubePlaylistItemListResponseItem = isMatching({
-  kind: 'youtube#playlistItem',
-  id: P.string,
-  snippet: {
-    title: P.string,
-    channelTitle: P.string,
-    resourceId: {
-      kind: 'youtube#video',
-      videoId: P.string,
-    },
-  },
-});
-
-export type YoutubePlaylistItemListResponse = GuardType<typeof isYoutubePlaylistItemListResponse>;
-export const isYoutubePlaylistItemListResponse = isMatching({
-  kind: 'youtube#playlistItemListResponse',
-  items: P.array(P.when(isYoutubePlaylistItemListResponseItem)),
-  pageInfo: { totalResults: P.number },
-});
-
-export interface QueryResult {
-  videoId: string;
-  title: string;
-  channelTitle: string;
-}
+export type QueryResult = z.infer<typeof QueryResultSchema>;
 
 const normaliseYoutubeUrl = (url: string) =>
   url
@@ -80,69 +31,39 @@ const normaliseYoutubeUrl = (url: string) =>
     .replace('youtube.com/shorts/', 'youtube.com/watch?v=');
 
 export class Youtube {
-  private static instance?: AxiosInstance;
-
-  private static assertInstance(): AxiosInstance {
-    if (Youtube.instance) {
-      return Youtube.instance;
-    }
-
-    const instance = axios.create({
-      baseURL: config.youtubeBaseUrl,
-      params: { key: config.youtubeApiKey },
-    });
-
-    instance.interceptors.request.use((config) => {
-      log.info({
-        event: 'Youtube.api',
-        method: config.method,
-        url: config.url,
-        params: config.params,
-      });
-      return config;
-    });
-
-    Youtube.instance = instance;
-    return Youtube.instance;
-  }
-
-  private constructor() {
-    Youtube.assertInstance();
-  }
+  private static client = youtube({
+    version: 'v3',
+    auth: config.youtubeApiKey,
+  });
 
   static search = (query: string, limit = 1) =>
-    Youtube.assertInstance().get<YoutubeSearchListResult>('/search', {
-      params: {
-        part: 'snippet',
+    Youtube.client.search
+      .list({
+        part: ['snippet'],
         order: 'relevance',
         safeSearch: 'none',
-        type: 'video',
+        type: ['video'],
         maxResults: limit,
         q: query,
-      },
-    });
+      })
+      .then((result) => result.data);
 
   static get = (id: string) =>
-    Youtube.assertInstance().get<YoutubeVideoListResponse>('/videos', {
-      params: {
-        part: 'snippet',
-        id,
-      },
-    });
+    Youtube.client.videos.list({ part: ['snippet'], id: [id] }).then((result) => result.data);
 
   static list = (playlistId: string, limit = 25) =>
-    Youtube.assertInstance().get<YoutubePlaylistItemListResponse>('/playlistItems', {
-      params: {
-        part: 'snippet',
-        maxResults: limit,
-        playlistId,
-      },
-    });
+    Youtube.client.playlistItems
+      .list({ part: ['snippet'], maxResults: limit, playlistId })
+      .then((result) => result.data);
 
   static query = async (raw: string, fuzzySearchLimit = 1): Promise<QueryResult[] | null> => {
     if (raw.includes('spotify.com')) {
       const url = new URL(raw);
-      log.info({ event: 'youtube', path: url.pathname, message: 'searching with spotify' });
+      log.info({
+        event: 'youtube',
+        path: url.pathname,
+        message: 'searching with spotify',
+      });
       const tracks = await Spotify.query(url.pathname);
       if (!tracks) {
         return null;
@@ -157,53 +78,79 @@ export class Youtube {
       );
 
       return results.flatMap((item) =>
-        item.data.items.map((item) => ({
-          videoId: item.id.videoId,
-          title: item.snippet.title,
-          channelTitle: item.snippet.channelTitle,
-        })),
+        (item.items ?? []).map((item) =>
+          QueryResultSchema.parse({
+            videoId: item.id?.videoId,
+            title: item.snippet?.title,
+            channelId: item.snippet?.channelId,
+            channelTitle: item.snippet?.channelTitle,
+            thumbnail: item.snippet?.thumbnails?.default?.url,
+          }),
+        ),
       );
     }
 
     if (raw.includes('youtube.com')) {
       const url = new URL(normaliseYoutubeUrl(raw));
-      const playlistId = url.searchParams.get('list');
-      if (playlistId) {
-        log.info({ event: 'youtube', playlistId, message: 'searching by playlist id' });
-        const response = await Youtube.list(playlistId)
-          .then((result) => result.data)
-          .catch((error) => {
-            log.error({ event: 'youtube', error, url: url.toString(), playlistId });
-            return null;
-          });
-
-        if (response?.items?.length) {
-          return response.items.map((item) => ({
-            videoId: item.snippet.resourceId.videoId,
-            title: item.snippet.title,
-            channelTitle: item.snippet.channelTitle,
-          }));
-        }
-      }
 
       const videoId = url.searchParams.get('v');
       if (videoId) {
-        log.info({ event: 'youtube', videoId, message: 'searching by video id' });
-        const response = await Youtube.get(videoId)
-          .then((result) => result.data)
-          .catch((error) => {
-            log.error({ event: 'youtube', error, url: url.toString(), id: videoId });
-            return null;
+        log.info({
+          event: 'youtube',
+          videoId,
+          message: 'searching by video id',
+        });
+        const response = await Youtube.get(videoId).catch((error) => {
+          log.error({
+            event: 'youtube',
+            error,
+            url: url.toString(),
+            id: videoId,
           });
+          return null;
+        });
 
         if (response?.items?.length) {
           return [
-            {
-              videoId: response.items[0].id,
-              title: response.items[0].snippet.title,
-              channelTitle: response.items[0].snippet.channelTitle,
-            },
+            QueryResultSchema.parse({
+              videoId: response.items?.[0].id,
+              title: response.items?.[0].snippet?.title,
+              channelId: response.items?.[0].snippet?.channelId,
+              channelTitle: response.items?.[0].snippet?.channelTitle,
+              thumbnail: response.items?.[0].snippet?.thumbnails?.default?.url,
+            }),
           ];
+        }
+      }
+
+      const playlistId = url.searchParams.get('list');
+      if (playlistId) {
+        log.info({
+          event: 'youtube',
+          playlistId,
+          message: 'searching by playlist id',
+        });
+
+        const response = await Youtube.list(playlistId).catch((error) => {
+          log.error({
+            event: 'youtube',
+            error,
+            url: url.toString(),
+            playlistId,
+          });
+          return null;
+        });
+
+        if (response?.items?.length) {
+          return response.items.map((item) =>
+            QueryResultSchema.parse({
+              videoId: item.snippet?.resourceId?.videoId,
+              title: item.snippet?.title,
+              channelId: item.snippet?.channelId,
+              channelTitle: item.snippet?.channelTitle,
+              thumbnail: item.snippet?.thumbnails?.default?.url,
+            }),
+          );
         }
       }
     }
@@ -214,14 +161,18 @@ export class Youtube {
       return null;
     });
 
-    if (!response?.data.items.length) {
-      return null;
+    if (response?.items?.length) {
+      return response.items.map((item) =>
+        QueryResultSchema.parse({
+          videoId: item.id?.videoId,
+          title: item.snippet?.title,
+          channelId: item.snippet?.channelId,
+          channelTitle: item.snippet?.channelTitle,
+          thumbnail: item.snippet?.thumbnails?.default?.url,
+        }),
+      );
     }
 
-    return response.data.items.map((item) => ({
-      videoId: item.id.videoId,
-      title: item.snippet.title,
-      channelTitle: item.snippet.channelTitle,
-    }));
+    return null;
   };
 }

@@ -1,6 +1,7 @@
 import { Client, ResultSet, createClient } from '@libsql/client';
 
-import { config } from '../../config';
+import { config, log } from '../../config';
+import { ZodSchema, z } from 'zod';
 
 export const expandResultSet = (results: ResultSet): any[] => {
   if (results.rows.length < 1) {
@@ -39,3 +40,29 @@ export class Pagination {
     return new Pagination(limit, offset);
   }
 }
+
+export const exec = (namespace: string) => ({
+  one: async <Schema extends ZodSchema>(
+    name: string,
+    schema: Schema,
+    sql: string,
+    args: any,
+  ): Promise<z.infer<typeof schema>[]> => {
+    const results = await client.execute({ sql, args });
+    const rows = results.rows;
+    log.debug({ event: `${namespace}.${name}`, sql, args, rows });
+    return rows.map((row) => schema.parse(row));
+  },
+
+  many: async <Schema extends ZodSchema>(
+    name: string,
+    schema: Schema,
+    sql: string,
+    argsList: any[],
+  ): Promise<z.infer<typeof schema>[][]> => {
+    const results = await client.batch(argsList.map((args) => ({ sql, args })));
+    const sets = results.map((result) => result.rows);
+    log.debug({ event: `${namespace}.${name}`, sql, args: argsList, sets });
+    return sets.map((rows) => rows.map((row) => schema.parse(row)));
+  },
+});

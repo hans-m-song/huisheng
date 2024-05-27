@@ -3,6 +3,7 @@ import path from 'path';
 
 import { trimToJsonObject, tryParseJSON } from './utils';
 import { config, log } from '../config';
+import { AsyncQueue } from './AsyncQueue';
 
 export const downloaderCacheDir = path.join(config.cacheDir, 'ytdl');
 export const downloaderOutputDir = path.join(config.cacheDir, 'out');
@@ -50,7 +51,11 @@ const execute = async (...args: string[]) => {
   let stderr = '';
   let stdout = '';
   let child: ChildProcessWithoutNullStreams;
-  log.info({ event: 'downloader', command: config.youtubeDLExecutable, args: args.join(' ') });
+  log.info({
+    event: 'downloader',
+    command: config.youtubeDLExecutable,
+    args: args.join(' '),
+  });
 
   try {
     child = spawn(config.youtubeDLExecutable, args);
@@ -98,8 +103,15 @@ const execute = async (...args: string[]) => {
   return { stderr, stdout };
 };
 
+const queue = new AsyncQueue<Awaited<ReturnType<typeof execute>>>(config.youtubeDLMaxConcurrency);
+
 export const download = async (target: string): Promise<unknown | null> => {
-  const process = await execute(target, ...args);
+  const process = await queue
+    .sync(target, () => execute(target, ...args))
+    .catch((error) => {
+      log.error({ event: 'Downloader.download', target, error });
+      return null;
+    });
   if (!process) {
     return null;
   }

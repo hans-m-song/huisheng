@@ -21,7 +21,9 @@ export const hooks = plugin(async (fastify: FastifyInstance) => {
       return render(payload);
     }
 
+    const { channelId } = request.params as any;
+
     // browser page request
-    return '<!DOCTYPE html>' + render(Layout({ children: payload }));
+    return '<!DOCTYPE html>' + render(Layout({ channelId, children: payload }));
   });
 });

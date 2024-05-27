@@ -1,9 +1,8 @@
 import { z } from 'zod';
 
-import { Pagination, client, expandResultSet } from './database';
+import { Pagination, exec } from './database';
 import * as queries from './queries';
 import { SongSchema } from './SongDAO';
-import { log } from '../../config';
 
 export const QueueItemSchema = z.object({
   channelId: z.string(),
@@ -20,44 +19,55 @@ export const QueuedSongSchema = z.intersection(QueueItemSchema, SongSchema);
 export type QueuedSong = z.infer<typeof QueuedSongSchema>;
 
 export class QueueDAO {
-  static async enqueue(channelId: string, songId: string) {
-    const statement = { sql: queries.enqueueSong, args: { channelId, songId } };
-    const result = await client.execute(statement);
-    const queueItem = QueueItemSchema.parse(expandResultSet(result)[0]);
-    log.debug({ event: 'QueueDAO.enqueue', statement, queueItem });
-    return queueItem;
+  static exec = exec('QueueDAO');
+
+  static async enqueue(channelId: string, songId: string): Promise<QueueItem | null> {
+    const rows = await QueueDAO.exec.one('enqueue', QueueItemSchema, queries.enqueue, {
+      channelId,
+      songId,
+    });
+
+    return rows[0] ?? null;
   }
 
-  static async dequeue(channelId: string): Promise<QueuedSong | null> {
-    const statement = { sql: queries.dequeueSong, args: { channelId } };
-    const result = await client.execute(statement);
-    const queuedSong = QueuedSongSchema.parse(expandResultSet(result)[0]);
-    log.debug({ event: 'QueueDAO.dequeue', statement, queuedSong });
-    return queuedSong;
+  static async dequeue(channelId: string): Promise<QueueItem | null> {
+    const rows = await QueueDAO.exec.one('dequeue', QueueItemSchema, queries.dequeueNext, {
+      channelId,
+    });
+
+    return rows[0] ?? null;
   }
 
   static async list(channelId: string, pagination?: Pagination): Promise<QueuedSong[]> {
-    const statement = {
-      sql: queries.listQueue,
-      args: { channelId, limit: 5, offset: 0, ...pagination },
-    };
-    const result = await client.execute(statement);
-    const queue = expandResultSet(result).map((item) => QueuedSongSchema.parse(item));
-    log.debug({ event: 'QueueDAO.list', statement, queue });
-    return queue;
+    return await QueueDAO.exec.one('list', QueuedSongSchema, queries.listQueue, {
+      channelId,
+      limit: 5,
+      offset: 0,
+      ...pagination,
+    });
   }
 
-  static async delete(channelId: string, sortOrder: number): Promise<QueueItem> {
-    const statement = { sql: queries.setQueueItemPlayed, args: { channelId, sortOrder } };
-    const result = await client.execute(statement);
-    const queueItem = QueueItemSchema.parse(expandResultSet(result)[0]);
-    log.debug({ event: 'QueueDAO.delete', statement, queueItem });
-    return queueItem;
+  static async listChannels(): Promise<{ channelId: string }[]> {
+    return await QueueDAO.exec.one(
+      'listChannels',
+      z.object({ channelId: z.string() }),
+      queries.listChannels,
+      {},
+    );
   }
 
-  static async clear() {
-    const statement = { sql: queries.clearQueue, args: {} };
-    const result = await client.execute(queries.clearQueue);
-    log.debug({ event: 'QueueDAO.clear', statement, rowsAffected: result.rowsAffected });
+  static async delete(channelId: string, sortOrder: number): Promise<QueueItem | null> {
+    const rows = await QueueDAO.exec.one('delete', QueueItemSchema, queries.dequeueBySortOrder, {
+      channelId,
+      sortOrder,
+    });
+
+    return rows[0] ?? null;
+  }
+
+  static async clear(channelId: string): Promise<void> {
+    await QueueDAO.exec.one('clear', QueueItemSchema, queries.clearQueue, {
+      channelId,
+    });
   }
 }

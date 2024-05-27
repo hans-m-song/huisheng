@@ -3,7 +3,7 @@
     "target": "ES2022",
     "lib": ["ESNext"],
     "module": "CommonJS",
-    "rootDir": "./src",
+    "rootDir": ".",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "declaration": true,
@@ -18,5 +18,5 @@
     "jsx": "react-jsx",
     "jsxImportSource": "preact"
   },
-  "include": ["./src/**/*.ts", "./src/**/*.tsx"]
+  "include": ["./src", "./bin"]
 }

@@ -1,8 +1,7 @@
 import React, { PropsWithChildren } from 'preact/compat';
 
 export interface LayoutProps {
-  title?: string;
-  description?: string;
+  channelId: string;
 }
 
 export const Layout = (props: PropsWithChildren<LayoutProps>) => (
@@ -10,8 +9,8 @@ export const Layout = (props: PropsWithChildren<LayoutProps>) => (
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <meta name="description" content={props.description ?? 'Manage a Huisheng instance'} />
-      <title>{props.title ?? 'Huisheng Admin Console'}</title>
+      <meta name="description" content="Manage a Huisheng instance" />
+      <title>Huisheng Admin Console</title>
       <link rel="stylesheet" href="/static/main.css" />
       <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
@@ -34,6 +33,7 @@ export const Layout = (props: PropsWithChildren<LayoutProps>) => (
             <a class="nav-link nav-active nav-brand" href="/">
               Huisheng
             </a>
+
             <button
               class="navbar-toggler"
               type="button"
@@ -45,48 +45,34 @@ export const Layout = (props: PropsWithChildren<LayoutProps>) => (
             >
               <span class="navbar-toggler-icon" />
             </button>
+
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-              <ul class="navbar-nav me-auto mb-2 mb-md-0">
+              <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                  <a
-                    class="nav-link"
-                    href="#"
-                    hx-get="/search"
-                    hx-target=".App"
-                    hx-swap="innerHTML"
-                    hx-push-url="true"
-                  >
-                    Search
+                  <a class="nav-link" href="/channels">
+                    Channels
                   </a>
                 </li>
-                <li class="nav-item">
-                  <a
-                    class="nav-link"
-                    href="#"
-                    hx-get="/queue"
-                    hx-target=".App"
-                    hx-swap="innerHTML"
-                    hx-push-url="true"
-                  >
-                    Queue
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a
-                    class="nav-link"
-                    href="#"
-                    hx-get="/songs"
-                    hx-target=".App"
-                    hx-swap="innerHTML"
-                    hx-push-url="true"
-                  >
-                    Songs
-                  </a>
-                </li>
+
+                {props.channelId && (
+                  <li class="nav-item">
+                    <a class="nav-link" href={`/queue/${props.channelId}`}>
+                      Queue
+                    </a>
+                  </li>
+                )}
+
+                {props.channelId && (
+                  <li class="nav-item">
+                    <a class="nav-link" href={`/songs/${props.channelId}`}>
+                      Songs
+                    </a>
+                  </li>
+                )}
               </ul>
-              <div class="mx-3">
-                <a class="link-secondary" href="https://github.com/hans-m-song/huisheng">
-                  <i class="bi bi-github" />
+              <div>
+                <a class="link-primary" href="https://github.com/hans-m-song/huisheng">
+                  <i class="bi bi-github" style={{ color: 'white' }} />
                 </a>
               </div>
             </div>
