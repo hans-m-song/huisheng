@@ -1,7 +1,7 @@
 import { Client, ResultSet, createClient } from '@libsql/client';
+import { ZodSchema, z } from 'zod';
 
 import { config, log } from '../../config';
-import { ZodSchema, z } from 'zod';
 
 export const expandResultSet = (results: ResultSet): any[] => {
   if (results.rows.length < 1) {

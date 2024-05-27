@@ -1,6 +1,7 @@
 import { describe, it, expect, jest } from '@jest/globals';
-import { AsyncQueue } from './AsyncQueue';
 import { promisify } from 'util';
+
+import { AsyncQueue } from './AsyncQueue';
 
 const sleep = promisify(setTimeout);
 

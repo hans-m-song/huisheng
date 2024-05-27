@@ -1,6 +1,6 @@
-import { QueryResult } from '../../lib/Youtube';
 import { Button } from './Button';
 import { Link } from './Link';
+import { QueryResult } from '../../lib/Youtube';
 
 export interface SongSearchFormProps {
   channelId?: string;

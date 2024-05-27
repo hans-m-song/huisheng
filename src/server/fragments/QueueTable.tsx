@@ -1,11 +1,11 @@
 import React from 'preact/compat';
 
 import { Button } from './Button';
+import { Link } from './Link';
+import { Pagination } from './Pagination';
 import { QueuedSong } from '../../lib/cache';
 import { secToTimeFragments } from '../../lib/utils';
 import { Trigger } from '../consts';
-import { Pagination } from './Pagination';
-import { Link } from './Link';
 
 export interface QueueTableProps {
   channelId: string;

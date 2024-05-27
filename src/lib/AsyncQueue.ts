@@ -21,6 +21,7 @@ export declare interface AsyncQueue<T = any> {
   emit(event: JobEvent, job: Job<T>): boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class AsyncQueue<T = any> extends EventEmitter {
   concurrency: number;
   items: Job<T>[] = [];

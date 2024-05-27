@@ -11,9 +11,10 @@
     "start": "node dist/index.js",
     "generate": "tsx bin/generate-queries.ts schema/queries.sql src/lib/cache/queries.ts",
     "debug": "nodemon",
-    "lint": "eslint \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:fix": "prettier --write ./src && yarn lint --fix",
     "test": "jest",
+    "test:ci": "jest --runInBand --detectOpenHandles --silent",
     "schema:diff": "atlas schema diff --from sqlite://local.db --to file://schema/tables.sql --dev-url 'sqlite://dev?mode=memory'",
     "schema:apply": "atlas schema apply --url sqlite://local.db --to file://schema/tables.sql --dev-url 'sqlite://dev?mode=memory'"
   },

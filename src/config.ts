@@ -1,4 +1,4 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyRequest } from 'fastify';
 import pino from 'pino';
 
 import { assertEnv, boolEnv, enumEnv, numEnv, obscure, serialiseError } from './lib/utils';

@@ -14,8 +14,8 @@ import {
   VoiceBasedChannel,
 } from 'discord.js';
 
-import { log } from '../config';
 import { getPlayer, Player } from './Player';
+import { log } from '../config';
 
 type VoiceCommandOptions = { allowConnect?: boolean; allowRetry?: boolean };
 

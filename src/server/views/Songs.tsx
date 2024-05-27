@@ -1,8 +1,8 @@
 import React from 'preact/compat';
 
-import { SongSearchForm } from '../fragments/SongSearchForm';
-import { SongForm } from '../fragments/SongForm';
 import { Trigger } from '../consts';
+import { SongForm } from '../fragments/SongForm';
+import { SongSearchForm } from '../fragments/SongSearchForm';
 
 export interface SongProps {
   channelId: string;

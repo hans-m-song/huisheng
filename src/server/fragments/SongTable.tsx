@@ -1,11 +1,11 @@
 import React from 'preact/compat';
 
 import { Button } from './Button';
+import { Link } from './Link';
 import { Pagination } from './Pagination';
 import { Song } from '../../lib/cache';
 import { secToTimeFragments, slugify } from '../../lib/utils';
 import { Trigger } from '../consts';
-import { Link } from './Link';
 
 export interface SongTableProps {
   channelId?: string;

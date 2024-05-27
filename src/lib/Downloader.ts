@@ -1,9 +1,9 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import path from 'path';
 
+import { AsyncQueue } from './AsyncQueue';
 import { trimToJsonObject, tryParseJSON } from './utils';
 import { config, log } from '../config';
-import { AsyncQueue } from './AsyncQueue';
 
 export const downloaderCacheDir = path.join(config.cacheDir, 'ytdl');
 export const downloaderOutputDir = path.join(config.cacheDir, 'out');

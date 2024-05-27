@@ -4,12 +4,14 @@ import React from 'preact/compat';
 import { render } from 'preact-render-to-string';
 
 import { ContentType, Header, Trigger } from './consts';
+import { ChannelList } from './fragments/ChannelList';
 import { Diagnostics } from './fragments/Diagnostics';
 import { ErrorSurface } from './fragments/ErrorSurface';
 import { QueueTable } from './fragments/QueueTable';
 import { SongForm } from './fragments/SongForm';
 import { SongSearchResultsTable } from './fragments/SongSearchForm';
 import { SongTable } from './fragments/SongTable';
+import { Channels } from './views/Channels';
 import { Layout } from './views/Layout';
 import { Queue } from './views/Queue';
 import { Songs } from './views/Songs';
@@ -17,8 +19,6 @@ import { QueueDAO, SongDAO, SongSchema } from '../lib/cache';
 import { Pagination } from '../lib/cache/database';
 import { version } from '../lib/Downloader';
 import { Youtube } from '../lib/Youtube';
-import { Channels } from './views/Channels';
-import { ChannelList } from './fragments/ChannelList';
 
 export const router = async (app: FastifyInstance) => {
   app.get('/', async (_, reply) => reply.redirect('/diagnostics'));
