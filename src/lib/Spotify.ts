@@ -2,8 +2,8 @@ import 'dotenv/config';
 
 import axios, { AxiosInstance } from 'axios';
 
-import { config, log } from '../config';
 import { encodeQueryParams } from './utils';
+import { config, log } from '../config';
 
 interface AccessTokenResponse {
   access_token: string;

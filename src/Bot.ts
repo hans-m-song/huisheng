@@ -35,9 +35,6 @@ export class Bot {
     this.client.on('interactionCreate', onInteractionCreate(this.client));
     this.client.on('voiceStateUpdate', onVoiceStateUpdate(this.client));
     this.client.once('invalidated', this.shutdown.bind(this));
-    process.on('beforeExit', this.shutdown.bind(this));
-    process.on('SIGINT', this.shutdown.bind(this));
-    process.on('SIGTERM', this.shutdown.bind(this));
   }
 
   async login() {
@@ -55,11 +52,9 @@ export class Bot {
     log.info({ event: 'Bot.login.ready', client: this.client.user?.tag, invite: authorizeUrl });
   }
 
-  async shutdown(exitCode?: number | string) {
-    log.info({ event: 'Bot.shutdown', message: 'client shutting down', exitCode });
+  async shutdown() {
     destroyVoiceConnections();
     this.client.user?.setStatus('invisible');
     this.client.destroy();
-    process.exit(typeof exitCode === 'number' ? exitCode : 1);
   }
 }

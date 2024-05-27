@@ -8,11 +8,11 @@ import {
 import { EmbedBuilder } from 'discord.js';
 import { promises as fs } from 'fs';
 
-import { log } from '../config';
 import { AudioFile } from './AudioFile';
 import { PlaylistItem } from './PlaylistItem';
 import { Queue } from './Queue';
 import { QueryResult } from './Youtube';
+import { log } from '../config';
 
 export class Player {
   playlist = new Queue<PlaylistItem>();
@@ -81,18 +81,6 @@ export class Player {
     if (this.instance.state.status === AudioPlayerStatus.Playing) {
       this.instance.pause(true);
       this.playlist.current?.timer.stop();
-    }
-  }
-
-  playPause() {
-    switch (this.instance.state.status) {
-      case AudioPlayerStatus.Paused:
-        this.play();
-        return;
-
-      case AudioPlayerStatus.Playing:
-        this.pause();
-        return;
     }
   }
 

@@ -1,0 +1,16 @@
+th,
+td {
+  padding: 2px;
+}
+
+.btn {
+  text-transform: capitalize;
+}
+
+.btn .spinner-border {
+  margin-right: 4px;
+}
+
+button:not(:disabled) .spinner-border {
+  display: none;
+}
