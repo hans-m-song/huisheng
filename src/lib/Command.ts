@@ -4,6 +4,7 @@ import {
   GuildEmoji,
   Message,
   SlashCommandBuilder,
+  SlashCommandOptionsOnlyBuilder,
 } from 'discord.js';
 
 export interface CommandContext {
@@ -20,7 +21,7 @@ export interface OnInteractionCallback {
 }
 
 export interface Command {
-  spec: Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>;
+  spec: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
   onInteraction?: OnInteractionCallback;
   onMessage: OnMessageCallback;
 }

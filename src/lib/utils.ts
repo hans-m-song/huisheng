@@ -1,6 +1,6 @@
 import 'newrelic';
 
-import { Collection, Collector } from 'discord.js';
+import { Collection, Collector, ReadonlyCollection } from 'discord.js';
 import { promises as fs } from 'fs';
 import internal from 'stream';
 import { isMatching, P } from 'ts-pattern';
@@ -197,7 +197,7 @@ export const readStream = <T = Buffer>(stream: internal.Readable): Promise<T[]> 
 };
 
 export const collect = <K, V, F extends unknown[] = []>(collector: Collector<K, V, F>) =>
-  new Promise<Collection<K, V>>((resolve) => {
+  new Promise<ReadonlyCollection<K, V>>((resolve) => {
     collector.once('end', resolve);
   });
 

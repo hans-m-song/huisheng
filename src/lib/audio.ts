@@ -14,8 +14,8 @@ import {
   VoiceBasedChannel,
 } from 'discord.js';
 
-import { log } from '../config';
 import { getPlayer, Player } from './Player';
+import { log } from '../config';
 
 type VoiceCommandOptions = { allowConnect?: boolean; allowRetry?: boolean };
 
@@ -214,7 +214,7 @@ const initializeVoiceConnection = async (channel: VoiceBasedChannel): Promise<Vo
     }
   });
 
-  await new Promise<void>((resolve) => voice.once(VoiceConnectionStatus.Ready, resolve));
+  await VoiceConnection.once(voice, VoiceConnectionStatus.Ready);
 
   return voice;
 };
