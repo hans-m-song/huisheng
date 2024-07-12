@@ -1,8 +1,8 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import path from 'path';
 
-import { config, log } from '../config';
 import { trimToJsonObject, tryParseJSON } from './utils';
+import { config, log } from '../config';
 
 export const downloaderCacheDir = path.join(config.cacheDir, 'ytdl');
 export const downloaderOutputDir = path.join(config.cacheDir, 'out');
@@ -69,20 +69,18 @@ const execute = async (...args: string[]) => {
     return null;
   }
 
-  await new Promise<void>((resolve, reject) => {
-    child.on('close', (code, signal) => {
-      if (code !== 0) {
-        reject(new Error(`exit status was ${code}, signal was ${signal}`));
-        return;
-      }
-
-      resolve();
-    });
-
+  const exitCode = await new Promise<number | null>((resolve) => {
+    child.on('close', resolve);
     child.on('error', (error) => log.error({ event: 'downloader', error }));
     child.stdout.on('data', (chunk) => chunk?.toString && (stdout += chunk.toString()));
     child.stderr.on('data', (chunk) => chunk?.toString && (stderr += chunk.toString()));
   });
+
+  if (exitCode !== null && exitCode > 0) {
+    log.error({ event: 'downloader', stderr, exitCode, message: 'unexpected exit code' });
+    // continue anyway
+    // return null;
+  }
 
   if (stderr.length > 0) {
     log.error({ event: 'downloader', stderr, message: 'unexpected stderr output' });
