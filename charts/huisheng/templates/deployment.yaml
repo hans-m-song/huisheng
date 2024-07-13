@@ -16,7 +16,7 @@ spec:
       labels: {{ include "huisheng.selectorLabels" . | nindent 8 }}
       annotations:
         credentials/checksum: {{ include (print $.Template.BasePath "/credentials.yaml") . | sha256sum }}
-        {{- range $key, $value := range .Values.podAnnotations }}
+        {{- range $key, $value := .Values.podAnnotations }}
         {{ $key }}: {{ $value | quote }}
         {{- end }}
     spec:
