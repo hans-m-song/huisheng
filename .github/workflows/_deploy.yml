@@ -27,17 +27,10 @@ jobs:
     environment: production
 
     steps:
-      - name: Upgrade helm chart
-        id: deploy
-        run: |
-          helm repo add huisheng https://huisheng.charts.axatol.xyz
-          helm repo update
-          helm upgrade huisheng huisheng/huisheng \
-            --install \
-            --create-namespace \
-            --namespace huisheng \
-            --atomic \
-            --reuse-values
+      - uses: axatol/actions/rollout-kubernetes-deployment@release
+        with:
+          namespace: huisheng
+          deployment-name: huisheng
 
       - name: Create deployment marker
         if: success()

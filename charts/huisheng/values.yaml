@@ -1,6 +1,8 @@
 image: public.ecr.aws/axatol/huisheng:latest
 imagePullPolicy: Always
 
+podAnnotations: {}
+
 env:
   {}
   # DEBUG:

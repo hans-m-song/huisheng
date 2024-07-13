@@ -74,6 +74,9 @@ export const log = pino({
   transport:
     config.logFormat == 'text' ? { target: 'pino-pretty', options: { colorize: true } } : undefined,
   level: config.logLevel,
+  formatters: {
+    level: (label, _number) => ({ level: label }),
+  },
   serializers: {
     error: (error: any): any => {
       if (
