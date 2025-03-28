@@ -44,6 +44,10 @@ export const search: Command = {
 
   onMessage: async (_, message, args) => {
     await messageVoiceCommand(message, { allowConnect: true }, async (player) => {
+      if (!message.channel.isSendable()) {
+        return;
+      }
+
       await message.react(emojis.thinking);
 
       const results = await Youtube.query(args.join(' '), 5);
@@ -108,6 +112,10 @@ export const search: Command = {
       interaction,
       { allowConnect: true },
       async (player, _, channel) => {
+        if (!channel.isSendable()) {
+          return;
+        }
+
         const query = interaction.options.getString('query');
         if (!query) {
           await interaction.reply('Must provide a query');

@@ -25,6 +25,10 @@ export const play: Command = {
 
   onMessage: async (_, message, args) => {
     await messageVoiceCommand(message, { allowConnect: true }, async (player) => {
+      if (!message.channel.isSendable()) {
+        return;
+      }
+
       if (args.length < 1 || args.join(' ').trim() === '') {
         player.play();
         return;

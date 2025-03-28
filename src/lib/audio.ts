@@ -14,8 +14,8 @@ import {
   VoiceBasedChannel,
 } from 'discord.js';
 
-import { getPlayer, Player } from './Player';
 import { log } from '../config';
+import { getPlayer, Player } from './Player';
 
 type VoiceCommandOptions = { allowConnect?: boolean; allowRetry?: boolean };
 
@@ -24,6 +24,10 @@ export const messageVoiceCommand = async (
   options: VoiceCommandOptions,
   callback: (player: Player, connection: VoiceConnection) => Promise<void> | void,
 ): Promise<void> => {
+  if (!message.channel.isSendable()) {
+    return;
+  }
+
   const { allowConnect, allowRetry } = {
     allowConnect: false,
     allowRetry: true,

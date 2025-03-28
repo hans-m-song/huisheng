@@ -10,6 +10,10 @@ export const np: Command = {
 
   onMessage: async (_, message) => {
     await messageVoiceCommand(message, { allowConnect: false }, async (player) => {
+      if (!message.channel.isSendable()) {
+        return;
+      }
+
       if (!player.playlist.current) {
         await message.channel.send('Not playing anything');
         return;
