@@ -39,6 +39,10 @@ export const debug: Command = {
   spec: new SlashCommandBuilder().setName('debug').setDescription('Print debug information'),
 
   onMessage: async (_, message) => {
+    if (!message.channel.isSendable()) {
+      return;
+    }
+
     const playerStatus = getPlayer(message.guild?.id ?? '').instance.state.status;
     const embed = (await debugEmbed()).addFields({
       name: 'Player Status',

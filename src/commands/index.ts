@@ -44,6 +44,10 @@ commands.register = {
   spec: new SlashCommandBuilder().setName('register').setDescription('Register slash commands'),
 
   onMessage: async (_, message) => {
+    if (!message.channel.isSendable()) {
+      return;
+    }
+
     if (!message.guildId) {
       await message.channel.send('Must be in a server to register slash commands');
       return;

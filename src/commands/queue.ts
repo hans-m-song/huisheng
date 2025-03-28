@@ -10,6 +10,10 @@ export const queue: Command = {
 
   onMessage: async (_, message) => {
     await messageVoiceCommand(message, { allowConnect: false }, async (player) => {
+      if (!message.channel.isSendable()) {
+        return;
+      }
+
       await message.channel.send({ embeds: [player.getQueueEmbed()] });
     });
   },

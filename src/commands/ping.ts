@@ -9,6 +9,10 @@ export const ping: Command = {
     .setDescription('Check if bot is healthy and configured correctly'),
 
   onMessage: async ({ client }, message) => {
+    if (!message.channel.isSendable()) {
+      return;
+    }
+
     const voice = message.guild && getVoiceConnection(message.guild.id);
     const embed = new EmbedBuilder().setDescription('pong').addFields([
       { name: 'API ping', value: `${client.ws.ping}ms`, inline: true },
