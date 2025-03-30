@@ -1,8 +1,8 @@
-FROM --platform=linux/amd64 node:18-bullseye-slim
+FROM node:22-bullseye-slim
 
 RUN set -x \
-  && apt-get update \
-  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+  && apt-get update --quiet \
+  && DEBIAN_FRONTEND=noninteractive apt-get install --quiet --yes --no-install-recommends \
   build-essential \
   bzip2 \
   ca-certificates \
@@ -14,11 +14,6 @@ RUN set -x \
   && rm -rf /var/lib/apt/lists/* \
   && ln /usr/bin/python3 /usr/bin/python
 
-# yt-dlp
-RUN set -x  \
-  && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
-  && chmod a+rx /usr/local/bin/yt-dlp
-
 # phantomjs
 ENV OPENSSL_CONF=/opt/openssl.cnf
 RUN set -x  \
@@ -27,6 +22,11 @@ RUN set -x  \
   | tar -xj --strip-components=1 -C /tmp/phantomjs \
   && mv /tmp/phantomjs/bin/phantomjs /usr/local/bin \
   && touch ${OPENSSL_CONF}
+
+# yt-dlp
+RUN set -x  \
+  && curl -sSfL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
+  && chmod a+rx /usr/local/bin/yt-dlp
 
 WORKDIR /app
 COPY ./tsconfig.json ./package.json ./package-lock.json ./
