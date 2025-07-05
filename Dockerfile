@@ -14,11 +14,6 @@ RUN set -x \
   && rm -rf /var/lib/apt/lists/* \
   && ln /usr/bin/python3 /usr/bin/python
 
-# yt-dlp
-RUN set -x  \
-  && curl -sSfL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
-  && chmod a+rx /usr/local/bin/yt-dlp
-
 # phantomjs
 ENV OPENSSL_CONF=/opt/openssl.cnf
 RUN set -x  \
@@ -28,6 +23,12 @@ RUN set -x  \
   && mv /tmp/phantomjs/bin/phantomjs /usr/local/bin \
   && rm -rf /tmp/phantomjs \
   && touch ${OPENSSL_CONF}
+
+# yt-dlp
+RUN set -x  \
+  && git config --global --unset-all remote.origin.proxy \
+  && curl -ksSfL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
+  && chmod a+rx /usr/local/bin/yt-dlp
 
 WORKDIR /app
 COPY ./tsconfig.json ./package.json ./package-lock.json ./
