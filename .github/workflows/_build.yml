@@ -41,9 +41,7 @@ jobs:
         if: inputs.publish
         with:
           image: ${{ env.image }}
-          tag-previous: true
           build-args: --build-arg GITHUB_SHA=${{ github.sha }}
-          use-cache: false
 
       - uses: axatol/actions/prune-ecr-repository@release
         if: inputs.publish

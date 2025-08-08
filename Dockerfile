@@ -18,7 +18,7 @@ RUN set -x \
 ENV OPENSSL_CONF=/opt/openssl.cnf
 RUN set -x  \
   && mkdir /tmp/phantomjs \
-  && curl -Ls https://github.com/Medium/phantomjs/releases/download/v2.1.1/phantomjs-2.1.1-linux-x86_64.tar.bz2 -o /tmp/phantomjs/phantomjs.tar.bz2 \
+  && curl -ksSfL https://github.com/Medium/phantomjs/releases/download/v2.1.1/phantomjs-2.1.1-linux-x86_64.tar.bz2 -o /tmp/phantomjs/phantomjs.tar.bz2 \
   && tar -xjf /tmp/phantomjs/phantomjs.tar.bz2 --strip-components=1 -C /tmp/phantomjs \
   && mv /tmp/phantomjs/bin/phantomjs /usr/local/bin \
   && rm -rf /tmp/phantomjs \
