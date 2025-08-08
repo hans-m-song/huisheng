@@ -26,6 +26,7 @@ const youtubeDLRetries = numEnv(process.env.YOUTUBE_DL_RETRIES, {
   min: 1,
   max: 5,
 });
+const youtubeDlPotProvider = process.env.YTDLP_POT_PROVIDER;
 
 const minioEndpoint = process.env.MINIO_ENDPOINT ?? 'api.minio.k8s.axatol.xyz';
 const minioEndpointPort = numEnv(process.env.MINIO_ENDPOINT_PORT, { default: 443 });
@@ -55,6 +56,7 @@ export const config = {
   youtubeDLExecutable,
   youtubeDLMaxConcurrency,
   youtubeDLRetries,
+  youtubeDlPotProvider,
 
   // minio
   minioEndpoint,
@@ -118,6 +120,7 @@ log.debug('config', {
   youtubeDLExecutable,
   youtubeDLMaxConcurrency,
   youtubeDLRetries,
+  youtubeDlPotProvider,
   minioEndpoint,
   minioEndpointPort,
   minioEndpointSSL,

@@ -32,3 +32,8 @@ credentials:
     # YOUTUBE_API_KEY:
     # SPOTIFY_CLIENT_ID:
     # SPOTIFY_CLIENT_SECRET:
+
+potProvider:
+  enable: true
+  image: brainicism/bgutil-ytdlp-pot-provider
+  port: 4416

@@ -34,6 +34,10 @@ spec:
             - name: {{ $name }}
               value: {{ $value | toString | quote }}
             {{- end }}
+            {{- if .Values.potProvider.enabled }}
+            - name: YTDLP_POT_PROVIDER
+              value: http://ytdlp-pot-provider:{{ .Values.potProvider.port }}
+            {{- end }}
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
@@ -45,6 +49,13 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+        {{- if .Values.potProvider.enabled }}
+        - name: ytdlp-pot-provider
+          image: {{ .Values.potProvider.image }}
+          args:
+          - --port
+          - {{ .Values.potProvider.port }}
+        {{- end }}
       volumes:
         - name: data
           emptyDir: {}

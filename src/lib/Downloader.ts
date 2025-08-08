@@ -1,8 +1,8 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import path from 'path';
 
-import { trimToJsonObject, tryParseJSON } from './utils';
 import { config, log } from '../config';
+import { trimToJsonObject, tryParseJSON } from './utils';
 
 export const downloaderCacheDir = path.join(config.cacheDir, 'ytdl');
 export const downloaderOutputDir = path.join(config.cacheDir, 'out');
@@ -37,6 +37,9 @@ const args = [
 
   // workarounds
   '--no-check-certificates',
+  config.youtubeDlPotProvider
+    ? ['--extractor-args', `youtubepot-bgutilhttp:base_url=${config.youtubeDlPotProvider}`]
+    : [],
 
   // post-processing options
   '--extract-audio',
@@ -44,7 +47,7 @@ const args = [
   '--format-sort-force',
   '--format-sort',
   'aext,+size',
-];
+].flat();
 
 const execute = async (...args: string[]) => {
   let stderr = '';
