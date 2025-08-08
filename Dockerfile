@@ -1,32 +1,29 @@
-FROM node:22-bullseye-slim
+FROM node:22-alpine
 
 RUN set -x \
-  && apt-get update --quiet \
-  && DEBIAN_FRONTEND=noninteractive apt-get install --quiet --yes --no-install-recommends \
-  build-essential \
+  && apk update \
+  && apk add --no-cache --no-interactive \
   bzip2 \
   ca-certificates \
   curl \
   ffmpeg \
-  libfontconfig \
+  fontconfig \
+  make \
   python3 \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/* \
-  && ln /usr/bin/python3 /usr/bin/python
+  tar
 
 # phantomjs
 ENV OPENSSL_CONF=/opt/openssl.cnf
 RUN set -x  \
   && mkdir /tmp/phantomjs \
-  && curl -ksSfL https://github.com/Medium/phantomjs/releases/download/v2.1.1/phantomjs-2.1.1-linux-x86_64.tar.bz2 -o /tmp/phantomjs/phantomjs.tar.bz2 \
-  && tar -xjf /tmp/phantomjs/phantomjs.tar.bz2 --strip-components=1 -C /tmp/phantomjs \
+  && curl -L https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2 \
+  | tar -xjf - --strip-components=1 -C /tmp/phantomjs \
   && mv /tmp/phantomjs/bin/phantomjs /usr/local/bin \
   && rm -rf /tmp/phantomjs \
   && touch ${OPENSSL_CONF}
 
 # yt-dlp
 RUN set -x  \
-  && git config --global --unset-all remote.origin.proxy \
   && curl -ksSfL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
   && chmod a+rx /usr/local/bin/yt-dlp
 
