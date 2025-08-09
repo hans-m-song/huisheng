@@ -34,6 +34,6 @@ credentials:
     # SPOTIFY_CLIENT_SECRET:
 
 potProvider:
-  enable: true
+  enabled: true
   image: brainicism/bgutil-ytdlp-pot-provider
   port: 4416

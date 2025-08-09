@@ -8,6 +8,7 @@ RUN set -x \
   curl \
   ffmpeg \
   fontconfig \
+  g++ \
   make \
   python3 \
   tar
