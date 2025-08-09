@@ -54,7 +54,7 @@ spec:
           image: {{ .Values.potProvider.image }}
           args:
           - --port
-          - {{ .Values.potProvider.port }}
+          - {{ .Values.potProvider.port | toString }}
         {{- end }}
       volumes:
         - name: data
