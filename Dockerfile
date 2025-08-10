@@ -25,7 +25,7 @@ RUN set -x  \
 
 # yt-dlp
 RUN set -x  \
-  && curl -ksSfL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
+  && curl -vksSfL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
   && chmod a+rx /usr/local/bin/yt-dlp
 
 WORKDIR /app
