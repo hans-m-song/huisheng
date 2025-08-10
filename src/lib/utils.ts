@@ -1,6 +1,4 @@
-import 'newrelic';
-
-import { Collection, Collector, ReadonlyCollection } from 'discord.js';
+import { Collector, ReadonlyCollection } from 'discord.js';
 import { promises as fs } from 'fs';
 import internal from 'stream';
 import { isMatching, P } from 'ts-pattern';

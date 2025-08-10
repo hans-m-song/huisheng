@@ -1,66 +1,67 @@
 import axios, { AxiosInstance } from 'axios';
-import { isMatching, P } from 'ts-pattern';
 
+import { trace } from '@opentelemetry/api';
+import z from 'zod';
 import { config, log } from '../config';
 import { Spotify } from './Spotify';
-import { GuardType } from './utils';
+import { addSpanAttributes, addSpanError, TraceMethod } from './telemetry';
 
-export type YoutubeSearchResult = GuardType<typeof isYoutubeSearchResult>;
-export const isYoutubeSearchResult = isMatching({
-  kind: 'youtube#searchResult',
-  id: {
-    kind: 'youtube#video',
-    videoId: P.string,
-  },
-  snippet: {
-    title: P.string,
-    channelTitle: P.string,
-  },
+export type YoutubeSearchResult = z.infer<typeof YoutubeSearchResult>;
+export const YoutubeSearchResult = z.object({
+  kind: z.literal('youtube#searchResult'),
+  id: z.object({
+    kind: z.literal('youtube#video'),
+    videoId: z.string(),
+  }),
+  snippet: z.object({
+    title: z.string(),
+    channelTitle: z.string(),
+  }),
 });
 
-export type YoutubeSearchListResult = GuardType<typeof isYoutubeSearchListResult>;
-const isYoutubeSearchListResult = isMatching({
-  kind: 'youtube#searchListResponse',
-  items: P.array(P.when(isYoutubeSearchResult)),
+export type YoutubeSearchListResult = z.infer<typeof YoutubeSearchListResult>;
+const YoutubeSearchListResult = z.object({
+  kind: z.literal('youtube#searchListResponse'),
+  items: z.array(YoutubeSearchResult),
 });
 
-export type YoutubeVideoListResponseItem = GuardType<typeof isYoutubeVideoListResponseItem>;
-export const isYoutubeVideoListResponseItem = isMatching({
-  kind: 'youtube#video',
-  id: P.string,
-  snippet: {
-    title: P.string,
-    channelTitle: P.string,
-  },
+export type YoutubeVideoListResponseItem = z.infer<typeof YoutubeVideoListResponseItem>;
+export const YoutubeVideoListResponseItem = z.object({
+  kind: z.literal('youtube#video'),
+  id: z.string(),
+  snippet: z.object({
+    title: z.string(),
+    channelTitle: z.string(),
+  }),
 });
 
-export type YoutubeVideoListResponse = GuardType<typeof isYoutubeVideoListResponse>;
-export const isYoutubeVideoListResponse = isMatching({
-  kind: 'youtube#videoListResponse',
-  items: P.array(P.when(isYoutubeVideoListResponseItem)),
+export type YoutubeVideoListResponse = z.infer<typeof YoutubeVideoListResponse>;
+export const YoutubeVideoListResponse = z.object({
+  kind: z.literal('youtube#videoListResponse'),
+  items: z.array(YoutubeVideoListResponseItem),
 });
 
-export type YoutubePlaylistItemListResponseItem = GuardType<
-  typeof isYoutubePlaylistItemListResponseItem
+export type YoutubePlaylistItemListResponseItem = z.infer<
+  typeof YoutubePlaylistItemListResponseItem
 >;
-export const isYoutubePlaylistItemListResponseItem = isMatching({
-  kind: 'youtube#playlistItem',
-  id: P.string,
-  snippet: {
-    title: P.string,
-    channelTitle: P.string,
-    resourceId: {
-      kind: 'youtube#video',
-      videoId: P.string,
-    },
-  },
+export const YoutubePlaylistItemListResponseItem = z.object({
+  kind: z.literal('youtube#playlistItem'),
+  id: z.string(),
+  snippet: z.object({
+    title: z.string(),
+    channelTitle: z.string(),
+    resourceId: z.object({
+      kind: z.literal('youtube#video'),
+      videoId: z.string(),
+    }),
+  }),
 });
 
-export type YoutubePlaylistItemListResponse = GuardType<typeof isYoutubePlaylistItemListResponse>;
-export const isYoutubePlaylistItemListResponse = isMatching({
-  kind: 'youtube#playlistItemListResponse',
-  items: P.array(P.when(isYoutubePlaylistItemListResponseItem)),
-  pageInfo: { totalResults: P.number },
+export type YoutubePlaylistItemListResponse = z.infer<typeof YoutubePlaylistItemListResponse>;
+export const YoutubePlaylistItemListResponse = z.object({
+  kind: z.literal('youtube#playlistItemListResponse'),
+  items: z.array(YoutubePlaylistItemListResponseItem),
+  pageInfo: z.object({ totalResults: z.number() }),
 });
 
 export interface QueryResult {
@@ -79,6 +80,8 @@ const normaliseYoutubeUrl = (url: string) =>
     .replace('/playlist', '/watch')
     .replace('youtube.com/shorts/', 'youtube.com/watch?v=');
 
+const tracer = trace.getTracer('youtube');
+
 export class Youtube {
   private static instance?: AxiosInstance;
 
@@ -88,8 +91,8 @@ export class Youtube {
     }
 
     const instance = axios.create({
-      baseURL: config.youtubeBaseUrl,
-      params: { key: config.youtubeApiKey },
+      baseURL: config.YOUTUBE_BASE_URL,
+      params: { key: config.YOUTUBE_API_KEY },
     });
 
     instance.interceptors.request.use((config) => {
@@ -110,8 +113,10 @@ export class Youtube {
     Youtube.assertInstance();
   }
 
-  static search = (query: string, limit = 1) =>
-    Youtube.assertInstance().get<YoutubeSearchListResult>('/search', {
+  @TraceMethod(tracer, 'youtube/search')
+  static async search(query: string, limit = 1) {
+    addSpanAttributes({ query });
+    return Youtube.assertInstance().get<YoutubeSearchListResult>('/search', {
       params: {
         part: 'snippet',
         order: 'relevance',
@@ -121,25 +126,33 @@ export class Youtube {
         q: query,
       },
     });
+  }
 
-  static get = (id: string) =>
-    Youtube.assertInstance().get<YoutubeVideoListResponse>('/videos', {
+  @TraceMethod(tracer, 'youtube/get')
+  static async get(id: string) {
+    addSpanAttributes({ video_id: id });
+    return Youtube.assertInstance().get<YoutubeVideoListResponse>('/videos', {
       params: {
         part: 'snippet',
         id,
       },
     });
+  }
 
-  static list = (playlistId: string, limit = 25) =>
-    Youtube.assertInstance().get<YoutubePlaylistItemListResponse>('/playlistItems', {
+  @TraceMethod(tracer, 'youtube/list')
+  static async list(playlistId: string, limit = 25) {
+    addSpanAttributes({ playlist_id: playlistId });
+    return Youtube.assertInstance().get<YoutubePlaylistItemListResponse>('/playlistItems', {
       params: {
         part: 'snippet',
         maxResults: limit,
         playlistId,
       },
     });
+  }
 
-  static query = async (raw: string, fuzzySearchLimit = 1): Promise<QueryResult[] | null> => {
+  @TraceMethod(tracer, 'youtube/query')
+  static async query(raw: string, fuzzySearchLimit = 1): Promise<QueryResult[] | null> {
     if (raw.includes('spotify.com')) {
       const url = new URL(raw);
       log.info({ event: 'youtube', path: url.pathname, message: 'searching with spotify' });
@@ -169,11 +182,13 @@ export class Youtube {
       const url = new URL(normaliseYoutubeUrl(raw));
       const playlistId = url.searchParams.get('list');
       if (playlistId) {
+        addSpanAttributes({ playlist_id: playlistId });
         log.info({ event: 'youtube', playlistId, message: 'searching by playlist id' });
         const response = await Youtube.list(playlistId)
           .then((result) => result.data)
           .catch((error) => {
             log.error({ event: 'youtube', error, url: url.toString(), playlistId });
+            addSpanError(error);
             return null;
           });
 
@@ -188,11 +203,13 @@ export class Youtube {
 
       const videoId = url.searchParams.get('v');
       if (videoId) {
+        addSpanAttributes({ video_id: videoId });
         log.info({ event: 'youtube', videoId, message: 'searching by video id' });
         const response = await Youtube.get(videoId)
           .then((result) => result.data)
           .catch((error) => {
             log.error({ event: 'youtube', error, url: url.toString(), id: videoId });
+            addSpanError(error);
             return null;
           });
 
@@ -208,9 +225,11 @@ export class Youtube {
       }
     }
 
+    addSpanAttributes({ query: raw });
     log.info({ event: 'youtube', raw, message: 'fuzzy text search' });
     const response = await Youtube.search(raw, fuzzySearchLimit).catch((error) => {
       log.error({ event: 'youtube', error, raw });
+      addSpanError(error);
       return null;
     });
 
@@ -223,5 +242,5 @@ export class Youtube {
       title: item.snippet.title,
       channelTitle: item.snippet.channelTitle,
     }));
-  };
+  }
 }

@@ -1,32 +1,34 @@
 import { getVoiceConnection } from '@discordjs/voice';
 import { Awaitable, Client, ClientEvents, VoiceState } from 'discord.js';
-import newrelic from 'newrelic';
 
+import { trace } from '@opentelemetry/api';
 import { commands } from './commands';
 import { config, log } from './config';
 import { emojiGetter } from './emotes';
 import { getPlayer } from './lib/Player';
+import { traceFn } from './lib/telemetry';
 
 interface ClientEventHandler<K extends keyof ClientEvents> {
   (...args: ClientEvents[K]): Awaitable<void>;
 }
 
-export const onError: ClientEventHandler<'error'> = (error) => log.error('discord.error', error);
+export const onError: ClientEventHandler<'error'> = (error) =>
+  log.error({ error }, 'discord.error');
 
+const messageTracer = trace.getTracer('discord.message');
 export const onMessageCreate =
   (client: Client): ClientEventHandler<'messageCreate'> =>
   async (message) => {
-    if (message.author.bot || !message.content.startsWith(config.botPrefix)) {
+    if (message.author.bot || !message.content.startsWith(config.DISCORD_BOT_PREFIX)) {
       return;
     }
 
-    const content = message.content.slice(config.botPrefix.length);
-
+    const content = message.content.slice(config.DISCORD_BOT_PREFIX.length);
     log.info({
       event: 'discord.message',
       channel: (message.channel as any)?.name ?? message.channel.type,
       author: message.author.tag,
-      content: message.content.slice(config.botPrefix.length),
+      content: message.content.slice(config.DISCORD_BOT_PREFIX.length),
     });
     const [command, ...args] = content.split(/\s{1,}/g);
     if (!commands[command]) {
@@ -34,12 +36,17 @@ export const onMessageCreate =
     }
 
     const emoji = emojiGetter(client.emojis.cache);
-    await newrelic.startWebTransaction(
-      `/command/${command}`,
-      commands[command].onMessage({ client, emoji }, message, args),
-    );
+    traceFn(messageTracer, `discord/message/${command}`, async (span) => {
+      span.setAttributes({
+        channel: (message.channel as any).name ?? 'unknown',
+        author: message.author.tag,
+        args: args.join(' '),
+      });
+      await commands[command].onMessage({ client, emoji }, message, args);
+    });
   };
 
+const interactionTracer = trace.getTracer('discord.interaction');
 export const onInteractionCreate =
   (client: Client): ClientEventHandler<'interactionCreate'> =>
   async (interaction) => {
@@ -53,16 +60,19 @@ export const onInteractionCreate =
       author: interaction.user.tag,
       content: interaction.commandName,
     });
-    const command = commands[interaction.commandName];
-    if (!command.onInteraction) {
+    const command = commands[interaction.commandName].onInteraction;
+    if (!command) {
       return;
     }
 
     const emoji = emojiGetter(client.emojis.cache);
-    await newrelic.startWebTransaction(
-      `/interaction/${interaction.commandName}`,
-      command.onInteraction({ client, emoji }, interaction),
-    );
+    traceFn(interactionTracer, `discord/interaction/${interaction.commandName}`, async (span) => {
+      span.setAttributes({
+        channel: interaction.channel?.id ?? 'unknown',
+        author: interaction.user.tag,
+      });
+      await command({ client, emoji }, interaction);
+    });
   };
 
 export const onVoiceStateUpdate =

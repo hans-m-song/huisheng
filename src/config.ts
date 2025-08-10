@@ -1,85 +1,84 @@
-import axios from 'axios';
 import pino from 'pino';
 
-import { assertEnv, boolEnv, enumEnv, numEnv, obscure } from './lib/utils';
+import axios from 'axios';
+import z from 'zod';
 
-const githubSha = process.env.GITHUB_SHA ?? 'unknown';
-const logLevel = enumEnv(Object.keys(pino.levels.values))('LOG_LEVEL', 'info');
-const logFormat = enumEnv(['text', 'json'])('LOG_FORMAT', 'json');
+const bool = (defaultValue: 'true' | 'false' = 'false') =>
+  z
+    .enum(['true', 'false'])
+    .default(defaultValue)
+    .transform((val) => val === 'true');
 
-const clientId = assertEnv('DISCORD_CLIENT_ID');
-const botToken = assertEnv('DISCORD_BOT_TOKEN');
-const botPrefix = process.env.DISCORD_BOT_PREFIX ?? '!';
+export const config = z
+  .object({
+    CACHE_DIR: z.string().default('/var/lib/huisheng/cache'),
+    DISCORD_BOT_PREFIX: z.string().default('!'),
+    DISCORD_BOT_TOKEN: z.string(),
+    DISCORD_CLIENT_ID: z.string(),
+    GITHUB_SHA: z.string().default('unknown'),
+    LOG_FORMAT: z.enum(['text', 'json']).default('json'),
+    LOG_LEVEL: z.enum(Object.keys(pino.levels.values)).default('info'),
+    OTLP_METRICS_ENDPOINT: z.string().default('http://localhost:4138/v1/metrics'),
+    OTLP_METRICS_TOKEN: z.string().optional(),
+    OTLP_TRACES_ENDPOINT: z.string().default('http://localhost:4138/v1/traces'),
+    OTLP_TRACES_TOKEN: z.string().optional(),
+    S3_ACCESS_KEY: z.string(),
+    S3_BUCKET_NAME: z.string().default('huisheng'),
+    S3_ENDPOINT_PORT: z.coerce.number().default(9000),
+    S3_ENDPOINT_SSL: bool(),
+    S3_ENDPOINT: z.string().default('localhost'),
+    S3_SECRET_KEY: z.string(),
+    SPOTIFY_BASE_URL: z.string().default('https://api.spotify.com/v1'),
+    SPOTIFY_CLIENT_ID: z.string().optional(),
+    SPOTIFY_CLIENT_SECRET: z.string().optional(),
+    YOUTUBE_API_KEY: z.string(),
+    YOUTUBE_BASE_URL: z.string().default('https://www.googleapis.com/youtube/v3'),
+    YTDL_EXECUTABLE: z.string().default('yt-dlp'),
+    YTDL_MAX_CONCURRENCY: z.coerce.number().min(1).max(5).default(1),
+    YTDL_RETRIES: z.coerce.number().min(1).max(5).default(3),
+    YTDLP_POT_PROVIDER_ENABLED: bool(),
+    YTDLP_POT_PROVIDER: z.string().default('http://localhost:4166'),
+  })
+  .parse(process.env);
 
-const cacheDir = process.env.CACHE_DIR ?? '/var/lib/huisheng/cache';
+export type Config = typeof config;
 
-const youtubeBaseUrl = process.env.YOUTUBE_BASE_URL ?? 'https://www.googleapis.com/youtube/v3';
-const youtubeApiKey = assertEnv('YOUTUBE_API_KEY');
-const youtubeDLExecutable = process.env.YOUTUBE_DL_EXECUTABLE ?? 'yt-dlp';
-const youtubeDLMaxConcurrency = numEnv(process.env.YOUTUBE_DL_MAX_CONCURRENCY, {
-  default: 1,
-  min: 1,
-  max: 5,
-});
-const youtubeDLRetries = numEnv(process.env.YOUTUBE_DL_RETRIES, {
-  default: 3,
-  min: 1,
-  max: 5,
-});
-const youtubeDlPotProvider = process.env.YTDLP_POT_PROVIDER;
+const redactions = [
+  'accessToken',
+  'Api-Key',
+  'Authorization',
 
-const minioEndpoint = process.env.MINIO_ENDPOINT ?? 'api.minio.k8s.axatol.xyz';
-const minioEndpointPort = numEnv(process.env.MINIO_ENDPOINT_PORT, { default: 443 });
-const minioEndpointSSL = boolEnv(process.env.MINIO_ENDPOINT_SSL, true);
-const minioBucketName = process.env.MINIO_BUCKET_NAME ?? 'huisheng';
-const minioAccessKey = assertEnv('MINIO_ACCESS_KEY');
-const minioSecretKey = assertEnv('MINIO_SECRET_KEY');
-
-const spotifyBaseUrl = process.env.SPOTIFY_BASE_URL ?? 'https://api.spotify.com/v1';
-const spotifyClientId = process.env.SPOTIFY_CLIENT_ID;
-const spotifyClientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-
-export const config = {
-  githubSha,
-  logLevel,
-  logFormat,
-
-  // Bot
-  clientId,
-  botToken,
-  botPrefix,
-  cacheDir,
-
-  // Youtube
-  youtubeBaseUrl,
-  youtubeApiKey,
-  youtubeDLExecutable,
-  youtubeDLMaxConcurrency,
-  youtubeDLRetries,
-  youtubeDlPotProvider,
-
-  // minio
-  minioEndpoint,
-  minioEndpointPort,
-  minioEndpointSSL,
-  minioBucketName,
-  minioAccessKey,
-  minioSecretKey,
-
-  // Spotify
-  spotifyBaseUrl,
-  spotifyClientId,
-  spotifyClientSecret,
-};
+  'DISCORD_BOT_TOKEN',
+  'DISCORD_CLIENT_ID',
+  'OTLP_METRICS_TOKEN',
+  'OTLP_TRACES_TOKEN',
+  'S3_ACCESS_KEY',
+  'S3_SECRET_KEY',
+  'SPOTIFY_CLIENT_ID',
+  'SPOTIFY_CLIENT_SECRET',
+  'YOUTUBE_API_KEY',
+];
 
 export const log = pino({
   transport:
-    config.logFormat == 'text' ? { target: 'pino-pretty', options: { colorize: true } } : undefined,
-  level: config.logLevel,
+    config.LOG_FORMAT == 'text'
+      ? { target: 'pino-pretty', options: { colorize: true } }
+      : undefined,
+  level: config.LOG_LEVEL,
   formatters: {
     level: (label, _number) => ({ level: label }),
   },
+
   serializers: {
+    config: (value: any): any => {
+      const raw = JSON.stringify(value);
+      return JSON.parse(raw, (key, value) => {
+        if (redactions.includes(key) && typeof value === 'string') {
+          return 'REDACTED';
+        }
+        return value;
+      });
+    },
     error: (error: any): any => {
       if (
         typeof error === 'string' ||
@@ -95,7 +94,6 @@ export const log = pino({
         : JSON.stringify(error, Object.getOwnPropertyNames(error));
 
       return JSON.parse(raw, (key, value) => {
-        const redactions = ['Authorization', 'Api-Key', 'accessToken'];
         if (redactions.includes(key) && typeof value === 'string') {
           return 'REDACTED';
         }
@@ -108,24 +106,4 @@ export const log = pino({
       });
     },
   },
-});
-
-log.debug('config', {
-  githubSha,
-  botPrefix,
-  logLevel,
-  logFormat,
-  cacheDir,
-  youtubeBaseUrl,
-  youtubeDLExecutable,
-  youtubeDLMaxConcurrency,
-  youtubeDLRetries,
-  youtubeDlPotProvider,
-  minioEndpoint,
-  minioEndpointPort,
-  minioEndpointSSL,
-  minioBucketName,
-  spotifyBaseUrl,
-  minioAccessKey: obscure(minioAccessKey),
-  spotifyClientId: obscure(spotifyClientId ?? ''),
 });

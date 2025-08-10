@@ -1,13 +1,13 @@
 import { ActivityType, Client, GatewayIntentBits, Partials } from 'discord.js';
 
 import { config, log } from './config';
-import { onMessageCreate, onInteractionCreate, onError, onVoiceStateUpdate } from './events';
+import { onError, onInteractionCreate, onMessageCreate, onVoiceStateUpdate } from './events';
 import { destroyVoiceConnections } from './lib/audio';
 
 const authorizeUrl =
   'https://discord.com/api/oauth2/authorize?' +
   [
-    `client_id=${config.clientId}`,
+    `client_id=${config.DISCORD_CLIENT_ID}`,
     `permissions=${process.env.DISCORD_BOT_PERMISSIONS ?? '3148864'}`,
     `scope=${encodeURIComponent(['applications.commands', 'bot'].join('&'))}`,
   ].join('&');
@@ -35,9 +35,6 @@ export class Bot {
     this.client.on('interactionCreate', onInteractionCreate(this.client));
     this.client.on('voiceStateUpdate', onVoiceStateUpdate(this.client));
     this.client.once('invalidated', this.shutdown.bind(this));
-    process.on('beforeExit', this.shutdown.bind(this));
-    process.on('SIGINT', this.shutdown.bind(this));
-    process.on('SIGTERM', this.shutdown.bind(this));
   }
 
   async login() {
@@ -51,7 +48,7 @@ export class Bot {
       });
     });
 
-    await Promise.all([this.client.login(config.botToken), ready]);
+    await Promise.all([this.client.login(config.DISCORD_BOT_TOKEN), ready]);
     log.info({ event: 'Bot.login.ready', client: this.client.user?.tag, invite: authorizeUrl });
   }
 

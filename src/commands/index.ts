@@ -74,7 +74,7 @@ commands.help = {
 };
 
 export const registerSlashCommands = async (guildId: string) => {
-  const rest = new REST({ version: '10' }).setToken(config.botToken);
+  const rest = new REST({ version: '10' }).setToken(config.DISCORD_BOT_TOKEN);
 
   const body = Object.values(commands)
     .filter((command) => !!command.onInteraction)
@@ -87,7 +87,7 @@ export const registerSlashCommands = async (guildId: string) => {
   }
 
   try {
-    await rest.put(Routes.applicationGuildCommands(config.clientId, guildId), { body });
+    await rest.put(Routes.applicationGuildCommands(config.DISCORD_CLIENT_ID, guildId), { body });
     log.info({ event: 'registerSlashCommands', status: 'success', guildId, commands: names });
   } catch (error) {
     log.error({

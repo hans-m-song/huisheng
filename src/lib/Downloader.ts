@@ -1,11 +1,13 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import path from 'path';
 
+import { trace } from '@opentelemetry/api';
 import { config, log } from '../config';
+import { addSpanAttributes, addSpanError, traceFn } from './telemetry';
 import { trimToJsonObject, tryParseJSON } from './utils';
 
-export const downloaderCacheDir = path.join(config.cacheDir, 'ytdl');
-export const downloaderOutputDir = path.join(config.cacheDir, 'out');
+export const downloaderCacheDir = path.join(config.CACHE_DIR, 'ytdl');
+export const downloaderOutputDir = path.join(config.CACHE_DIR, 'out');
 const args = [
   // general
   '--abort-on-error',
@@ -17,7 +19,7 @@ const args = [
   // download options
   // TODO check this option '--concurrent-fragments',
   '--retries',
-  `${config.youtubeDLRetries}`,
+  `${config.YTDL_RETRIES}`,
 
   // filesystem options
   '--paths',
@@ -37,8 +39,8 @@ const args = [
 
   // workarounds
   '--no-check-certificates',
-  config.youtubeDlPotProvider
-    ? ['--extractor-args', `youtubepot-bgutilhttp:base_url=${config.youtubeDlPotProvider}`]
+  config.YTDLP_POT_PROVIDER_ENABLED
+    ? ['--extractor-args', `youtubepot-bgutilhttp:base_url=${config.YTDLP_POT_PROVIDER}`]
     : [],
 
   // post-processing options
@@ -49,75 +51,87 @@ const args = [
   'aext,+size',
 ].flat();
 
-const execute = async (...args: string[]) => {
-  let stderr = '';
-  let stdout = '';
-  let child: ChildProcessWithoutNullStreams;
-  log.info({ event: 'downloader', command: config.youtubeDLExecutable, args: args.join(' ') });
+const tracer = trace.getTracer('downloader');
 
-  try {
-    child = spawn(config.youtubeDLExecutable, args);
-  } catch (error) {
-    log.error({
-      event: 'downloader',
-      error,
-      command: config.youtubeDLExecutable,
-      args: args.join(' '),
-      message: 'spawn failed',
+const execute = async (...args: string[]) =>
+  traceFn(tracer, 'downloader/execute', async () => {
+    addSpanAttributes({ args: args.join(' ') });
+
+    let stderr = '';
+    let stdout = '';
+    let child: ChildProcessWithoutNullStreams;
+    log.info({ event: 'downloader', command: config.YTDL_EXECUTABLE, args: args.join(' ') });
+
+    try {
+      child = spawn(config.YTDL_EXECUTABLE, args);
+    } catch (error) {
+      addSpanError(error);
+      log.error({
+        event: 'downloader',
+        error,
+        command: config.YTDL_EXECUTABLE,
+        args: args.join(' '),
+        message: 'spawn failed',
+      });
+
+      console.log({ stderr });
+      console.log({ stdout });
+
+      return null;
+    }
+
+    const exitCode = await new Promise<number | null>((resolve) => {
+      child.on('close', resolve);
+      child.on('error', (error) => log.error({ event: 'downloader', error }));
+      child.stdout.on('data', (chunk) => chunk?.toString && (stdout += chunk.toString()));
+      child.stderr.on('data', (chunk) => chunk?.toString && (stderr += chunk.toString()));
     });
 
-    console.log({ stderr });
-    console.log({ stdout });
+    addSpanAttributes({ exit_code: exitCode ?? 0 });
 
-    return null;
-  }
+    if (exitCode !== null && exitCode > 0) {
+      addSpanError({ message: 'unexpected exit code' });
+      log.error({ event: 'downloader', stderr, exitCode, message: 'unexpected exit code' });
+      // continue anyway
+      // return null;
+    }
 
-  const exitCode = await new Promise<number | null>((resolve) => {
-    child.on('close', resolve);
-    child.on('error', (error) => log.error({ event: 'downloader', error }));
-    child.stdout.on('data', (chunk) => chunk?.toString && (stdout += chunk.toString()));
-    child.stderr.on('data', (chunk) => chunk?.toString && (stderr += chunk.toString()));
+    if (stderr.length > 0) {
+      log.error({ event: 'downloader', stderr, message: 'unexpected stderr output' });
+      // continue anyway
+      // return null;
+    }
+
+    if (stdout.length < 1) {
+      addSpanError({ message: 'stdout was empty' });
+      log.error({ event: 'downloader', message: 'stdout was empty' });
+      return null;
+    }
+
+    return { stderr, stdout };
   });
 
-  if (exitCode !== null && exitCode > 0) {
-    log.error({ event: 'downloader', stderr, exitCode, message: 'unexpected exit code' });
-    // continue anyway
-    // return null;
-  }
+export const download = async (target: string): Promise<unknown | null> =>
+  traceFn(tracer, 'downloader/download', async () => {
+    const process = await execute(target, ...args);
+    if (!process) {
+      return null;
+    }
 
-  if (stderr.length > 0) {
-    log.error({ event: 'downloader', stderr, message: 'unexpected stderr output' });
-    // continue anyway
-    // return null;
-  }
+    const result = tryParseJSON(trimToJsonObject(process.stdout));
+    if (!result) {
+      return null;
+    }
 
-  if (stdout.length < 1) {
-    log.error({ event: 'downloader', message: 'stdout was empty' });
-    return null;
-  }
+    return result;
+  });
 
-  return { stderr, stdout };
-};
+export const version = async (): Promise<string | null> =>
+  traceFn(tracer, 'downloader/version', async () => {
+    const process = await execute('--version');
+    if (!process) {
+      return null;
+    }
 
-export const download = async (target: string): Promise<unknown | null> => {
-  const process = await execute(target, ...args);
-  if (!process) {
-    return null;
-  }
-
-  const result = tryParseJSON(trimToJsonObject(process.stdout));
-  if (!result) {
-    return null;
-  }
-
-  return result;
-};
-
-export const version = async (): Promise<string | null> => {
-  const process = await execute('--version');
-  if (!process) {
-    return null;
-  }
-
-  return process.stdout.trim();
-};
+    return process.stdout.trim();
+  });

@@ -5,9 +5,8 @@ import { config } from '../config';
 import { Command } from '../lib/Command';
 import { version } from '../lib/Downloader';
 import { getPlayer } from '../lib/Player';
-import { obscure } from '../lib/utils';
 
-const debugEmbed = async () => {
+const debugEmbed = async (guildId: string) => {
   const connections = Array.from(getVoiceConnections().entries());
   const connectionsStatus =
     connections.length < 1
@@ -16,22 +15,34 @@ const debugEmbed = async () => {
 
   const ytdlVersion = await version();
 
+  const playerStatus = getPlayer(guildId).instance.state.status;
+
+  const fields: Record<string, string | number | boolean> = {
+    'Cache Dir': config.CACHE_DIR,
+    Connections: connectionsStatus,
+    'Discord bot prefix': config.DISCORD_BOT_PREFIX,
+    'Github SHA': config.GITHUB_SHA,
+    'OTLP metrics endpoint': config.OTLP_METRICS_ENDPOINT,
+    'OTLP traces endpoint': config.OTLP_TRACES_ENDPOINT,
+    'Player status': playerStatus,
+    'S3 bucket name': config.S3_BUCKET_NAME,
+    'S3 endpoint': config.S3_ENDPOINT,
+    'Spotify base url': config.SPOTIFY_BASE_URL,
+    'Youtube base url': config.YOUTUBE_BASE_URL,
+    'YTDL executable': config.YTDL_EXECUTABLE,
+    'YTDL max concurrency': config.YTDL_MAX_CONCURRENCY,
+    'YTDL retries': config.YTDL_RETRIES,
+    'YTDL version': ytdlVersion ?? 'unknown',
+    'YTDLP pot provider enabled': config.YTDLP_POT_PROVIDER_ENABLED,
+    'YTDLP pot provider': config.YTDLP_POT_PROVIDER,
+  };
+
   return new EmbedBuilder().setTitle('Debugging information').addFields(
-    [
-      { name: 'Github SHA', value: `\`${config.githubSha}\`` },
-      { name: 'Bot Prefix', value: `\`${config.botPrefix}\`` },
-      { name: 'Cache Dir', value: `\`${config.cacheDir}\`` },
-      { name: 'Youtube Base URL', value: `\`${config.youtubeBaseUrl}\`` },
-      { name: 'Youtube DL Executable', value: `\`${config.youtubeDLExecutable}\`` },
-      { name: 'Youtube DL Max Concurrency', value: `\`${config.youtubeDLMaxConcurrency}\`` },
-      { name: 'Youtube DL Retries', value: `\`${config.youtubeDLRetries}\`` },
-      { name: 'Youtube DL Version', value: `\`${ytdlVersion ?? 'unknown'}\`` },
-      { name: 'Bucket Name', value: `\`${config.minioBucketName}\`` },
-      { name: 'Bucket Access Key', value: `\`${obscure(config.minioAccessKey)}\`` },
-      { name: 'Spotify base URL', value: `\`${config.spotifyBaseUrl}\`` },
-      { name: 'Spotify client ID', value: `\`${obscure(config.spotifyClientId ?? '')}\`` },
-      { name: 'Connections', value: connectionsStatus },
-    ].map((field) => ({ ...field, inline: true })),
+    Object.entries(fields).map(([name, value]) => ({
+      name,
+      value: `\`${value}\``,
+      inline: true,
+    })),
   );
 };
 
@@ -43,13 +54,7 @@ export const debug: Command = {
       return;
     }
 
-    const playerStatus = getPlayer(message.guild?.id ?? '').instance.state.status;
-    const embed = (await debugEmbed()).addFields({
-      name: 'Player Status',
-      value: `\`${playerStatus}\``,
-      inline: true,
-    });
-
+    const embed = await debugEmbed(message.guild?.id ?? '');
     await message.channel.send({ embeds: [embed] });
   },
 
@@ -62,13 +67,7 @@ export const debug: Command = {
       return;
     }
 
-    const playerStatus = getPlayer(interaction.guild?.id ?? '').instance.state.status;
-    const embed = (await debugEmbed()).addFields({
-      name: 'Player Status',
-      value: `\`${playerStatus}\``,
-      inline: true,
-    });
-
+    const embed = await debugEmbed(interaction.guild?.id ?? '');
     await interaction.reply({ embeds: [embed] });
   },
 };

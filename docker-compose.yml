@@ -1,27 +1,77 @@
-version: "3"
-
 services:
   huisheng:
+    image: public.ecr.aws/axatol/huisheng
     build:
       context: ./
     env_file: .env
+    environment:
+      YTDLP_POT_PROVIDER: http://ytdlp-pot-provider:4416
+      OTLP_TRACES_ENDPOINT: http://jaeger:4318/v1/traces
+      OTLP_METRICS_ENDPOINT: http://jaeger:4318/v1/metrics
     container_name: huisheng
     volumes:
-      - youtube-dl-cache:/var/lib/huisheng/cache
-    profiles:
-      - production
+      - huisheng-data:/var/lib/huisheng/cache
+    pull_policy: build
 
-  huisheng-debug:
-    build:
-      context: ./
-      dockerfile: Dockerfile.debug
-    env_file: .env
-    container_name: huisheng-debug
+  jaeger:
+    image: jaegertracing/jaeger
+    ports:
+      - 16686:16686
+      - 4317:4317
+      - 4318:4318
+      - 5778:5778
+      - 9411:9411
+    restart: on-failure
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '--tries=1', 'http://localhost:16686/']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  ytdlp-pot-provider:
+    image: brainicism/bgutil-ytdlp-pot-provider
+    container_name: ytdlp-pot-provider
+    command:
+      - --port
+      - '4416'
+    ports:
+      - 4416:4416
+    environment:
+      YTDLP_POT_PROVIDER_PORT: 4416
+
+  minio:
+    image: minio/minio
+    command:
+      - server
+      - /data
+      - --console-address
+      - :9001
     volumes:
-      - ./:/app
-      - ./.cache:/var/lib/huisheng/cache
-    profiles:
-      - debug
+      - minio-data:/data
+    ports:
+      - 9000:9000
+      - 9001:9001
+    restart: on-failure
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  minio-config:
+    image: minio/mc
+    entrypoint:
+      - /bin/sh
+    command:
+      - -c
+      - |
+        mc alias set minio http://minio:9000 minioadmin minioadmin
+        mc mb minio/huisheng --ignore-existing
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: no
 
 volumes:
-  youtube-dl-cache:
+  huisheng-data:
+  minio-data:
