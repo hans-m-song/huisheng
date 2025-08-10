@@ -25,6 +25,8 @@ jobs:
         with:
           show-progress: false
 
+      - run: curl -vksSfL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+
       - uses: axatol/actions/assume-aws-role@release
         if: inputs.publish
         with:
