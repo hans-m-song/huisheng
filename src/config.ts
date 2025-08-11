@@ -11,13 +11,15 @@ const bool = (defaultValue: 'true' | 'false' = 'false') =>
 
 export const config = z
   .object({
-    CACHE_DIR: z.string().default('/var/lib/huisheng/cache'),
+    CACHE_DIR: z.string().default('/tmp/huisheng/cache'),
     DISCORD_BOT_PREFIX: z.string().default('!'),
     DISCORD_BOT_TOKEN: z.string(),
     DISCORD_CLIENT_ID: z.string(),
     GITHUB_SHA: z.string().default('unknown'),
     LOG_FORMAT: z.enum(['text', 'json']).default('json'),
     LOG_LEVEL: z.enum(Object.keys(pino.levels.values)).default('info'),
+    OTLP_LOGS_ENDPOINT: z.string().default('http://localhost:4138/v1/logs'),
+    OTLP_LOGS_TOKEN: z.string().optional(),
     OTLP_METRICS_ENDPOINT: z.string().default('http://localhost:4138/v1/metrics'),
     OTLP_METRICS_TOKEN: z.string().optional(),
     OTLP_TRACES_ENDPOINT: z.string().default('http://localhost:4138/v1/traces'),

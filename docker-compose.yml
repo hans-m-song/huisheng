@@ -5,7 +5,9 @@ services:
       context: ./
     env_file: .env
     environment:
+      YTDLP_POT_PROVIDER_ENABLED: 'true'
       YTDLP_POT_PROVIDER: http://ytdlp-pot-provider:4416
+      OTLP_LOGS_ENDPOINT: http://jaeger:4318/v1/logs
       OTLP_TRACES_ENDPOINT: http://jaeger:4318/v1/traces
       OTLP_METRICS_ENDPOINT: http://jaeger:4318/v1/metrics
     container_name: huisheng
