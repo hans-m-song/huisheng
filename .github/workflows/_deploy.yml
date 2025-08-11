@@ -6,10 +6,6 @@ on:
     secrets:
       DISCORD_WEBHOOK_URL:
         required: true
-      NEW_RELIC_DEPLOYMENT_ENTITY_GUID:
-        required: true
-      NEW_RELIC_API_KEY:
-        required: true
 
 jobs:
   notify:
@@ -31,14 +27,6 @@ jobs:
         with:
           namespace: huisheng
           deployment-name: huisheng
-
-      - name: Create deployment marker
-        if: success()
-        uses: axatol/actions/create-newrelic-deployment@release
-        with:
-          api-key: ${{ secrets.NEW_RELIC_API_KEY }}
-          guid: ${{ secrets.NEW_RELIC_DEPLOYMENT_ENTITY_GUID }}
-          deployment-type: ROLLING
 
       - name: Notify deployment complete
         if: success() || failure()

@@ -10,6 +10,9 @@ on:
 
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.ref }}
+
 jobs:
   build:
     uses: ./.github/workflows/_build.yml
@@ -23,5 +26,3 @@ jobs:
     uses: ./.github/workflows/_deploy.yml
     secrets:
       DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-      NEW_RELIC_DEPLOYMENT_ENTITY_GUID: ${{ secrets.NEW_RELIC_DEPLOYMENT_ENTITY_GUID }}
-      NEW_RELIC_API_KEY: ${{ secrets.NEW_RELIC_API_KEY }}
