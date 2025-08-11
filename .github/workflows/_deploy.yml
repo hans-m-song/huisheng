@@ -19,7 +19,7 @@ jobs:
 
   deploy:
     needs: notify
-    runs-on: self-hosted
+    runs-on: ${{ github.repository_owner }}-${{ github.event.repository.name }}
     environment: production
 
     steps:

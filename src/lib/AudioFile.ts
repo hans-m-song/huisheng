@@ -176,5 +176,9 @@ const getByFilepath = async (filepaths: string[]) => {
 
 const getFileByVideoId = async (videoId: string) => {
   const files = await fs.readdir(downloaderOutputDir);
-  return files.find((file) => file.includes(videoId)) || null;
+  const filename = files.find((file) => file.includes(videoId)) || null;
+  if (!filename) {
+    return null;
+  }
+  return path.join(downloaderOutputDir, filename);
 };
