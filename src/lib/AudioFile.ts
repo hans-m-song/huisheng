@@ -56,34 +56,16 @@ export class AudioFile implements AudioFileMetadata {
   }
 
   static async fromInfoJson(data: any): Promise<AudioFile | null> {
-    const {
-      id,
-      webpage_url,
-      title,
-      duration,
-      uploader,
-      artist,
-      acodec,
-      ext,
-      audio_ext,
-      filename,
-      format_id,
-      format,
-    } = data ?? {};
+    const { id, webpage_url, title, duration, uploader, artist, acodec, format_id, format } =
+      data ?? {};
 
-    const possibleFilepaths = [
-      filename,
-      path.join(downloaderOutputDir, `${id}.${ext}`),
-      path.join(downloaderOutputDir, `${id}.${acodec}`),
-      path.join(downloaderOutputDir, `${id}.${audio_ext}`),
-    ];
-
-    const filepath = await getByFilepath(possibleFilepaths);
+    const filepath = await getFileByVideoId(id);
     if (!filepath) {
       log.error({
         event: 'AudioFile.fromInfoJson',
         message: 'could not find file',
-        possibleFilepaths,
+        id,
+        format,
       });
       return null;
     }
@@ -100,6 +82,7 @@ export class AudioFile implements AudioFileMetadata {
       format_id,
       format,
     };
+
     log.info({ event: 'AudioFile.fromInfoJson', metadata });
 
     if (!isAudioFileMetadata(metadata)) {
@@ -189,4 +172,9 @@ const getByFilepath = async (filepaths: string[]) => {
   }
 
   return null;
+};
+
+const getFileByVideoId = async (videoId: string) => {
+  const files = await fs.readdir(downloaderOutputDir);
+  return files.find((file) => file.includes(videoId)) || null;
 };

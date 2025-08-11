@@ -40,7 +40,10 @@ const args = [
   // workarounds
   '--no-check-certificates',
   config.YTDLP_POT_PROVIDER_ENABLED
-    ? ['--extractor-args', `youtubepot-bgutilhttp:base_url=${config.YTDLP_POT_PROVIDER}`]
+    ? [
+        '--extractor-args',
+        `youtube:player-client=default,mweb;youtubepot-bgutilhttp:base_url=${config.YTDLP_POT_PROVIDER}`,
+      ]
     : [],
 
   // post-processing options

@@ -30,9 +30,9 @@ RUN set -x  \
 
 # yt-dlp-pot-provider plugin
 RUN set -x  \
-  && mkdir -p /etc/yt-dlp \
+  && mkdir -p /home/node/.config/yt-dlp/plugins/pot_provider \
   && curl -L https://github.com/Brainicism/bgutil-ytdlp-pot-provider/releases/latest/download/bgutil-ytdlp-pot-provider.zip -o /tmp/bgutil-ytdlp-pot-provider.zip \
-  && unzip /tmp/bgutil-ytdlp-pot-provider.zip -d /etc/yt-dlp/youtubepot-bgutilhttp/ \
+  && unzip /tmp/bgutil-ytdlp-pot-provider.zip -d /home/node/.config/yt-dlp/plugins/pot_provider \
   && rm /tmp/bgutil-ytdlp-pot-provider.zip
 
 USER node
