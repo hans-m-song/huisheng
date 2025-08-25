@@ -1,5 +1,8 @@
 FROM node:22-alpine
 
+ENV HOME=/home/node
+ENV XDG_CONFIG_HOME=/home/node/.config
+
 RUN --mount=type=cache,target=/etc/apk/cache \
   apk add --update-cache --no-interactive \
   bzip2 \

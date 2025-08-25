@@ -16,8 +16,6 @@ export const isAudioFileMetadata = isMatching({
   uploader: P.string,
   artist: P.string,
   duration: P.number,
-  acodec: P.string,
-  format_id: P.union(P.string, P.number),
   format: P.union(P.string, P.number),
 });
 
@@ -29,8 +27,6 @@ export class AudioFile implements AudioFileMetadata {
   uploader: string;
   artist: string;
   duration: number;
-  acodec: string;
-  format_id: string | number;
   format: string | number;
 
   constructor(props: AudioFileMetadata) {
@@ -41,8 +37,6 @@ export class AudioFile implements AudioFileMetadata {
     this.uploader = props.uploader;
     this.artist = props.artist;
     this.duration = props.duration;
-    this.acodec = props.acodec;
-    this.format_id = props.format_id;
     this.format = props.format;
   }
 
@@ -56,8 +50,7 @@ export class AudioFile implements AudioFileMetadata {
   }
 
   static async fromInfoJson(data: any): Promise<AudioFile | null> {
-    const { id, webpage_url, title, duration, uploader, artist, acodec, format_id, format } =
-      data ?? {};
+    const { id, webpage_url, title, duration, uploader, artist, format } = data ?? {};
 
     const filepath = await getFileByVideoId(id);
     if (!filepath) {
@@ -78,8 +71,6 @@ export class AudioFile implements AudioFileMetadata {
       uploader,
       artist: artist ?? 'Unknown',
       duration,
-      acodec,
-      format_id,
       format,
     };
 
@@ -154,8 +145,6 @@ export class AudioFile implements AudioFileMetadata {
       uploader: this.uploader,
       artist: this.artist,
       duration: this.duration,
-      acodec: this.acodec,
-      format_id: this.format_id,
       format: this.format,
     };
   }
