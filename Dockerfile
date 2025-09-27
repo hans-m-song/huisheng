@@ -41,11 +41,9 @@ RUN set -x  \
 USER node
 WORKDIR /app
 COPY --chown=node ./tsconfig.json ./package.json ./package-lock.json ./
+RUN npm install
 COPY --chown=node ./src ./src
-RUN set -x \
-  && npm install \
-  && npm run compile \
-  && rm -rf ./src
+RUN npm run compile
 ARG GITHUB_SHA=unknown
 ENV GITHUB_SHA=${GITHUB_SHA}
-CMD ["node", "dist/index.js"]
+CMD ["node", "--require", "./dist/instrumentation.js", "dist/index.js"]

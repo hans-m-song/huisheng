@@ -7,12 +7,9 @@ import { Bot } from './Bot';
 import { config, log } from './config';
 import { dependencyReport } from './lib/audio';
 import { Bucket } from './lib/Bucket';
-import { telemetrySdk } from './lib/telemetry';
 
-(async () => {
+const run = async () => {
   log.info({ event: 'init', report: dependencyReport(), config });
-
-  telemetrySdk.start();
 
   await fs.mkdir(config.CACHE_DIR, { recursive: true });
   await Bucket.ping();
@@ -20,7 +17,8 @@ import { telemetrySdk } from './lib/telemetry';
   await bot.login();
 
   const shutdown = (resolve: () => void) => async (exitCode: number) => {
-    await Promise.all([telemetrySdk.shutdown(), bot.shutdown(exitCode)]);
+    log.info({ event: 'shutdown', exitCode });
+    await bot.shutdown(exitCode);
     resolve();
     process.exit(0);
   };
@@ -30,4 +28,8 @@ import { telemetrySdk } from './lib/telemetry';
       process.on(code, shutdown(resolve));
     });
   });
-})();
+};
+
+if (require.main === module) {
+  run();
+}

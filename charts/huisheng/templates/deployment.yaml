@@ -35,8 +35,10 @@ spec:
               value: {{ $value | toString | quote }}
             {{- end }}
             {{- if .Values.potProvider.enabled }}
+            - name: YTDLP_POT_PROVIDER_ENABLED
+              value: "true"
             - name: YTDLP_POT_PROVIDER
-              value: http://ytdlp-pot-provider:{{ .Values.potProvider.port }}
+              value: http://localhost:{{ .Values.potProvider.port }}
             {{- end }}
           securityContext:
             allowPrivilegeEscalation: false

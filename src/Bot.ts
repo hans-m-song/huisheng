@@ -57,6 +57,5 @@ export class Bot {
     destroyVoiceConnections();
     this.client.user?.setStatus('invisible');
     this.client.destroy();
-    process.exit(typeof exitCode === 'number' ? exitCode : 1);
   }
 }

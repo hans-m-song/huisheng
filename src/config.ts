@@ -1,6 +1,6 @@
+import axios from 'axios';
 import pino from 'pino';
 
-import axios from 'axios';
 import z from 'zod';
 
 const bool = (defaultValue: 'true' | 'false' = 'false') =>
@@ -18,11 +18,12 @@ export const config = z
     GITHUB_SHA: z.string().default('unknown'),
     LOG_FORMAT: z.enum(['text', 'json']).default('json'),
     LOG_LEVEL: z.enum(Object.keys(pino.levels.values)).default('info'),
-    OTLP_LOGS_ENDPOINT: z.string().default('http://localhost:4138/v1/logs'),
+    OTEL_LOG_LEVEL: z.string().optional(),
+    OTLP_LOGS_ENDPOINT: z.string().optional(),
     OTLP_LOGS_TOKEN: z.string().optional(),
-    OTLP_METRICS_ENDPOINT: z.string().default('http://localhost:4138/v1/metrics'),
+    OTLP_METRICS_ENDPOINT: z.string().optional(),
     OTLP_METRICS_TOKEN: z.string().optional(),
-    OTLP_TRACES_ENDPOINT: z.string().default('http://localhost:4138/v1/traces'),
+    OTLP_TRACES_ENDPOINT: z.string().optional(),
     OTLP_TRACES_TOKEN: z.string().optional(),
     S3_ACCESS_KEY: z.string(),
     S3_BUCKET_NAME: z.string().default('huisheng'),
