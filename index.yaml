@@ -3,6 +3,22 @@ entries:
   huisheng:
   - apiVersion: v2
     appVersion: 0.0.1
+    created: "2025-09-27T13:57:36.836141393Z"
+    description: Huisheng
+    digest: e5c23217db0556be39dfc00ba053c5f145a5976ea6c3d18a9de0ab417b107a65
+    home: https://github.com/hans-m-song/huisheng
+    maintainers:
+    - name: hans-m-song
+      url: https://github.com/hans-m-song
+    name: huisheng
+    sources:
+    - https://github.com/hans-m-song/huisheng
+    type: application
+    urls:
+    - https://github.com/hans-m-song/huisheng/releases/download/huisheng-0.0.10/huisheng-0.0.10.tgz
+    version: 0.0.10
+  - apiVersion: v2
+    appVersion: 0.0.1
     created: "2025-08-09T03:12:46.827548971Z"
     description: Huisheng
     digest: 2b6990856032b462ed8b5f89e9d56bdf38c22433d26ff9ca4a6e0874f7482a55
@@ -145,4 +161,4 @@ entries:
     urls:
     - https://github.com/hans-m-song/huisheng/releases/download/huisheng-0.0.1/huisheng-0.0.1.tgz
     version: 0.0.1
-generated: "2025-08-09T03:12:46.827585843Z"
+generated: "2025-09-27T13:57:36.836194731Z"
