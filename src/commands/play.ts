@@ -36,14 +36,14 @@ export const play: Command = {
 
       await message.suppressEmbeds(true);
 
-      const results = await Youtube.query(args.join(' ').trim());
+      const results = await Youtube.query(args.join(' ').trim(), 1);
       if (!results || results.length < 1) {
         await message.channel.send('No results found');
         return;
       }
 
       await message.react(emojis.thinking);
-      const enqueueResult = await player.enqueue(results);
+      const enqueueResult = await player.enqueue([results.shift()!]);
       if (enqueueResult.errors.length > 0 || enqueueResult.successes.length < 1) {
         await message.react(emojis.cross);
       }
