@@ -37,6 +37,9 @@ const args = [
   '--no-progress',
   // '--write-info-json',
 
+  '--js-runtimes',
+  'node',
+
   // workarounds
   '--no-check-certificates',
   config.YTDLP_POT_PROVIDER_ENABLED
