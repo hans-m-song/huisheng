@@ -57,6 +57,9 @@ spec:
           args:
           - --port
           - {{ .Values.potProvider.port | toString | quote }}
+          environment:
+          - name: NODE_OPTIONS
+            value: --allow-fs-read
         {{- end }}
       volumes:
         - name: data

@@ -3,7 +3,7 @@ name: huisheng
 description: Huisheng
 type: application
 
-version: 0.0.10
+version: 0.0.11
 appVersion: 0.0.1
 
 home: https://github.com/hans-m-song/huisheng
