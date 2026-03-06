@@ -26,6 +26,7 @@
     "@opentelemetry/sdk-node": "^0.213.0",
     "@opentelemetry/sdk-trace-node": "^2.6.0",
     "@opentelemetry/semantic-conventions": "^1.40.0",
+    "@snazzah/davey": "^0.1.10",
     "axios": "1.13.6",
     "bufferutil": "4.1.0",
     "discord-api-types": "0.38.41",
