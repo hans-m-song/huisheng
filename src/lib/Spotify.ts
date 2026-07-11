@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import axios, { AxiosInstance } from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 
 import { config, log } from '../config';
 import { addSpanAttributes, TraceMethod } from './telemetry';
