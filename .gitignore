@@ -14,3 +14,5 @@ helmfile.yaml
 .DS_Store
 .dccache
 newrelic_agent.log
+
+.memsearch

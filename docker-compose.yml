@@ -3,6 +3,8 @@ services:
     image: public.ecr.aws/axatol/huisheng
     build:
       context: ./
+      platforms:
+        - linux/amd64
     env_file: .env
     environment:
       YTDLP_POT_PROVIDER_ENABLED: 'true'
