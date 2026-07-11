@@ -40,7 +40,7 @@ RUN set -x  \
 
 USER node
 WORKDIR /app
-COPY --chown=node ./tsconfig.json ./package.json ./package-lock.json ./
+COPY --chown=node ./.npmrc ./tsconfig.json ./package.json ./package-lock.json ./
 RUN npm install
 COPY --chown=node ./src ./src
 RUN npm run compile

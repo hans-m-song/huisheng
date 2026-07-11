@@ -33,12 +33,12 @@ export const sdk = new NodeSDK({
     [ATTR_SERVICE_VERSION]: config.GITHUB_SHA,
   }),
   logRecordProcessors: [
-    new logs.BatchLogRecordProcessor(
-      new OTLPLogExporter({
+    new logs.BatchLogRecordProcessor({
+      exporter: new OTLPLogExporter({
         url: config.OTLP_LOGS_ENDPOINT,
         headers: config.OTLP_LOGS_TOKEN ? { bearer: config.OTLP_LOGS_TOKEN } : undefined,
       }),
-    ),
+    }),
   ],
   traceExporter: new OTLPTraceExporter({
     url: config.OTLP_TRACES_ENDPOINT,

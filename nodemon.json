@@ -3,5 +3,5 @@
   "delay": 1000,
   "ext": "ts",
   "watch": ["src/**"],
-  "exec": "ts-node src/index.ts"
+  "exec": "tsx src/index.ts"
 }

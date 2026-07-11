@@ -2,4 +2,7 @@
 **/dist
 .cache
 .github
+.memsearch
+.vscode
 charts
+manifests

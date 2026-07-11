@@ -1,23 +1,22 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { isMatching, P } from 'ts-pattern';
 
+import z from 'zod';
 import { log } from '../config';
 import { Bucket } from './Bucket';
 import { download, downloaderOutputDir } from './Downloader';
 import { TraceMethod } from './telemetry';
-import { GuardType } from './utils';
 
-export type AudioFileMetadata = GuardType<typeof isAudioFileMetadata>;
-export const isAudioFileMetadata = isMatching({
-  videoId: P.string,
-  url: P.string,
-  filepath: P.string,
-  title: P.string,
-  uploader: P.string,
-  artist: P.string,
-  duration: P.number,
-  format: P.union(P.string, P.number),
+export type AudioFileMetadata = z.infer<typeof AudioFileMetadataSchema>;
+export const AudioFileMetadataSchema = z.object({
+  videoId: z.string(),
+  url: z.string(),
+  filepath: z.string(),
+  title: z.string(),
+  uploader: z.string(),
+  artist: z.string(),
+  duration: z.number(),
+  format: z.union([z.string(), z.number()]),
 });
 
 export class AudioFile implements AudioFileMetadata {
@@ -79,7 +78,7 @@ export class AudioFile implements AudioFileMetadata {
 
     log.info({ event: 'AudioFile.fromInfoJson', metadata });
 
-    if (!isAudioFileMetadata(metadata)) {
+    if (!AudioFileMetadataSchema.safeParse(metadata).success) {
       log.error({
         event: 'AudioFile.fromInfoJson',
         message: 'data was not of type AudioFileMetadata',
@@ -104,7 +103,8 @@ export class AudioFile implements AudioFileMetadata {
       return null;
     }
 
-    if (!isAudioFileMetadata(metadata)) {
+    const parsed = AudioFileMetadataSchema.safeParse(metadata);
+    if (!parsed.success) {
       log.info({
         event: 'AudioFile.fromBucketTags',
         message: 'bucket tags was not of type AudioFileMetadata',
@@ -114,7 +114,7 @@ export class AudioFile implements AudioFileMetadata {
     }
 
     log.info({ event: 'AudioFile.fromBucketTags', message: 'loaded from bucket' });
-    return new AudioFile(metadata);
+    return new AudioFile(parsed.data);
   }
 
   async saveToBucket(): Promise<boolean> {

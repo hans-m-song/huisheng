@@ -1,8 +1,8 @@
 import { Collector, ReadonlyCollection } from 'discord.js';
 import { promises as fs } from 'fs';
 import internal from 'stream';
-import { isMatching, P } from 'ts-pattern';
 
+import z from 'zod';
 import { log } from '../config';
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -11,8 +11,6 @@ export type GuardType<T> = T extends (arg: any) => arg is infer G ? G : T;
 export type Resolver<T> = (value: T | PromiseLike<T>) => void;
 export type Rejecter = (reason: any) => void;
 export type primitive = number | string | boolean | undefined | null;
-
-export const isPrimitive = isMatching(P.union(P.string, P.number, P.boolean, P.nullish));
 
 export const isNotNullish = <T>(value: T | null | undefined): value is T =>
   value !== null && value !== undefined;
@@ -80,7 +78,7 @@ export const tryReadFile = async (filepath: string): Promise<string | null> => {
     const result = await fs.readFile(filepath);
     return result.toString();
   } catch (error) {
-    if (isMatching({ code: 'ENOENT' })) {
+    if (!z.object({ code: z.literal('ENOENT') }).safeParse(error).success) {
       return null;
     }
 
