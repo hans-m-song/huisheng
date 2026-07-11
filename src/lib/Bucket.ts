@@ -1,7 +1,6 @@
 import * as Minio from 'minio';
 import internal from 'stream';
 
-import { trace } from '@opentelemetry/api';
 import { config, log } from '../config';
 import { addSpanAttributes, addSpanError, TraceMethod } from './telemetry';
 import { isNotNullishEntry, readStream } from './utils';
@@ -41,10 +40,8 @@ const flattenTagList = (tags: Minio.Tag[]): Minio.TagList =>
     }),
   );
 
-const tracer = trace.getTracer('bucket');
-
 export class Bucket {
-  @TraceMethod(tracer, 'bucket/ping')
+  @TraceMethod()
   static async ping() {
     try {
       addSpanAttributes({ bucket_name: config.S3_BUCKET_NAME });
@@ -58,7 +55,7 @@ export class Bucket {
     }
   }
 
-  @TraceMethod(tracer, 'bucket/get_tags')
+  @TraceMethod()
   static async getTags(name: string): Promise<Minio.TagList | null> {
     try {
       addSpanAttributes({ bucket_name: config.S3_BUCKET_NAME, object_name: name });
@@ -73,7 +70,7 @@ export class Bucket {
     }
   }
 
-  @TraceMethod(tracer, 'bucket/set_tags')
+  @TraceMethod()
   static async setTags(name: string, tags: TagInput): Promise<boolean> {
     if (Object.keys(tags).length < 1) {
       log.info({ event: 'Bucket.setTags', name, message: 'no tags to set' });
@@ -92,7 +89,7 @@ export class Bucket {
     }
   }
 
-  @TraceMethod(tracer, 'bucket/list')
+  @TraceMethod()
   static async list(prefix: string, recursive = true): Promise<Minio.BucketItem[] | null> {
     try {
       addSpanAttributes({ bucket_name: config.S3_BUCKET_NAME, prefix, recursive });
@@ -107,7 +104,7 @@ export class Bucket {
     }
   }
 
-  @TraceMethod(tracer, 'bucket/put')
+  @TraceMethod()
   static async put(src: string, dest: string): Promise<boolean> {
     try {
       addSpanAttributes({ bucket_name: config.S3_BUCKET_NAME, object_name: dest, filename: src });
@@ -121,7 +118,7 @@ export class Bucket {
     }
   }
 
-  @TraceMethod(tracer, 'bucket/stat')
+  @TraceMethod()
   static async stat(name: string): Promise<Minio.BucketItemStat | null> {
     try {
       addSpanAttributes({ bucket_name: config.S3_BUCKET_NAME, object_name: name });
@@ -138,7 +135,7 @@ export class Bucket {
     }
   }
 
-  @TraceMethod(tracer, 'bucket/get_stream')
+  @TraceMethod()
   static async getStream(name: string): Promise<internal.Readable | null> {
     try {
       addSpanAttributes({ bucket_name: config.S3_BUCKET_NAME, object_name: name });
@@ -164,7 +161,7 @@ export class Bucket {
     }
   }
 
-  @TraceMethod(tracer, 'bucket/get')
+  @TraceMethod()
   static async get(name: string): Promise<Buffer | null> {
     try {
       addSpanAttributes({ bucket_name: config.S3_BUCKET_NAME, object_name: name });

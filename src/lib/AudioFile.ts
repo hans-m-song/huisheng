@@ -5,6 +5,7 @@ import { isMatching, P } from 'ts-pattern';
 import { log } from '../config';
 import { Bucket } from './Bucket';
 import { download, downloaderOutputDir } from './Downloader';
+import { TraceMethod } from './telemetry';
 import { GuardType } from './utils';
 
 export type AudioFileMetadata = GuardType<typeof isAudioFileMetadata>;
@@ -40,6 +41,7 @@ export class AudioFile implements AudioFileMetadata {
     this.format = props.format;
   }
 
+  @TraceMethod()
   static async fromUrl(target: string): Promise<AudioFile | null> {
     const raw = await download(target);
     if (!raw) {
@@ -49,6 +51,7 @@ export class AudioFile implements AudioFileMetadata {
     return this.fromInfoJson(raw);
   }
 
+  @TraceMethod()
   static async fromInfoJson(data: any): Promise<AudioFile | null> {
     const { id, webpage_url, title, duration, uploader, artist, format } = data ?? {};
 

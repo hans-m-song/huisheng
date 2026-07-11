@@ -3,6 +3,7 @@ import { ActivityType, Client, GatewayIntentBits, Partials } from 'discord.js';
 import { config, log } from './config';
 import { onError, onInteractionCreate, onMessageCreate, onVoiceStateUpdate } from './events';
 import { destroyVoiceConnections } from './lib/audio';
+import { TraceMethod } from './lib/telemetry';
 
 const authorizeUrl =
   'https://discord.com/api/oauth2/authorize?' +
@@ -37,6 +38,7 @@ export class Bot {
     this.client.once('invalidated', this.shutdown.bind(this));
   }
 
+  @TraceMethod()
   async login() {
     const ready = new Promise<void>((resolve) => {
       this.client.once('ready', (client) => {
