@@ -10,6 +10,8 @@
     "watch": "npm run compile -- -w",
     "start": "node dist/index.js",
     "debug": "nodemon",
+    "typecheck": "tsc --noEmit",
+    "typecheck:ts7": "tsgo --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "prettier --write ./src && yarn lint --fix"
   },
@@ -46,6 +48,7 @@
   },
   "devDependencies": {
     "@types/node": "25.3.5",
+    "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "@typescript-eslint/eslint-plugin": "8.39.0",
     "@typescript-eslint/parser": "8.39.0",
     "eslint": "9.33.0",
