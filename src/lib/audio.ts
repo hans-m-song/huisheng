@@ -16,6 +16,7 @@ import {
 
 import { log } from '../config';
 import { getPlayer, Player } from './Player';
+import { addSpanAttributes, traceFn } from './telemetry';
 
 type VoiceCommandOptions = { allowConnect?: boolean; allowRetry?: boolean };
 
@@ -176,52 +177,55 @@ export const interactionVoiceCommand = async (
   await callback(player, connection, interaction.channel);
 };
 
-const initializeVoiceConnection = async (channel: VoiceBasedChannel): Promise<VoiceConnection> => {
-  const existing = getVoiceConnection(channel.guild.id);
-  if (existing) {
-    return existing;
-  }
+const initializeVoiceConnection = async (channel: VoiceBasedChannel): Promise<VoiceConnection> =>
+  traceFn('audio', 'initializeVoiceConnection', {}, async () => {
+    addSpanAttributes({ guildId: channel.guild.id, channel: channel.name });
 
-  const voice = joinVoiceChannel({
-    channelId: channel.id,
-    guildId: channel.guild.id,
-    adapterCreator: channel.guild.voiceAdapterCreator,
-  });
-
-  voice.on('error', (error) => log.error({ event: 'audio.voice.error', error }));
-  voice.on('debug', (message) => log.debug({ event: 'audio.voice.debug', message }));
-  voice.on('stateChange', (oldState, newState) => {
-    if (oldState.status === newState.status) {
-      return;
+    const existing = getVoiceConnection(channel.guild.id);
+    if (existing) {
+      return existing;
     }
 
-    log.info({
-      event: 'audio.voice.stateChange',
-      channel: channel.name,
-      oldStatus: oldState.status,
-      newStatus: newState.status,
+    const voice = joinVoiceChannel({
+      channelId: channel.id,
+      guildId: channel.guild.id,
+      adapterCreator: channel.guild.voiceAdapterCreator,
     });
+
+    voice.on('error', (error) => log.error({ event: 'audio.voice.error', error }));
+    voice.on('debug', (message) => log.debug({ event: 'audio.voice.debug', message }));
+    voice.on('stateChange', (oldState, newState) => {
+      if (oldState.status === newState.status) {
+        return;
+      }
+
+      log.info({
+        event: 'audio.voice.stateChange',
+        channel: channel.name,
+        oldStatus: oldState.status,
+        newStatus: newState.status,
+      });
+    });
+
+    // https://github.com/discordjs/discord.js/issues/9185#issuecomment-1452514375
+    voice.on('stateChange', (oldState, newState) => {
+      Reflect.get(oldState, 'networking')?.off('stateChange', handleVoiceStateChange);
+      Reflect.get(newState, 'networking')?.on('stateChange', handleVoiceStateChange);
+
+      if (
+        (oldState.status === VoiceConnectionStatus.Ready &&
+          newState.status === VoiceConnectionStatus.Connecting) ||
+        (oldState.status === VoiceConnectionStatus.Connecting &&
+          newState.status === VoiceConnectionStatus.Signalling)
+      ) {
+        voice.configureNetworking();
+      }
+    });
+
+    await VoiceConnection.once(voice, VoiceConnectionStatus.Ready);
+
+    return voice;
   });
-
-  // https://github.com/discordjs/discord.js/issues/9185#issuecomment-1452514375
-  voice.on('stateChange', (oldState, newState) => {
-    Reflect.get(oldState, 'networking')?.off('stateChange', handleVoiceStateChange);
-    Reflect.get(newState, 'networking')?.on('stateChange', handleVoiceStateChange);
-
-    if (
-      (oldState.status === VoiceConnectionStatus.Ready &&
-        newState.status === VoiceConnectionStatus.Connecting) ||
-      (oldState.status === VoiceConnectionStatus.Connecting &&
-        newState.status === VoiceConnectionStatus.Signalling)
-    ) {
-      voice.configureNetworking();
-    }
-  });
-
-  await VoiceConnection.once(voice, VoiceConnectionStatus.Ready);
-
-  return voice;
-};
 
 const handleVoiceStateChange = (oldState: VoiceConnectionState, newState: VoiceConnectionState) => {
   const udp = Reflect.get(newState, 'udp');

@@ -54,9 +54,7 @@ export const sdk = new NodeSDK({
     new AwsInstrumentation(),
     new ConnectInstrumentation(),
     new HttpInstrumentation(),
-    new PinoInstrumentation({
-      logKeys: { spanId: 'spanId', traceId: 'traceId', traceFlags: 'traceFlags' },
-    }),
+    new PinoInstrumentation(),
     new RuntimeNodeInstrumentation(),
   ],
 });

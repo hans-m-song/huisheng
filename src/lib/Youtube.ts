@@ -1,6 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
 
-import { trace } from '@opentelemetry/api';
 import z from 'zod';
 import { config, log } from '../config';
 import { Spotify } from './Spotify';
@@ -80,8 +79,6 @@ const normaliseYoutubeUrl = (url: string) =>
     .replace('/playlist', '/watch')
     .replace('youtube.com/shorts/', 'youtube.com/watch?v=');
 
-const tracer = trace.getTracer('youtube');
-
 export class Youtube {
   private static instance?: AxiosInstance;
 
@@ -113,7 +110,7 @@ export class Youtube {
     Youtube.assertInstance();
   }
 
-  @TraceMethod(tracer, 'youtube/search')
+  @TraceMethod()
   static async search(query: string, limit = 1) {
     addSpanAttributes({ query });
     return Youtube.assertInstance().get<YoutubeSearchListResult>('/search', {
@@ -128,7 +125,7 @@ export class Youtube {
     });
   }
 
-  @TraceMethod(tracer, 'youtube/get')
+  @TraceMethod()
   static async get(id: string) {
     addSpanAttributes({ video_id: id });
     return Youtube.assertInstance().get<YoutubeVideoListResponse>('/videos', {
@@ -139,7 +136,7 @@ export class Youtube {
     });
   }
 
-  @TraceMethod(tracer, 'youtube/list')
+  @TraceMethod()
   static async list(playlistId: string, limit = 25) {
     addSpanAttributes({ playlist_id: playlistId });
     return Youtube.assertInstance().get<YoutubePlaylistItemListResponse>('/playlistItems', {
@@ -151,7 +148,7 @@ export class Youtube {
     });
   }
 
-  @TraceMethod(tracer, 'youtube/query')
+  @TraceMethod()
   static async query(raw: string, fuzzySearchLimit = 1): Promise<QueryResult[] | null> {
     if (raw.includes('spotify.com')) {
       const url = new URL(raw);

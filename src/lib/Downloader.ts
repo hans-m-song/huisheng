@@ -1,7 +1,6 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import path from 'path';
 
-import { trace } from '@opentelemetry/api';
 import { config, log } from '../config';
 import { addSpanAttributes, addSpanError, traceFn } from './telemetry';
 import { trimToJsonObject, tryParseJSON } from './utils';
@@ -57,10 +56,8 @@ const args = [
   'aext,+size',
 ].flat();
 
-const tracer = trace.getTracer('downloader');
-
 const execute = async (...args: string[]) =>
-  traceFn(tracer, 'downloader/execute', async () => {
+  traceFn('downloader', 'execute', {}, async () => {
     addSpanAttributes({ args: args.join(' ') });
 
     let stderr = '';
@@ -118,7 +115,7 @@ const execute = async (...args: string[]) =>
   });
 
 export const download = async (target: string): Promise<unknown | null> =>
-  traceFn(tracer, 'downloader/download', async () => {
+  traceFn('downloader', 'download', {}, async () => {
     const process = await execute(target, ...args);
     if (!process) {
       return null;
@@ -133,7 +130,7 @@ export const download = async (target: string): Promise<unknown | null> =>
   });
 
 export const version = async (): Promise<string | null> =>
-  traceFn(tracer, 'downloader/version', async () => {
+  traceFn('downloader', 'version', {}, async () => {
     const process = await execute('--version');
     if (!process) {
       return null;

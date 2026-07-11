@@ -2,7 +2,6 @@ import 'dotenv/config';
 
 import axios, { AxiosInstance } from 'axios';
 
-import { trace } from '@opentelemetry/api';
 import { config, log } from '../config';
 import { addSpanAttributes, TraceMethod } from './telemetry';
 import { encodeQueryParams } from './utils';
@@ -58,12 +57,10 @@ export interface SpotifyTrack {
   artists: { id: string; name: string }[];
 }
 
-const tracer = trace.getTracer('spotify');
-
 export class Spotify {
   private static session?: Session;
 
-  @TraceMethod(tracer, 'spotify/assert_session')
+  @TraceMethod()
   private static async assertSession(): Promise<Session> {
     if (Spotify.session && Spotify.session.expiresAt > Date.now()) {
       return Spotify.session;
@@ -119,7 +116,7 @@ export class Spotify {
     return instance;
   }
 
-  @TraceMethod(tracer, 'spotify/paginate')
+  @TraceMethod()
   private async paginate<T>(instance: AxiosInstance, endpoint: string): Promise<T[]> {
     addSpanAttributes({ endpoint });
     const response = await instance.get<Pagination<T>>(endpoint).catch((error) => {
@@ -139,7 +136,7 @@ export class Spotify {
     return response.data.items;
   }
 
-  @TraceMethod(tracer, 'spotify/query')
+  @TraceMethod()
   static async query(path: string): Promise<SpotifyTrack[] | null> {
     addSpanAttributes({ path });
     const [type, id] = path.replace(/^\//, '').split('/');
@@ -163,7 +160,7 @@ export class Spotify {
   /**
    * https://developer.spotify.com/documentation/web-api/reference/get-an-albums-tracks
    */
-  @TraceMethod(tracer, 'spotify/get_playlist')
+  @TraceMethod()
   async getPlaylist(id: string): Promise<SpotifyTrack[] | null> {
     const spotify = await this.createInstance();
 
@@ -190,7 +187,7 @@ export class Spotify {
   /**
    * https://developer.spotify.com/documentation/web-api/reference/get-an-albums-tracks
    */
-  @TraceMethod(tracer, 'spotify/get_album')
+  @TraceMethod()
   async getAlbum(id: string): Promise<SpotifyTrack[] | null> {
     const spotify = await this.createInstance();
 

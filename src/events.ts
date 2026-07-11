@@ -1,7 +1,6 @@
 import { getVoiceConnection } from '@discordjs/voice';
 import { Awaitable, Client, ClientEvents, VoiceState } from 'discord.js';
 
-import { trace } from '@opentelemetry/api';
 import { commands } from './commands';
 import { config, log } from './config';
 import { emojiGetter } from './emotes';
@@ -15,7 +14,6 @@ interface ClientEventHandler<K extends keyof ClientEvents> {
 export const onError: ClientEventHandler<'error'> = (error) =>
   log.error({ error }, 'discord.error');
 
-const messageTracer = trace.getTracer('discord.message');
 export const onMessageCreate =
   (client: Client): ClientEventHandler<'messageCreate'> =>
   async (message) => {
@@ -36,7 +34,7 @@ export const onMessageCreate =
     }
 
     const emoji = emojiGetter(client.emojis.cache);
-    traceFn(messageTracer, `discord/message/${command}`, async (span) => {
+    traceFn('discord.message', command, { root: true }, async (span) => {
       span.setAttributes({
         channel: (message.channel as any).name ?? 'unknown',
         author: message.author.tag,
@@ -46,7 +44,6 @@ export const onMessageCreate =
     });
   };
 
-const interactionTracer = trace.getTracer('discord.interaction');
 export const onInteractionCreate =
   (client: Client): ClientEventHandler<'interactionCreate'> =>
   async (interaction) => {
@@ -66,7 +63,7 @@ export const onInteractionCreate =
     }
 
     const emoji = emojiGetter(client.emojis.cache);
-    traceFn(interactionTracer, `discord/interaction/${interaction.commandName}`, async (span) => {
+    traceFn('discord.interaction', interaction.commandName, { root: true }, async (span) => {
       span.setAttributes({
         channel: interaction.channel?.id ?? 'unknown',
         author: interaction.user.tag,
