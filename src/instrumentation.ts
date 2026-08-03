@@ -2,8 +2,7 @@ import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
-import { AwsInstrumentation } from '@opentelemetry/instrumentation-aws-sdk';
-import { ConnectInstrumentation } from '@opentelemetry/instrumentation-connect';
+import { FsInstrumentation } from '@opentelemetry/instrumentation-fs';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 import { RuntimeNodeInstrumentation } from '@opentelemetry/instrumentation-runtime-node';
@@ -51,12 +50,15 @@ export const sdk = new NodeSDK({
     }),
   }),
   instrumentations: [
-    new AwsInstrumentation(),
-    new ConnectInstrumentation(),
+    new FsInstrumentation({ requireParentSpan: true }),
     new HttpInstrumentation(),
     new PinoInstrumentation(),
-    new RuntimeNodeInstrumentation(),
+    new RuntimeNodeInstrumentation({ captureUncaughtException: true }),
   ],
 });
 
 sdk.start();
+
+let shutdownPromise: Promise<void> | undefined;
+
+export const shutdownTelemetry = () => (shutdownPromise ??= sdk.shutdown());
