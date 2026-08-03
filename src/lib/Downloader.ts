@@ -2,62 +2,15 @@ import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import path from 'path';
 
 import { config, log } from '../config';
-import { addSpanAttributes, addSpanError, traceFn } from './telemetry';
+import { TraceMethod, addSpanAttributes, addSpanError } from './telemetry';
 import { trimToJsonObject, tryParseJSON } from './utils';
 
-export const downloaderCacheDir = path.join(config.CACHE_DIR, 'ytdl');
-export const downloaderOutputDir = path.join(config.CACHE_DIR, 'out');
-const args = [
-  // general
-  '--abort-on-error',
-  '--no-mark-watched',
+export class Downloader {
+  static cacheDir = path.join(config.CACHE_DIR, 'ytdl');
+  static outputDir = path.join(config.CACHE_DIR, 'out');
 
-  // video selection
-  '--no-playlist',
-
-  // download options
-  // TODO check this option '--concurrent-fragments',
-  '--retries',
-  `${config.YTDL_RETRIES}`,
-
-  // filesystem options
-  '--paths',
-  downloaderOutputDir,
-  '--output',
-  '%(id)s.%(ext)s',
-  '--no-overwrites',
-  '--continue',
-  '--cache-dir',
-  downloaderCacheDir,
-
-  // verbosity and simulation options
-  '--no-simulate',
-  '--dump-json',
-  '--no-progress',
-  // '--write-info-json',
-
-  '--js-runtimes',
-  'node',
-
-  // workarounds
-  '--no-check-certificates',
-  config.YTDLP_POT_PROVIDER_ENABLED
-    ? [
-        '--extractor-args',
-        `youtube:player-client=default,mweb;youtubepot-bgutilhttp:base_url=${config.YTDLP_POT_PROVIDER}`,
-      ]
-    : [],
-
-  // post-processing options
-  '--extract-audio',
-  '--prefer-free-formats',
-  '--format-sort-force',
-  '--format-sort',
-  'aext,+size',
-].flat();
-
-const execute = async (...args: string[]) =>
-  traceFn('downloader', 'execute', {}, async () => {
+  @TraceMethod()
+  static async execute(...args: string[]) {
     addSpanAttributes({ args: args.join(' ') });
 
     let stderr = '';
@@ -112,11 +65,61 @@ const execute = async (...args: string[]) =>
     }
 
     return { stderr, stdout };
-  });
+  }
 
-export const download = async (target: string): Promise<unknown | null> =>
-  traceFn('downloader', 'download', {}, async () => {
-    const process = await execute(target, ...args);
+  @TraceMethod()
+  static async download(target: string): Promise<unknown | null> {
+    const process = await Downloader.execute(
+      target,
+
+      // general
+      '--abort-on-error',
+      '--no-mark-watched',
+
+      // video selection
+      '--no-playlist',
+
+      // download options
+      // TODO check this option '--concurrent-fragments',
+      '--retries',
+      `${config.YTDL_RETRIES}`,
+
+      // filesystem options
+      '--paths',
+      Downloader.outputDir,
+      '--output',
+      '%(id)s.%(ext)s',
+      '--no-overwrites',
+      '--continue',
+      '--cache-dir',
+      Downloader.cacheDir,
+
+      // verbosity and simulation options
+      '--no-simulate',
+      '--dump-json',
+      '--no-progress',
+      // '--write-info-json',
+
+      '--js-runtimes',
+      'node',
+
+      // workarounds
+      '--no-check-certificates',
+      ...(config.YTDLP_POT_PROVIDER_ENABLED
+        ? [
+            '--extractor-args',
+            `youtube:player-client=default,mweb;youtubepot-bgutilhttp:base_url=${config.YTDLP_POT_PROVIDER}`,
+          ]
+        : []),
+
+      // post-processing options
+      '--extract-audio',
+      '--prefer-free-formats',
+      '--format-sort-force',
+      '--format-sort',
+      'aext,+size',
+    );
+
     if (!process) {
       return null;
     }
@@ -127,14 +130,15 @@ export const download = async (target: string): Promise<unknown | null> =>
     }
 
     return result;
-  });
+  }
 
-export const version = async (): Promise<string | null> =>
-  traceFn('downloader', 'version', {}, async () => {
-    const process = await execute('--version');
+  @TraceMethod()
+  static async version(): Promise<string | null> {
+    const process = await Downloader.execute('--version');
     if (!process) {
       return null;
     }
 
     return process.stdout.trim();
-  });
+  }
+}

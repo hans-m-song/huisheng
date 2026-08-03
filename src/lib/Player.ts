@@ -13,7 +13,7 @@ import { log } from '../config';
 import { AudioFile } from './AudioFile';
 import { PlaylistItem } from './PlaylistItem';
 import { Queue } from './Queue';
-import { addSpanAttributes, addSpanError, TraceMethod, traceFn } from './telemetry';
+import { addSpanAttributes, addSpanError, traceFn, TraceMethod } from './telemetry';
 import { QueryResult } from './Youtube';
 
 const meter = metrics.getMeter('player');
@@ -48,7 +48,7 @@ export class Player {
       });
     });
 
-  @TraceMethod({ root: true })
+  @TraceMethod()
   async next() {
     this.stop();
 
