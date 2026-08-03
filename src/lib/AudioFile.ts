@@ -4,7 +4,7 @@ import path from 'path';
 import z from 'zod';
 import { log } from '../config';
 import { Bucket } from './Bucket';
-import { download, downloaderOutputDir } from './Downloader';
+import { Downloader } from './Downloader';
 import { TraceMethod } from './telemetry';
 
 export type AudioFileMetadata = z.infer<typeof AudioFileMetadataSchema>;
@@ -42,7 +42,7 @@ export class AudioFile implements AudioFileMetadata {
 
   @TraceMethod()
   static async fromUrl(target: string): Promise<AudioFile | null> {
-    const raw = await download(target);
+    const raw = await Downloader.download(target);
     if (!raw) {
       return null;
     }
@@ -54,8 +54,9 @@ export class AudioFile implements AudioFileMetadata {
   static async fromInfoJson(data: any): Promise<AudioFile | null> {
     const { id, webpage_url, title, duration, uploader, artist, format } = data ?? {};
 
-    const filepath = await getFileByVideoId(id);
-    if (!filepath) {
+    const files = await fs.readdir(Downloader.outputDir);
+    const filename = files.find((file) => file.includes(id)) || null;
+    if (!filename) {
       log.error({
         event: 'AudioFile.fromInfoJson',
         message: 'could not find file',
@@ -64,6 +65,8 @@ export class AudioFile implements AudioFileMetadata {
       });
       return null;
     }
+
+    const filepath = path.join(Downloader.outputDir, filename);
 
     const metadata: AudioFileMetadata = {
       videoId: id,
@@ -91,6 +94,7 @@ export class AudioFile implements AudioFileMetadata {
     return new AudioFile(metadata);
   }
 
+  @TraceMethod()
   static async fromBucketTags(id: string): Promise<AudioFile | null> {
     const objectName = path.join('cache', id);
     const exists = await Bucket.stat(objectName);
@@ -117,16 +121,19 @@ export class AudioFile implements AudioFileMetadata {
     return new AudioFile(parsed.data);
   }
 
+  @TraceMethod()
   async saveToBucket(): Promise<boolean> {
     const dest = path.join('cache', this.videoId);
     return Bucket.put(this.filepath, dest);
   }
 
+  @TraceMethod()
   async updateBucketMetadata() {
     const dest = path.join('cache', this.videoId);
     await Bucket.setTags(dest, { ...this.toJSON(), duration: `${this.duration}` });
   }
 
+  @TraceMethod()
   async streamFromBucket() {
     return Bucket.getStream(path.join('cache', this.videoId));
   }
@@ -153,24 +160,11 @@ export class AudioFile implements AudioFileMetadata {
   }
 }
 
-const getByFilepath = async (filepaths: string[]) => {
-  for (const filepath of filepaths) {
-    try {
-      await fs.stat(filepath);
-      return filepath;
-    } catch {
-      continue;
-    }
-  }
-
-  return null;
-};
-
 const getFileByVideoId = async (videoId: string) => {
-  const files = await fs.readdir(downloaderOutputDir);
+  const files = await fs.readdir(Downloader.outputDir);
   const filename = files.find((file) => file.includes(videoId)) || null;
   if (!filename) {
     return null;
   }
-  return path.join(downloaderOutputDir, filename);
+  return path.join(Downloader.outputDir, filename);
 };

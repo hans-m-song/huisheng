@@ -38,7 +38,7 @@ export class Bot {
     this.client.once('invalidated', this.shutdown.bind(this));
   }
 
-  @TraceMethod()
+  @TraceMethod({ root: true })
   async login() {
     const ready = new Promise<void>((resolve) => {
       this.client.once('ready', (client) => {
