@@ -69,6 +69,24 @@ export interface QueryResult {
   channelTitle: string;
 }
 
+export const YOUTUBE_PLAYLIST_LIMIT = 25;
+
+export const isCanonicalYoutubePlaylistUrl = (raw: string) => {
+  try {
+    const url = new URL(raw);
+    const hostname = url.hostname.toLowerCase();
+    const pathname = url.pathname.replace(/\/$/, '');
+
+    return (
+      ['youtube.com', 'www.youtube.com', 'music.youtube.com'].includes(hostname) &&
+      pathname === '/playlist' &&
+      Boolean(url.searchParams.get('list'))
+    );
+  } catch {
+    return false;
+  }
+};
+
 const normaliseYoutubeUrl = (url: string) =>
   url
     .replace('music.youtube.com', 'youtube.com')
@@ -137,7 +155,7 @@ export class Youtube {
   }
 
   @TraceMethod()
-  static async list(playlistId: string, limit = 25) {
+  static async list(playlistId: string, limit = YOUTUBE_PLAYLIST_LIMIT) {
     addSpanAttributes({ playlist_id: playlistId });
     return Youtube.assertInstance().get<YoutubePlaylistItemListResponse>('/playlistItems', {
       params: {
@@ -152,7 +170,11 @@ export class Youtube {
   static async query(raw: string, fuzzySearchLimit = 1): Promise<QueryResult[] | null> {
     if (raw.includes('spotify.com')) {
       const url = new URL(raw);
-      log.info({ event: 'youtube', path: url.pathname, message: 'searching with spotify' });
+      log.info({
+        event: 'Youtube.query.spotify',
+        path: url.pathname,
+        message: 'searching with spotify',
+      });
       const tracks = await Spotify.query(url.pathname);
       if (!tracks) {
         return null;
@@ -180,11 +202,15 @@ export class Youtube {
       const playlistId = url.searchParams.get('list');
       if (playlistId) {
         addSpanAttributes({ playlist_id: playlistId });
-        log.info({ event: 'youtube', playlistId, message: 'searching by playlist id' });
+        log.info({
+          event: 'Youtube.query.playlist',
+          playlistId,
+          message: 'searching by playlist id',
+        });
         const response = await Youtube.list(playlistId)
           .then((result) => result.data)
           .catch((error) => {
-            log.error({ event: 'youtube', error, url: url.toString(), playlistId });
+            log.error({ event: 'Youtube.query.playlist', error, url: url.toString(), playlistId });
             addSpanError(error);
             return null;
           });
@@ -201,11 +227,11 @@ export class Youtube {
       const videoId = url.searchParams.get('v');
       if (videoId) {
         addSpanAttributes({ video_id: videoId });
-        log.info({ event: 'youtube', videoId, message: 'searching by video id' });
+        log.info({ event: 'Youtube.query.video', videoId, message: 'searching by video id' });
         const response = await Youtube.get(videoId)
           .then((result) => result.data)
           .catch((error) => {
-            log.error({ event: 'youtube', error, url: url.toString(), id: videoId });
+            log.error({ event: 'Youtube.query.video', error, url: url.toString(), id: videoId });
             addSpanError(error);
             return null;
           });
@@ -223,9 +249,9 @@ export class Youtube {
     }
 
     addSpanAttributes({ query: raw });
-    log.info({ event: 'youtube', raw, message: 'fuzzy text search' });
+    log.info({ event: 'Youtube.query.search', raw, message: 'fuzzy text search' });
     const response = await Youtube.search(raw, fuzzySearchLimit).catch((error) => {
-      log.error({ event: 'youtube', error, raw });
+      log.error({ event: 'Youtube.query.search', error, raw });
       addSpanError(error);
       return null;
     });

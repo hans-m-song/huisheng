@@ -4,7 +4,7 @@ import { emojis } from '../emotes';
 import { messageVoiceCommand } from '../lib/audio';
 import { Command } from '../lib/Command';
 import { reportEnqueueResult } from '../lib/Player';
-import { Youtube } from '../lib/Youtube';
+import { isCanonicalYoutubePlaylistUrl, Youtube, YOUTUBE_PLAYLIST_LIMIT } from '../lib/Youtube';
 
 export const play: Command = {
   spec: new SlashCommandBuilder()
@@ -36,14 +36,18 @@ export const play: Command = {
 
       await message.suppressEmbeds(true);
 
-      const results = await Youtube.query(args.join(' ').trim(), 1);
+      const raw = args.join(' ').trim();
+      const results = await Youtube.query(raw, 1);
       if (!results || results.length < 1) {
         await message.channel.send('No results found');
         return;
       }
 
       await message.react(emojis.thinking);
-      const enqueueResult = await player.enqueue([results.shift()!]);
+      const enqueueResults = isCanonicalYoutubePlaylistUrl(raw)
+        ? results.slice(0, YOUTUBE_PLAYLIST_LIMIT)
+        : [results[0]];
+      const enqueueResult = await player.enqueue(enqueueResults);
       if (enqueueResult.errors.length > 0 || enqueueResult.successes.length < 1) {
         await message.react(emojis.cross);
       }
