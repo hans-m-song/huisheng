@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import 'source-map-support/register';
 
+import { shutdownTelemetry } from './instrumentation';
+
 import { promises as fs } from 'fs';
 
 import { Bot } from './Bot';
@@ -18,9 +20,16 @@ const run = async () => {
 
   const shutdown = (resolve: () => void) => async (exitCode: number) => {
     log.info({ event: 'shutdown', exitCode });
-    await bot.shutdown(exitCode);
-    resolve();
-    process.exit(0);
+    try {
+      await bot.shutdown(exitCode);
+    } finally {
+      try {
+        await shutdownTelemetry();
+      } finally {
+        resolve();
+        process.exit(0);
+      }
+    }
   };
 
   await new Promise<void>((resolve) => {

@@ -46,4 +46,4 @@ COPY --chown=node ./src ./src
 RUN npm run compile
 ARG GITHUB_SHA=unknown
 ENV GITHUB_SHA=${GITHUB_SHA}
-CMD ["node", "--require", "./dist/instrumentation.js", "dist/index.js"]
+CMD ["node", "dist/index.js"]

@@ -34,7 +34,7 @@ export const onMessageCreate =
     }
 
     const emoji = emojiGetter(client.emojis.cache);
-    traceFn('discord.message', command, { root: true }, async (span) => {
+    await traceFn('discord.message', command, { root: true }, async (span) => {
       span.setAttributes({
         channel: (message.channel as any).name ?? 'unknown',
         author: message.author.tag,
@@ -63,7 +63,7 @@ export const onInteractionCreate =
     }
 
     const emoji = emojiGetter(client.emojis.cache);
-    traceFn('discord.interaction', interaction.commandName, { root: true }, async (span) => {
+    await traceFn('discord.interaction', interaction.commandName, { root: true }, async (span) => {
       span.setAttributes({
         channel: interaction.channel?.id ?? 'unknown',
         author: interaction.user.tag,
