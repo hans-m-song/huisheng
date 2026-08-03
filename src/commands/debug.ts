@@ -3,7 +3,7 @@ import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
 import { config } from '../config';
 import { Command } from '../lib/Command';
-import { version } from '../lib/Downloader';
+import { Downloader } from '../lib/Downloader';
 import { getPlayer } from '../lib/Player';
 
 const debugEmbed = async (guildId: string) => {
@@ -13,7 +13,7 @@ const debugEmbed = async (guildId: string) => {
       ? 'none'
       : connections.map(([id, conn]) => `${id}: \`${conn.state.status}\``).join(', ');
 
-  const ytdlVersion = await version();
+  const ytdlVersion = await Downloader.version();
 
   const playerStatus = getPlayer(guildId).instance.state.status;
 
