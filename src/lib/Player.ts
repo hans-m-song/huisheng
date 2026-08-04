@@ -26,6 +26,7 @@ const enqueueResults = meter.createCounter('enqueue.result', {
 
 export class Player {
   playlist = new Queue<PlaylistItem>();
+  private nextPromise?: Promise<void>;
   instance = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause } })
     .on('error', (error) => {
       playbackErrors.add(1);
@@ -48,8 +49,26 @@ export class Player {
       });
     });
 
-  @TraceMethod()
-  async next() {
+  next(): Promise<void> {
+    if (this.nextPromise) {
+      return this.nextPromise;
+    }
+
+    const nextPromise: Promise<void> = Promise.resolve().then(() =>
+      traceFn('Player', 'next', { root: true }, async () => {
+        await this.advanceToNextTrack();
+      }),
+    );
+    const trackedPromise = nextPromise.finally(() => {
+      if (this.nextPromise === trackedPromise) {
+        this.nextPromise = undefined;
+      }
+    });
+    this.nextPromise = trackedPromise;
+    return trackedPromise;
+  }
+
+  private async advanceToNextTrack() {
     this.stop();
 
     const next = this.playlist.next();
